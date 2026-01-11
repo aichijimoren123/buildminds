@@ -1,5 +1,70 @@
 # Changelog
 
+## [2026-01-12] 完善日志和修复 GitHub OAuth 配置
+
+### 新增功能
+
+#### 1. 自定义 HTTP 请求日志
+- 添加 Hono logger 中间件，格式化显示所有 HTTP 请求
+- 日志格式：`[时间] 方法 路径 状态码 响应时间`
+- 使用颜色区分状态（绿色=成功 2xx/3xx，红色=错误 4xx/5xx）
+- 使用 24 小时制显示时间
+- 文件：[src/index.tsx](src/index.tsx:49-67)
+
+### Bug 修复
+
+#### 1. 修复 Better Auth OAuth State 验证失败
+- 添加 `secret` 配置用于加密 session 和 cookies
+- 启用 `session.cookieCache` 确保 OAuth state 正确保存
+- 添加 `BETTER_AUTH_SECRET` 环境变量
+- 文件：[src/server/auth.ts](src/server/auth.ts:17-23)
+
+#### 2. 修复 GitHub OAuth 登录流程
+- 使用 Better Auth 客户端 `authClient.signIn.social()` 方法触发登录
+- 导出完整的 `authClient` 对象以便使用所有 API
+- 设置正确的 `callbackURL` 参数
+- 文件：
+  - [src/lib/auth-client.ts](src/lib/auth-client.ts:3)
+  - [src/components/IntegrationsPanel.tsx](src/components/IntegrationsPanel.tsx:45-48)
+
+### 配置说明
+
+#### GitHub OAuth App 回调 URL 配置
+确保在 GitHub OAuth App 设置中配置正确的回调 URL：
+```
+http://localhost:10086/api/auth/callback/github
+```
+
+**注意：** `localhost` 和 `127.0.0.1` 对 OAuth 来说是不同的 URL，必须完全匹配。
+
+#### 新增环境变量
+```bash
+# Better Auth Secret (用于加密 session 和 cookies)
+BETTER_AUTH_SECRET=your-super-secret-key-change-this-to-random-string-in-production
+```
+
+### 技术细节
+
+#### 日志中间件实现
+使用 Hono 的 logger 中间件并自定义输出格式：
+- 解析 Hono 内置日志消息
+- 提取请求方法、路径、状态码、响应时间
+- 使用 ANSI 颜色码美化输出
+- 只显示响应日志（`-->`），隐藏请求日志（`<--`）
+
+#### Better Auth Session 配置
+```typescript
+session: {
+  cookieCache: {
+    enabled: true,
+    maxAge: 60 * 60, // 1 hour
+  },
+}
+```
+这确保了 OAuth state 在 cookie 中正确保存和验证。
+
+---
+
 ## [2026-01-11] 迁移到 BetterAuth 认证框架
 
 ### 概述
