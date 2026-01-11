@@ -1,6 +1,6 @@
-import { eq, desc, isNotNull, sql } from "drizzle-orm";
+import { desc, eq, isNotNull } from "drizzle-orm";
+import { sessions, type InsertSession, type Session } from "../database/schema";
 import { BaseRepository } from "./base.repository";
-import { sessions, type Session, type InsertSession } from "../db/schema";
 
 export class SessionRepository extends BaseRepository {
   async create(data: InsertSession): Promise<Session> {

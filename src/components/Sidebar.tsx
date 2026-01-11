@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Dialog from "@radix-ui/react-dialog";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
 import { useAppStore } from "../store/useAppStore";
+import { IntegrationsPanel } from "./IntegrationsPanel";
 
 interface SidebarProps {
   connected: boolean;
@@ -20,6 +22,8 @@ export function Sidebar({
   isMobileOpen = false,
   onMobileClose
 }: SidebarProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const sessions = useAppStore((state) => state.sessions);
   const activeSessionId = useAppStore((state) => state.activeSessionId);
   const setActiveSessionId = useAppStore((state) => state.setActiveSessionId);
@@ -75,7 +79,7 @@ export function Sidebar({
   };
 
   const handleSelectSession = (sessionId: string) => {
-    setActiveSessionId(sessionId);
+    navigate(`/chat/${sessionId}`);
     onMobileClose?.();
   };
 
@@ -83,6 +87,19 @@ export function Sidebar({
     onNewSession();
     onMobileClose?.();
   };
+
+  const setCwd = useAppStore((state) => state.setCwd);
+  const setSelectedGitHubRepoId = useAppStore((state) => state.setSelectedGitHubRepoId);
+
+  const handleSelectRepo = (repoId: string, localPath: string) => {
+    // Store the selected repo info in app store for use when creating a new session
+    setCwd(localPath);
+    setSelectedGitHubRepoId(repoId);
+  };
+
+  // Determine active session from URL
+  const urlSessionId = location.pathname.match(/^\/chat\/([^/]+)/)?.[1];
+  const isSessionActive = (sessionId: string) => urlSessionId === sessionId;
 
   return (
     <>
@@ -131,13 +148,13 @@ export function Sidebar({
           className="w-full rounded-xl border border-ink-900/10 bg-surface px-4 py-2.5 text-sm font-medium text-ink-700 hover:bg-surface-tertiary hover:border-ink-900/20 transition-colors flex items-center justify-center gap-2"
           onClick={onOpenSettings}
         >
-          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="3" />
-            <path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m5.08-5.08l4.24-4.24" />
-          </svg>
           Settings
         </button>
-        <div className="flex flex-col gap-2 overflow-y-auto">
+
+        {/* Integrations Panel */}
+        <IntegrationsPanel onSelectRepo={handleSelectRepo} />
+
+        <div className="flex flex-1 flex-col gap-2 overflow-y-auto min-h-0">
           {sessionList.length === 0 && (
             <div className="rounded-xl border border-ink-900/5 bg-surface px-4 py-5 text-center text-xs text-muted">
               No sessions yet. Start by sending a prompt.
@@ -146,7 +163,7 @@ export function Sidebar({
           {sessionList.map((session) => (
             <div
               key={session.id}
-              className={`cursor-pointer rounded-xl border px-2 py-3 text-left transition ${activeSessionId === session.id
+              className={`cursor-pointer rounded-xl border px-2 py-3 text-left transition ${isSessionActive(session.id)
                 ? "border-accent/30 bg-accent-subtle"
                 : "border-ink-900/5 bg-surface hover:bg-surface-tertiary"
                 }`}

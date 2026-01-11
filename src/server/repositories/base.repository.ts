@@ -1,4 +1,4 @@
-import type { DatabaseType } from "../db";
+import type { DatabaseType } from "../database";
 
 export abstract class BaseRepository {
   constructor(protected db: DatabaseType) {}

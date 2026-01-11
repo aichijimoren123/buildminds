@@ -1,10 +1,10 @@
-import { SessionRepository } from "../repositories/session.repository";
+import type { StreamMessage } from "../../types";
+import type { InsertSession, Session } from "../database/schema";
 import { MessageRepository } from "../repositories/message.repository";
+import { SessionRepository } from "../repositories/session.repository";
+import { NotFoundError } from "../utils/errors";
 import { ClaudeService } from "./claude.service";
 import { WebSocketService } from "./websocket.service";
-import type { Session, InsertSession } from "../db/schema";
-import type { StreamMessage, SessionStatus } from "../../types";
-import { NotFoundError } from "../utils/errors";
 
 export type SessionHistory = {
   session: Session;

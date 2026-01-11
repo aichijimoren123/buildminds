@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
+import { settings, type Setting } from "../database/schema";
 import { BaseRepository } from "./base.repository";
-import { settings, type Setting, type InsertSetting } from "../db/schema";
 
 export class SettingsRepository extends BaseRepository {
   async get(key: string): Promise<string | null> {

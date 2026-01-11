@@ -1,18 +1,20 @@
 import type { Hono } from "hono";
-import { db } from "../db";
-import { SessionRepository } from "../repositories/session.repository";
-import { MessageRepository } from "../repositories/message.repository";
-import { SettingsRepository } from "../repositories/settings.repository";
-import { WebSocketService } from "../services/websocket.service";
-import { ClaudeService } from "../services/claude.service";
-import { SessionService } from "../services/session.service";
-import { SettingsService } from "../services/settings.service";
+import { loadClaudeSettingsEnv } from "../../claude-settings";
+import { auth } from "../auth";
 import { SessionController } from "../controllers/session.controller";
 import { SettingsController } from "../controllers/settings.controller";
 import { WebSocketController } from "../controllers/websocket.controller";
+import { db } from "../database";
+import { MessageRepository } from "../repositories/message.repository";
+import { SessionRepository } from "../repositories/session.repository";
+import { SettingsRepository } from "../repositories/settings.repository";
+import { ClaudeService } from "../services/claude.service";
+import { SessionService } from "../services/session.service";
+import { SettingsService } from "../services/settings.service";
+import { WebSocketService } from "../services/websocket.service";
+import { githubRoutes } from "./github.routes";
 import { registerSessionRoutes } from "./session.routes";
 import { registerSettingsRoutes } from "./settings.routes";
-import { loadClaudeSettingsEnv } from "../../claude-settings";
 
 export function setupRoutes(app: Hono) {
   // Initialize repositories
@@ -49,6 +51,13 @@ export function setupRoutes(app: Hono) {
   // Register routes
   registerSessionRoutes(app, sessionController);
   registerSettingsRoutes(app, settingsController);
+
+  // Better Auth routes - handles all /api/auth/* endpoints automatically
+  app.on(["GET", "POST"], "/api/auth/**", (c) => {
+    return auth.handler(c.req.raw);
+  });
+
+  app.route("/api/github", githubRoutes);
 
   // Health check endpoint
   app.get("/api/health", (c) => c.text("ok"));

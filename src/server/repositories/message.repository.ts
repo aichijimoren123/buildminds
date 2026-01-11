@@ -1,6 +1,6 @@
-import { eq, asc } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
+import { messages, type InsertMessage, type Message } from "../database/schema";
 import { BaseRepository } from "./base.repository";
-import { messages, type Message, type InsertMessage } from "../db/schema";
 
 export class MessageRepository extends BaseRepository {
   async create(data: InsertMessage): Promise<Message> {

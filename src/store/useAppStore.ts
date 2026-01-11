@@ -26,18 +26,18 @@ interface AppState {
   activeSessionId: string | null;
   prompt: string;
   cwd: string;
+  selectedGitHubRepoId: string | null;
   pendingStart: boolean;
   globalError: string | null;
   sessionsLoaded: boolean;
-  showStartModal: boolean;
   historyRequested: Set<string>;
 
   // Actions
   setPrompt: (prompt: string) => void;
   setCwd: (cwd: string) => void;
+  setSelectedGitHubRepoId: (repoId: string | null) => void;
   setPendingStart: (pending: boolean) => void;
   setGlobalError: (error: string | null) => void;
-  setShowStartModal: (show: boolean) => void;
   setActiveSessionId: (id: string | null) => void;
   markHistoryRequested: (sessionId: string) => void;
   resolvePermissionRequest: (sessionId: string, toolUseId: string) => void;
@@ -57,17 +57,17 @@ export const useAppStore = create<AppState>((set, get) => ({
   activeSessionId: null,
   prompt: "",
   cwd: "",
+  selectedGitHubRepoId: null,
   pendingStart: false,
   globalError: null,
   sessionsLoaded: false,
-  showStartModal: false,
   historyRequested: new Set(),
 
   setPrompt: (prompt) => set({ prompt }),
   setCwd: (cwd) => set({ cwd }),
+  setSelectedGitHubRepoId: (selectedGitHubRepoId) => set({ selectedGitHubRepoId }),
   setPendingStart: (pendingStart) => set({ pendingStart }),
   setGlobalError: (globalError) => set({ globalError }),
-  setShowStartModal: (showStartModal) => set({ showStartModal }),
 
   setActiveSessionId: (id) => {
     set({ activeSessionId: id });
@@ -125,10 +125,7 @@ export const useAppStore = create<AppState>((set, get) => ({
           sessionsLoaded: true
         });
 
-        const hasSessions = event.payload.sessions.length > 0;
-        set({ showStartModal: !hasSessions });
-
-        if (!hasSessions) {
+        if (!event.payload.sessions.length) {
           get().setActiveSessionId(null);
         }
 
@@ -194,7 +191,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
         if (state.pendingStart) {
           get().setActiveSessionId(sessionId);
-          set({ pendingStart: false, showStartModal: false });
+          set({ pendingStart: false });
         }
         break;
       }
@@ -206,8 +203,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         const nextSessions = { ...state.sessions };
         delete nextSessions[sessionId];
         set({
-          sessions: nextSessions,
-          showStartModal: Object.keys(nextSessions).length === 0
+          sessions: nextSessions
         });
         if (state.activeSessionId === sessionId) {
           const remaining = Object.values(nextSessions).sort(
