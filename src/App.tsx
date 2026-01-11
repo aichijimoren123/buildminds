@@ -1,16 +1,17 @@
-import type { PermissionResult, SDKPartialAssistantMessage } from "@anthropic-ai/claude-agent-sdk";
+import type { PermissionResult } from "@anthropic-ai/claude-agent-sdk";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ServerEvent } from "./types";
-import type { PermissionRequest } from "./store/useAppStore";
-import { MessageCard } from "./components/EventCard";
 import { DecisionPanel } from "./components/DecisionPanel";
-import { Sidebar } from "./components/Sidebar";
+import { MessageCard } from "./components/EventCard";
 import { PromptInput, usePromptActions } from "./components/PromptInput";
+import { Sidebar } from "./components/Sidebar";
 import { StartSessionModal } from "./components/StartSessionModal";
+import { SettingsModal } from "./components/SettingsModal";
 import { useWebSocket } from "./hooks/useWebSocket";
-import { useAppStore } from "./store/useAppStore";
-import MDContent from "./render/markdown";
 import "./index.css";
+import MDContent from "./render/markdown";
+import type { PermissionRequest } from "./store/useAppStore";
+import { useAppStore } from "./store/useAppStore";
+import type { ServerEvent } from "./types";
 
 export default function App() {
   // State from store
@@ -25,6 +26,7 @@ export default function App() {
   const historyRequested = useAppStore((state) => state.historyRequested);
   const [recentCwds, setRecentCwds] = useState<string[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   // Actions from store
   const setPrompt = useAppStore((state) => state.setPrompt);
@@ -171,6 +173,7 @@ export default function App() {
           onDeleteSession={(sessionId) =>
             sendEvent({ type: "session.delete", payload: { sessionId } })
           }
+          onOpenSettings={() => setShowSettingsModal(true)}
           isMobileOpen={isSidebarOpen}
           onMobileClose={() => setIsSidebarOpen(false)}
         />
@@ -269,6 +272,9 @@ export default function App() {
           onStart={handleStartFromModal}
           onClose={() => setShowStartModal(false)}
         />
+      )}
+      {showSettingsModal && (
+        <SettingsModal onClose={() => setShowSettingsModal(false)} />
       )}
     </div>
   );

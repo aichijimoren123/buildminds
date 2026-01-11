@@ -2,9 +2,9 @@ import type { ClaudeSettingsEnv } from "./types";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
+import type { SessionStore } from "./libs/session-store";
 
-
-const CLAUDE_SETTINGS_ENV_KEYS = [
+export const CLAUDE_SETTINGS_ENV_KEYS = [
   "ANTHROPIC_AUTH_TOKEN",
   "ANTHROPIC_BASE_URL",
   "ANTHROPIC_DEFAULT_HAIKU_MODEL",
@@ -15,7 +15,8 @@ const CLAUDE_SETTINGS_ENV_KEYS = [
   "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"
 ] as const;
 
-export function loadClaudeSettingsEnv(): ClaudeSettingsEnv {
+export function loadClaudeSettingsEnv(sessionStore?: SessionStore): ClaudeSettingsEnv {
+  // First, try loading from ~/.claude/settings.json
   try {
     const settingsPath = join(homedir(), ".claude", "settings.json");
     const raw = readFileSync(settingsPath, "utf8");
@@ -29,6 +30,16 @@ export function loadClaudeSettingsEnv(): ClaudeSettingsEnv {
     }
   } catch {
     // Ignore missing or invalid settings file.
+  }
+
+  // Then, override with database settings (higher priority)
+  if (sessionStore) {
+    const dbSettings = sessionStore.getAllSettings();
+    for (const [key, value] of Object.entries(dbSettings)) {
+      if (value !== undefined && value !== null && value !== "") {
+        process.env[key] = value;
+      }
+    }
   }
 
   const env = {} as ClaudeSettingsEnv;

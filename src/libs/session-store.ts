@@ -216,6 +216,46 @@ export class SessionStore {
       .run(...values);
   }
 
+  getSetting(key: string): string | null {
+    const row = this.db
+      .query(`select value from settings where key = ?`)
+      .get(key) as Record<string, unknown> | null;
+    return row ? String(row.value) : null;
+  }
+
+  getAllSettings(): Record<string, string> {
+    const rows = this.db
+      .query(`select key, value from settings`)
+      .all() as Array<Record<string, unknown>>;
+    const settings: Record<string, string> = {};
+    for (const row of rows) {
+      settings[String(row.key)] = String(row.value);
+    }
+    return settings;
+  }
+
+  setSetting(key: string, value: string): void {
+    this.db
+      .prepare(
+        `insert into settings (key, value, updated_at)
+         values (?, ?, ?)
+         on conflict(key) do update set value = ?, updated_at = ?`
+      )
+      .run(key, value, Date.now(), value, Date.now());
+  }
+
+  setSettings(settings: Record<string, string>): void {
+    for (const [key, value] of Object.entries(settings)) {
+      if (value !== undefined && value !== null) {
+        this.setSetting(key, value);
+      }
+    }
+  }
+
+  deleteSetting(key: string): void {
+    this.db.prepare(`delete from settings where key = ?`).run(key);
+  }
+
   private initialize(): void {
     this.db.run(`pragma journal_mode = WAL;`);
     this.db.run(
@@ -241,6 +281,13 @@ export class SessionStore {
       )`
     );
     this.db.run(`create index if not exists messages_session_id on messages(session_id)`);
+    this.db.run(
+      `create table if not exists settings (
+        key text primary key,
+        value text not null,
+        updated_at integer not null
+      )`
+    );
   }
 
   private loadSessions(): void {

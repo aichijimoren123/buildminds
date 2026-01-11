@@ -1,16 +1,13 @@
 import { serve } from "bun";
+import { existsSync } from "fs";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import type { ClientEvent, ServerEvent } from "./types";
-import { runClaude, type RunnerHandle } from "./libs/runner";
-import { SessionStore } from "./libs/session-store";
-import "./claude-settings";
-import { dirname, extname, join, resolve, sep } from "path";
 import { networkInterfaces } from "os";
-import { generateSessionTitle } from "./libs/util";
-import { existsSync } from "fs";
+import { dirname, extname, join, resolve, sep } from "path";
 import { fileURLToPath } from "url";
+import { setupRoutes } from "./server/routes";
 
+// Static file serving setup
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = resolve(__dirname, "..");
 const distDir = resolve(rootDir, "dist");
@@ -23,6 +20,7 @@ const indexRoutes = {
   "/": indexFile,
   "/index.html": indexFile
 };
+
 const staticContentTypes: Record<string, string> = {
   ".css": "text/css; charset=utf-8",
   ".gif": "image/gif",
@@ -39,235 +37,16 @@ const staticContentTypes: Record<string, string> = {
   ".webp": "image/webp"
 };
 
+// Server configuration
 const PORT = Number(process.env.PORT ?? 10086);
-const DB_PATH = process.env.DB_PATH ?? join(process.cwd(), "webui.db");
 const rawCorsOrigin = process.env.CORS_ORIGIN ?? "*";
 const corsOrigins = rawCorsOrigin.split(",").map((origin) => origin.trim()).filter(Boolean);
 const corsOrigin = corsOrigins.length === 1 ? corsOrigins[0] : corsOrigins;
-const sessions = new SessionStore(DB_PATH);
-const clients = new Set<unknown>();
-const runnerHandles = new Map<string, RunnerHandle>();
 
-function broadcast(event: ServerEvent) {
-  const payload = JSON.stringify(event);
-  for (const client of clients) {
-    const ws = client as { readyState: number; send: (data: string) => void };
-    if (ws.readyState === 1) { // WebSocket.OPEN = 1
-      ws.send(payload);
-    }
-  }
-}
-
-function emit(event: ServerEvent) {
-  if (event.type === "session.status") {
-    sessions.updateSession(event.payload.sessionId, { status: event.payload.status });
-  }
-  if (event.type === "stream.message") {
-    sessions.recordMessage(event.payload.sessionId, event.payload.message);
-  }
-  if (event.type === "stream.user_prompt") {
-    sessions.recordMessage(event.payload.sessionId, {
-      type: "user_prompt",
-      prompt: event.payload.prompt
-    });
-  }
-  broadcast(event);
-}
-
-function handleClientEvent(event: ClientEvent) {
-  if (event.type === "session.list") {
-    emit({
-      type: "session.list",
-      payload: { sessions: sessions.listSessions() }
-    });
-    return;
-  }
-
-  if (event.type === "session.history") {
-    const history = sessions.getSessionHistory(event.payload.sessionId);
-    if (!history) {
-      emit({
-        type: "runner.error",
-        payload: { message: "Unknown session" }
-      });
-      return;
-    }
-    emit({
-      type: "session.history",
-      payload: {
-        sessionId: history.session.id,
-        status: history.session.status,
-        messages: history.messages
-      }
-    });
-    return;
-  }
-
-  if (event.type === "session.start") {
-    const session = sessions.createSession({
-      cwd: event.payload.cwd,
-      title: event.payload.title,
-      allowedTools: event.payload.allowedTools,
-      prompt: event.payload.prompt
-    });
-
-    sessions.updateSession(session.id, {
-      status: "running",
-      lastPrompt: event.payload.prompt
-    });
-    emit({
-      type: "session.status",
-      payload: { sessionId: session.id, status: "running", title: session.title, cwd: session.cwd }
-    });
-
-    emit({
-      type: "stream.user_prompt",
-      payload: { sessionId: session.id, prompt: event.payload.prompt }
-    });
-
-    runClaude({
-      prompt: event.payload.prompt,
-      session,
-      resumeSessionId: session.claudeSessionId,
-      onEvent: emit,
-      onSessionUpdate: (updates) => {
-        sessions.updateSession(session.id, updates);
-      }
-    })
-      .then((handle) => {
-        runnerHandles.set(session.id, handle);
-        sessions.setAbortController(session.id, undefined);
-      })
-      .catch((error) => {
-        sessions.updateSession(session.id, { status: "error" });
-        emit({
-          type: "session.status",
-          payload: {
-            sessionId: session.id,
-            status: "error",
-            title: session.title,
-            cwd: session.cwd,
-            error: String(error)
-          }
-        });
-      });
-
-    return;
-  }
-
-  if (event.type === "session.continue") {
-    const session = sessions.getSession(event.payload.sessionId);
-    if (!session) {
-      emit({
-        type: "runner.error",
-        payload: { message: "Unknown session" }
-      });
-      return;
-    }
-
-    if (!session.claudeSessionId) {
-      emit({
-        type: "runner.error",
-        payload: { sessionId: session.id, message: "Session has no resume id yet." }
-      });
-      return;
-    }
-
-    sessions.updateSession(session.id, { status: "running", lastPrompt: event.payload.prompt });
-    emit({
-      type: "session.status",
-      payload: { sessionId: session.id, status: "running", title: session.title, cwd: session.cwd }
-    });
-
-    emit({
-      type: "stream.user_prompt",
-      payload: { sessionId: session.id, prompt: event.payload.prompt }
-    });
-
-    runClaude({
-      prompt: event.payload.prompt,
-      session,
-      resumeSessionId: session.claudeSessionId,
-      onEvent: emit,
-      onSessionUpdate: (updates) => {
-        sessions.updateSession(session.id, updates);
-      }
-    })
-      .then((handle) => {
-        runnerHandles.set(session.id, handle);
-      })
-      .catch((error) => {
-        sessions.updateSession(session.id, { status: "error" });
-        emit({
-          type: "session.status",
-          payload: {
-            sessionId: session.id,
-            status: "error",
-            title: session.title,
-            cwd: session.cwd,
-            error: String(error)
-          }
-        });
-      });
-
-    return;
-  }
-
-  if (event.type === "session.stop") {
-    const session = sessions.getSession(event.payload.sessionId);
-    if (!session) return;
-
-    const handle = runnerHandles.get(session.id);
-    if (handle) {
-      handle.abort();
-      runnerHandles.delete(session.id);
-    }
-
-    sessions.updateSession(session.id, { status: "idle" });
-    emit({
-      type: "session.status",
-      payload: { sessionId: session.id, status: "idle", title: session.title, cwd: session.cwd }
-    });
-    return;
-  }
-
-  if (event.type === "session.delete") {
-    const sessionId = event.payload.sessionId;
-    const handle = runnerHandles.get(sessionId);
-    if (handle) {
-      handle.abort();
-      runnerHandles.delete(sessionId);
-    }
-
-    const deleted = sessions.deleteSession(sessionId);
-    if (!deleted) {
-      emit({
-        type: "runner.error",
-        payload: { message: "Unknown session" }
-      });
-      return;
-    }
-    emit({
-      type: "session.deleted",
-      payload: { sessionId }
-    });
-    return;
-  }
-
-  if (event.type === "permission.response") {
-    const session = sessions.getSession(event.payload.sessionId);
-    if (!session) return;
-
-    const pending = session.pendingPermissions.get(event.payload.toolUseId);
-    if (pending) {
-      pending.resolve(event.payload.result);
-    }
-    return;
-  }
-}
-
+// Initialize Hono app
 const app = new Hono();
 
+// CORS middleware
 app.use("*", cors({
   origin: corsOrigin,
   allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -275,36 +54,28 @@ app.use("*", cors({
   credentials: corsOrigin !== "*",
 }));
 
-app.get("/api/health", c =>
-  c.text("ok")
-);
+// Setup all routes and get WebSocket controller
+const { wsController } = setupRoutes(app);
 
-app.get("/api/sessions/recent-cwd", async (c) => {
-  const limitParam = c.req.query("limit");
-  const limit = limitParam ? Number(limitParam) : 8;
-  const boundedLimit = Number.isFinite(limit) ? Math.min(Math.max(limit, 1), 20) : 8;
-  const cwds = sessions.listRecentCwds(boundedLimit);
-  return c.json({ cwds });
-})
-
-app.get("/api/sessions/title", async (c) => {
-  const userInput = c.req.query("userInput") || null;
-  const title = await generateSessionTitle(userInput);
-  return c.json({ title });
-})
-
+// Start server
 const server = serve({
   port: PORT,
   hostname: "0.0.0.0",
   routes: indexRoutes,
   async fetch(req, server) {
     const url = new URL(req.url);
+
+    // WebSocket upgrade
     if (url.pathname === "/ws" && server.upgrade(req)) {
       return;
     }
+
+    // API routes
     if (url.pathname.startsWith("/api")) {
       return app.fetch(req);
     }
+
+    // Static file serving
     if (req.method === "GET") {
       if (useDist) {
         const filePath = resolve(distDir, "." + url.pathname);
@@ -324,25 +95,18 @@ const server = serve({
         }
       }
     }
+
     return app.fetch(req);
   },
   websocket: {
     open(ws) {
-      clients.add(ws);
+      wsController.handleOpen(ws);
     },
     close(ws) {
-      clients.delete(ws);
+      wsController.handleClose(ws);
     },
-    message(_, message) {
-      try {
-        const parsed = JSON.parse(String(message)) as ClientEvent;
-        handleClientEvent(parsed);
-      } catch (error) {
-        emit({
-          type: "runner.error",
-          payload: { message: `Invalid message: ${String(error)}` }
-        });
-      }
+    message(ws, message) {
+      wsController.handleMessage(ws, message);
     }
   },
   development: process.env.NODE_ENV !== "production" && {
@@ -354,6 +118,7 @@ const server = serve({
   },
 });
 
+// Display server addresses
 const serverUrl = new URL(server.url);
 const port = serverUrl.port || String(PORT);
 const localAddresses = new Set<string>(["127.0.0.1"]);

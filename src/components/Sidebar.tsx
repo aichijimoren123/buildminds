@@ -7,6 +7,7 @@ interface SidebarProps {
   connected: boolean;
   onNewSession: () => void;
   onDeleteSession: (sessionId: string) => void;
+  onOpenSettings: () => void;
   isMobileOpen?: boolean;
   onMobileClose?: () => void;
 }
@@ -15,6 +16,7 @@ export function Sidebar({
   connected,
   onNewSession,
   onDeleteSession,
+  onOpenSettings,
   isMobileOpen = false,
   onMobileClose
 }: SidebarProps) {
@@ -124,6 +126,16 @@ export function Sidebar({
           onClick={handleNewSession}
         >
           + New Session
+        </button>
+        <button
+          className="w-full rounded-xl border border-ink-900/10 bg-surface px-4 py-2.5 text-sm font-medium text-ink-700 hover:bg-surface-tertiary hover:border-ink-900/20 transition-colors flex items-center justify-center gap-2"
+          onClick={onOpenSettings}
+        >
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m5.08-5.08l4.24-4.24" />
+          </svg>
+          Settings
         </button>
         <div className="flex flex-col gap-2 overflow-y-auto">
           {sessionList.length === 0 && (
