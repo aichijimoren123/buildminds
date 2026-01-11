@@ -1,6 +1,7 @@
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
+import { authClient } from "../lib/auth-client";
 
 interface GithubRepo {
   id: string;
@@ -33,7 +34,7 @@ export function IntegrationsPanel({ onSelectRepo }: IntegrationsPanelProps) {
   const [loadingRepos, setLoadingRepos] = useState(false);
   const [addingRepo, setAddingRepo] = useState<string | null>(null);
 
-  const handleToggleExpanded = () => {
+  const handleToggleExpanded = async () => {
     if (authenticated) {
       setExpanded(!expanded);
       if (!expanded && !showRepos && repos.length === 0) {
@@ -41,8 +42,11 @@ export function IntegrationsPanel({ onSelectRepo }: IntegrationsPanelProps) {
         loadRepos();
       }
     } else {
-      // Redirect to GitHub OAuth
-      window.location.href = "/api/auth/callback/github";
+      // Trigger GitHub OAuth sign in using Better Auth client
+      await authClient.signIn.social({
+        provider: "github",
+        callbackURL: "/",
+      });
     }
   };
 

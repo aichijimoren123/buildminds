@@ -2,6 +2,7 @@ import { serve } from "bun";
 import { existsSync } from "fs";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { logger } from "hono/logger";
 import { networkInterfaces } from "os";
 import { dirname, extname, join, resolve, sep } from "path";
 import { fileURLToPath } from "url";
@@ -45,6 +46,26 @@ const corsOrigin = corsOrigins.length === 1 ? corsOrigins[0] : corsOrigins;
 
 // Initialize Hono app
 const app = new Hono();
+
+// Logger middleware - custom formatted request logs
+app.use("*", logger((message, ...rest) => {
+  // Parse the log message to extract method, path, status, and time
+  const match = message.match(/^(-->|<--)\s+(\w+)\s+(.+?)(?:\s+(\d+)\s+(.+))?$/);
+  if (match) {
+    const [, arrow, method, path, status, time] = match;
+    if (arrow === "-->") {
+      // Response log with status code
+      const statusColor = status && parseInt(status) >= 400 ? "\x1b[31m" : "\x1b[32m";
+      const methodColor = "\x1b[36m"; // Cyan
+      const reset = "\x1b[0m";
+      const dim = "\x1b[2m";
+      console.log(`${dim}[${new Date().toLocaleTimeString('zh-CN', { hour12: false })}]${reset} ${methodColor}${method}${reset} ${path} ${statusColor}${status}${reset} ${dim}${time}${reset}`);
+    }
+  } else {
+    // Fallback to original message
+    console.log(message, ...rest);
+  }
+}));
 
 // CORS middleware
 app.use("*", cors({
