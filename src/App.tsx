@@ -98,21 +98,31 @@ export default function App() {
   useEffect(() => {
     if (!showStartModal) return;
     const controller = new AbortController();
-    fetch(`/api/sessions/recent-cwd?limit=8`, { signal: controller.signal })
-      .then((response) => (response.ok ? response.json() : Promise.reject(response)))
-      .then((data) => {
-        if (data && Array.isArray(data.cwds)) {
-          setRecentCwds(data.cwds);
-        } else {
-          setRecentCwds([]);
-        }
-      })
-      .catch(() => {
+
+    // Fetch default cwd and recent cwds in parallel
+    Promise.all([
+      fetch(`/api/sessions/default-cwd`, { signal: controller.signal })
+        .then((response) => (response.ok ? response.json() : Promise.reject(response)))
+        .catch(() => ({ cwd: "" })),
+      fetch(`/api/sessions/recent-cwd?limit=8`, { signal: controller.signal })
+        .then((response) => (response.ok ? response.json() : Promise.reject(response)))
+        .catch(() => ({ cwds: [] }))
+    ]).then(([defaultData, recentData]) => {
+      // Auto-fill default cwd if current cwd is empty
+      if (defaultData?.cwd && !cwd) {
+        setCwd(defaultData.cwd);
+      }
+
+      // Set recent cwds
+      if (recentData && Array.isArray(recentData.cwds)) {
+        setRecentCwds(recentData.cwds);
+      } else {
         setRecentCwds([]);
-      });
+      }
+    });
 
     return () => controller.abort();
-  }, [showStartModal]);
+  }, [showStartModal, cwd, setCwd]);
 
   // History loading
   useEffect(() => {

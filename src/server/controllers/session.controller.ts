@@ -26,4 +26,13 @@ export class SessionController {
       return c.json({ error: String(error) }, 500);
     }
   }
+
+  async getDefaultCwd(c: Context) {
+    try {
+      const defaultCwd = process.cwd();
+      return c.json({ cwd: defaultCwd });
+    } catch (error) {
+      return c.json({ error: String(error) }, 500);
+    }
+  }
 }
