@@ -15,7 +15,7 @@ export class SettingsController {
 
   async update(c: Context) {
     try {
-      const body = await c.req.json() as { settings: Record<string, string> };
+      const body = (await c.req.json()) as { settings: Record<string, string> };
       if (!body.settings || typeof body.settings !== "object") {
         return c.json({ error: "Invalid request body" }, 400);
       }

@@ -5,7 +5,9 @@ import { z } from "zod";
 import { nanoid } from "nanoid";
 
 export const githubRepos = sqliteTable("github_repos", {
-  id: text("id").primaryKey().$defaultFn(() => nanoid()),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
   // Store user_id as simple string (no FK) - better-auth manages users
   userId: text("user_id").notNull(),
   repoFullName: text("repo_full_name").notNull(),
@@ -15,8 +17,12 @@ export const githubRepos = sqliteTable("github_repos", {
   branch: text("branch").notNull().default("main"),
   lastSynced: integer("last_synced", { mode: "timestamp" }),
   isPrivate: integer("is_private", { mode: "boolean" }).notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 
 export const insertGithubRepoSchema = createInsertSchema(githubRepos, {

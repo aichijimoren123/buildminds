@@ -15,7 +15,8 @@ export class WebSocketService {
     const payload = JSON.stringify(event);
     for (const client of this.clients) {
       const ws = client as { readyState: number; send: (data: string) => void };
-      if (ws.readyState === 1) { // WebSocket.OPEN = 1
+      if (ws.readyState === 1) {
+        // WebSocket.OPEN = 1
         ws.send(payload);
       }
     }

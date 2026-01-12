@@ -5,6 +5,7 @@
 GitHub集成的核心后端功能已经实现！包括：
 
 ### 后端功能 ✅
+
 - ✅ GitHub OAuth认证系统
 - ✅ 用户管理（users表）
 - ✅ GitHub仓库管理（github_repos表）
@@ -14,6 +15,7 @@ GitHub集成的核心后端功能已经实现！包括：
 - ✅ 认证中间件
 
 ### 前端组件 ✅
+
 - ✅ `useAuth` Hook - 管理认证状态
 - ✅ `GitHubAuthButton` - GitHub登录/登出按钮
 - ✅ `GitHubRepoSelector` - 仓库选择器组件
@@ -78,7 +80,7 @@ import { GitHubAuthButton } from "./GitHubAuthButton";
 // 在Sidebar顶部添加
 <div className="p-4 border-b">
   <GitHubAuthButton />
-</div>
+</div>;
 ```
 
 #### 2. 在 `src/pages/Home.tsx` 中集成仓库选择
@@ -95,43 +97,48 @@ const [selectedRepoId, setSelectedRepoId] = useState<string | null>(null);
 const { authenticated } = useAuth();
 
 // 在Advanced Options中添加tab切换
-{showAdvanced && (
-  <div>
-    {/* Tab切换 */}
-    <div className="flex gap-2 mb-4">
-      <button onClick={() => setSourceType("local")}>
-        Local Directory
-      </button>
-      <button onClick={() => setSourceType("github")} disabled={!authenticated}>
-        GitHub Repository
-      </button>
-    </div>
+{
+  showAdvanced && (
+    <div>
+      {/* Tab切换 */}
+      <div className="flex gap-2 mb-4">
+        <button onClick={() => setSourceType("local")}>Local Directory</button>
+        <button
+          onClick={() => setSourceType("github")}
+          disabled={!authenticated}
+        >
+          GitHub Repository
+        </button>
+      </div>
 
-    {/* 内容区域 */}
-    {sourceType === "local" ? (
-      <input value={cwd} onChange={(e) => setCwd(e.target.value)} />
-    ) : (
-      <GitHubRepoSelector
-        onSelect={(repoId, localPath) => {
-          setSelectedRepoId(repoId);
-          setCwd(localPath);
-        }}
-        selectedRepoId={selectedRepoId}
-      />
-    )}
-  </div>
-)}
+      {/* 内容区域 */}
+      {sourceType === "local" ? (
+        <input value={cwd} onChange={(e) => setCwd(e.target.value)} />
+      ) : (
+        <GitHubRepoSelector
+          onSelect={(repoId, localPath) => {
+            setSelectedRepoId(repoId);
+            setCwd(localPath);
+          }}
+          selectedRepoId={selectedRepoId}
+        />
+      )}
+    </div>
+  );
+}
 ```
 
 ## 🔌 API端点
 
 ### 认证相关
+
 - `GET /api/auth/github` - 跳转到GitHub OAuth授权
 - `GET /api/auth/github/callback` - OAuth回调
 - `GET /api/auth/me` - 获取当前用户信息
 - `POST /api/auth/logout` - 退出登录
 
 ### GitHub仓库管理
+
 - `GET /api/github/repos` - 列出已添加的仓库
 - `GET /api/github/browse` - 浏览GitHub上的所有仓库
 - `POST /api/github/repos` - 添加（克隆）仓库
@@ -150,12 +157,15 @@ const { authenticated } = useAuth();
 ## 📊 数据库Schema
 
 ### users 表
+
 存储GitHub用户信息和access token。
 
 ### github_repos 表
+
 存储已克隆的GitHub仓库信息，包括本地路径、最后同步时间等。
 
 ### sessions 表（已扩展）
+
 添加了 `userId` 和 `githubRepoId` 字段，用于关联用户和GitHub仓库。
 
 ## 🧪 测试流程
@@ -209,21 +219,25 @@ curl -b cookies.txt -X POST http://localhost:10086/api/github/repos/REPO_ID/sync
 ## 🐛 故障排除
 
 ### 问题1：OAuth回调失败
+
 - 确保 `.env` 中的 `PUBLIC_URL` 正确
 - 确保GitHub OAuth App的回调URL正确配置
 
 ### 问题2：仓库克隆失败
+
 - 检查access token权限（需要`repo`权限）
 - 确保有足够的磁盘空间
 - 检查网络连接
 
 ### 问题3：认证状态丢失
+
 - 检查cookie设置（`httpOnly`, `sameSite`）
 - 开发模式下可能需要使用`secure: false`
 
 ## 🎯 核心文件清单
 
 ### 后端
+
 - `src/server/db/schema/users.schema.ts`
 - `src/server/db/schema/github-repos.schema.ts`
 - `src/server/services/auth.service.ts`
@@ -236,11 +250,13 @@ curl -b cookies.txt -X POST http://localhost:10086/api/github/repos/REPO_ID/sync
 - `src/server/repositories/github-repo.repository.ts`
 
 ### 前端
+
 - `src/hooks/useAuth.ts`
 - `src/components/GitHubAuthButton.tsx`
 - `src/components/GitHubRepoSelector.tsx`
 
 ### 配置
+
 - `.env.example` - 环境变量模板
 - `scripts/run-migration.ts` - 数据库迁移脚本
 

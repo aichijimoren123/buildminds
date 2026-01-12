@@ -75,7 +75,11 @@ try {
   console.log("✅ Better Auth tables created successfully!");
 
   // Verify tables were created
-  const tables = db.query("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('user', 'session', 'account', 'verification')").all();
+  const tables = db
+    .query(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('user', 'session', 'account', 'verification')",
+    )
+    .all();
   console.log("\nCreated tables:", tables.map((t: any) => t.name).join(", "));
 } catch (error) {
   console.error("❌ Error creating tables:", error);

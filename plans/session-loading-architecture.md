@@ -46,13 +46,13 @@ Database (SQLite via Drizzle ORM)
 ```typescript
 // src/server/db/schema/sessions.schema.ts
 export const sessions = sqliteTable("sessions", {
-  id: text("id").primaryKey(),                    // 会话唯一标识
-  title: text("title").notNull(),                 // 会话标题
-  claudeSessionId: text("claude_session_id"),     // Claude SDK 的会话 ID（用于恢复）
-  status: text("status").notNull(),               // "idle" | "running" | "completed" | "error"
-  cwd: text("cwd"),                               // 工作目录
-  allowedTools: text("allowed_tools"),            // 允许的工具（JSON 字符串）
-  lastPrompt: text("last_prompt"),                // 最后的用户提示
+  id: text("id").primaryKey(), // 会话唯一标识
+  title: text("title").notNull(), // 会话标题
+  claudeSessionId: text("claude_session_id"), // Claude SDK 的会话 ID（用于恢复）
+  status: text("status").notNull(), // "idle" | "running" | "completed" | "error"
+  cwd: text("cwd"), // 工作目录
+  allowedTools: text("allowed_tools"), // 允许的工具（JSON 字符串）
+  lastPrompt: text("last_prompt"), // 最后的用户提示
   createdAt: integer("created_at", { mode: "timestamp" }),
   updatedAt: integer("updated_at", { mode: "timestamp" }),
 });
@@ -65,13 +65,13 @@ export const sessions = sqliteTable("sessions", {
 ```typescript
 // src/server/db/schema/messages.schema.ts
 export const messages = sqliteTable("messages", {
-  id: text("id").primaryKey(),                    // 消息唯一标识
-  sessionId: text("session_id")                   // 外键，关联到 sessions
+  id: text("id").primaryKey(), // 消息唯一标识
+  sessionId: text("session_id") // 外键，关联到 sessions
     .notNull()
     .references(() => sessions.id, {
-      onDelete: "cascade"                         // 级联删除
+      onDelete: "cascade", // 级联删除
     }),
-  data: text("data").notNull(),                   // JSON 序列化的 StreamMessage
+  data: text("data").notNull(), // JSON 序列化的 StreamMessage
   createdAt: integer("created_at", { mode: "timestamp" }),
 });
 ```
@@ -110,25 +110,28 @@ export const sessionsRelations = relations(sessions, ({ many }) => ({
 ```typescript
 export class SessionRepository extends BaseRepository {
   // 创建会话
-  async create(data: InsertSession): Promise<Session>
+  async create(data: InsertSession): Promise<Session>;
 
   // 根据 ID 查找单个会话
-  async findById(id: string): Promise<Session | null>
+  async findById(id: string): Promise<Session | null>;
 
   // 查找所有会话（按更新时间降序）
-  async findAll(): Promise<Session[]>
+  async findAll(): Promise<Session[]>;
 
   // 根据状态查找会话
-  async findByStatus(status: string): Promise<Session[]>
+  async findByStatus(status: string): Promise<Session[]>;
 
   // 更新会话
-  async update(id: string, data: Partial<InsertSession>): Promise<Session | null>
+  async update(
+    id: string,
+    data: Partial<InsertSession>,
+  ): Promise<Session | null>;
 
   // 删除会话
-  async delete(id: string): Promise<boolean>
+  async delete(id: string): Promise<boolean>;
 
   // 获取最近使用的工作目录
-  async getRecentCwds(limit = 8): Promise<string[]>
+  async getRecentCwds(limit = 8): Promise<string[]>;
 }
 ```
 
@@ -171,16 +174,16 @@ async findAll(): Promise<Session[]> {
 ```typescript
 export class MessageRepository extends BaseRepository {
   // 创建消息
-  async create(data: InsertMessage): Promise<Message>
+  async create(data: InsertMessage): Promise<Message>;
 
   // 根据会话 ID 查找所有消息（按创建时间升序）
-  async findBySessionId(sessionId: string): Promise<Message[]>
+  async findBySessionId(sessionId: string): Promise<Message[]>;
 
   // 删除会话的所有消息
-  async deleteBySessionId(sessionId: string): Promise<number>
+  async deleteBySessionId(sessionId: string): Promise<number>;
 
   // 批量创建消息
-  async batchCreate(data: InsertMessage[]): Promise<Message[]>
+  async batchCreate(data: InsertMessage[]): Promise<Message[]>;
 }
 ```
 
@@ -217,35 +220,35 @@ export class SessionService {
     private sessionRepo: SessionRepository,
     private messageRepo: MessageRepository,
     private claudeService: ClaudeService,
-    private wsService: WebSocketService
+    private wsService: WebSocketService,
   ) {}
 
   // 创建新会话
-  async createSession(options): Promise<Session>
+  async createSession(options): Promise<Session>;
 
   // 获取单个会话（仅元数据）
-  async getSession(id: string): Promise<Session | null>
+  async getSession(id: string): Promise<Session | null>;
 
   // 列出所有会话（仅元数据）
-  async listSessions(): Promise<Session[]>
+  async listSessions(): Promise<Session[]>;
 
   // 获取会话历史（元数据 + 所有消息）
-  async getSessionHistory(id: string): Promise<SessionHistory | null>
+  async getSessionHistory(id: string): Promise<SessionHistory | null>;
 
   // 更新会话
-  async updateSession(id: string, data): Promise<Session | null>
+  async updateSession(id: string, data): Promise<Session | null>;
 
   // 删除会话
-  async deleteSession(id: string): Promise<boolean>
+  async deleteSession(id: string): Promise<boolean>;
 
   // 获取最近使用的工作目录
-  async getRecentCwds(limit = 8): Promise<string[]>
+  async getRecentCwds(limit = 8): Promise<string[]>;
 
   // 启动会话
-  async startSession(id, prompt, title?, cwd?): Promise<void>
+  async startSession(id, prompt, title?, cwd?): Promise<void>;
 
   // 停止会话
-  async stopSession(id: string): Promise<void>
+  async stopSession(id: string): Promise<void>;
 }
 ```
 
@@ -285,7 +288,7 @@ async getSessionHistory(id: string): Promise<SessionHistory | null> {
 export class WebSocketController {
   constructor(
     private sessionService: SessionService,
-    private wsService: WebSocketService
+    private wsService: WebSocketService,
   ) {}
 
   // 处理客户端消息
@@ -296,15 +299,15 @@ export class WebSocketController {
 
   private async handleClientEvent(event: ClientEvent) {
     // 处理不同类型的事件
-    switch(event.type) {
+    switch (event.type) {
       case "session.list":
-        // 列出所有会话
+      // 列出所有会话
       case "session.history":
-        // 获取会话历史
+      // 获取会话历史
       case "session.start":
-        // 启动新会话
+      // 启动新会话
       case "session.continue":
-        // 继续现有会话
+      // 继续现有会话
       // ... 更多事件
     }
   }
@@ -498,16 +501,18 @@ handleServerEvent: (event) => {
 消息以 JSON 字符串形式存储在 `messages.data` 字段中。
 
 **数据库存储**:
+
 ```sql
 INSERT INTO messages (id, session_id, data, created_at)
 VALUES ('msg-123', 'session-456', '{"type":"text","text":"Hello"}', 1234567890);
 ```
 
 **TypeScript 类型**:
+
 ```typescript
 type StreamMessage =
-  | SDKMessage           // 来自 Claude Agent SDK 的消息
-  | UserPromptMessage;   // 用户输入的提示
+  | SDKMessage // 来自 Claude Agent SDK 的消息
+  | UserPromptMessage; // 用户输入的提示
 
 // 存储时
 const dataString = JSON.stringify(message);
@@ -608,6 +613,7 @@ private recordMessage(sessionId: string, message: StreamMessage): void {
 ## 关键代码位置
 
 ### 数据库层
+
 - **Schema 定义**: `src/server/db/schema/`
   - `sessions.schema.ts` - 会话表结构
   - `messages.schema.ts` - 消息表结构
@@ -615,24 +621,29 @@ private recordMessage(sessionId: string, message: StreamMessage): void {
 - **数据库连接**: `src/server/db/index.ts`
 
 ### Repository 层
+
 - **Session Repository**: `src/server/repositories/session.repository.ts`
 - **Message Repository**: `src/server/repositories/message.repository.ts`
 - **Base Repository**: `src/server/repositories/base.repository.ts`
 
 ### Service 层
+
 - **Session Service**: `src/server/services/session.service.ts`
 - **WebSocket Service**: `src/server/services/websocket.service.ts`
 - **Claude Service**: `src/server/services/claude.service.ts`
 
 ### Controller 层
+
 - **WebSocket Controller**: `src/server/controllers/websocket.controller.ts`
 - **Session Controller**: `src/server/controllers/session.controller.ts`
 
 ### 路由层
+
 - **Routes Setup**: `src/server/routes/index.ts`
 - **Session Routes**: `src/server/routes/session.routes.ts`
 
 ### Frontend
+
 - **App 主组件**: `src/App.tsx`
 - **Zustand Store**: `src/store/useAppStore.ts`
 - **WebSocket Hook**: `src/hooks/useWebSocket.ts`
@@ -666,10 +677,9 @@ CREATE INDEX idx_sessions_updated_at ON sessions(updated_at);
 使用外键约束实现自动级联删除：
 
 ```typescript
-sessionId: text("session_id")
-  .references(() => sessions.id, {
-    onDelete: "cascade"  // 删除 session 时自动删除所有 messages
-  })
+sessionId: text("session_id").references(() => sessions.id, {
+  onDelete: "cascade", // 删除 session 时自动删除所有 messages
+});
 ```
 
 ### 4. WebSocket 广播
@@ -679,7 +689,7 @@ sessionId: text("session_id")
 ```typescript
 this.wsService.broadcast({
   type: "session.list",
-  payload: { sessions }
+  payload: { sessions },
 });
 ```
 
@@ -705,7 +715,7 @@ await db.transaction(async (tx) => {
 ```typescript
 sessionId: text("session_id")
   .notNull()
-  .references(() => sessions.id)
+  .references(() => sessions.id);
 ```
 
 ### 3. WAL 模式
@@ -746,7 +756,7 @@ async getSessionHistory(id: string): Promise<SessionHistory | null> {
 if (!history) {
   this.wsService.broadcast({
     type: "runner.error",
-    payload: { message: "Unknown session" }
+    payload: { message: "Unknown session" },
   });
   return;
 }

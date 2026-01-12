@@ -113,19 +113,19 @@ export class Config {
   public readonly server = {
     port: Number(process.env.PORT ?? 10086),
     host: process.env.HOST ?? "0.0.0.0",
-    corsOrigin: process.env.CORS_ORIGIN ?? "*"
+    corsOrigin: process.env.CORS_ORIGIN ?? "*",
   };
 
   public readonly database = {
     path: process.env.DB_PATH ?? "./webui.db",
-    walMode: true
+    walMode: true,
   };
 
   public readonly claude = {
     authToken: process.env.ANTHROPIC_AUTH_TOKEN,
     baseUrl: process.env.ANTHROPIC_BASE_URL,
     model: process.env.ANTHROPIC_MODEL,
-    timeout: Number(process.env.API_TIMEOUT_MS ?? 600000)
+    timeout: Number(process.env.API_TIMEOUT_MS ?? 600000),
   };
 
   private constructor() {
@@ -211,9 +211,7 @@ export abstract class BaseRepository<T> {
 // src/server/repositories/session.repository.ts
 export class SessionRepository extends BaseRepository<Session> {
   findById(id: string): Session | null {
-    const row = this.db
-      .query("SELECT * FROM sessions WHERE id = ?")
-      .get(id);
+    const row = this.db.query("SELECT * FROM sessions WHERE id = ?").get(id);
     return row ? this.mapToSession(row) : null;
   }
 
@@ -262,7 +260,7 @@ export class SessionService {
   constructor(
     private sessionRepo: SessionRepository,
     private messageRepo: MessageRepository,
-    private claudeService: ClaudeService
+    private claudeService: ClaudeService,
   ) {}
 
   async createSession(params: CreateSessionParams): Promise<Session> {
@@ -270,7 +268,7 @@ export class SessionService {
     const session = this.sessionRepo.create({
       title: params.title,
       cwd: params.cwd,
-      status: "idle"
+      status: "idle",
     });
 
     // 记录初始消息
@@ -278,7 +276,7 @@ export class SessionService {
       this.messageRepo.create({
         sessionId: session.id,
         type: "user_prompt",
-        content: params.prompt
+        content: params.prompt,
       });
     }
 
@@ -299,7 +297,7 @@ export class SessionService {
       cwd: session.cwd,
       onMessage: (msg) => this.handleClaudeMessage(sessionId, msg),
       onComplete: () => this.handleClaudeComplete(sessionId),
-      onError: (err) => this.handleClaudeError(sessionId, err)
+      onError: (err) => this.handleClaudeError(sessionId, err),
     });
   }
 
@@ -308,13 +306,13 @@ export class SessionService {
     this.messageRepo.create({
       sessionId,
       type: message.type,
-      content: JSON.stringify(message)
+      content: JSON.stringify(message),
     });
 
     // 广播到 WebSocket
     this.wsService.broadcast({
       type: "stream.message",
-      payload: { sessionId, message }
+      payload: { sessionId, message },
     });
   }
 }
@@ -323,7 +321,7 @@ export class SessionService {
 export class SettingsService {
   constructor(
     private settingsRepo: SettingsRepository,
-    private config: Config
+    private config: Config,
   ) {}
 
   getAll(): Record<string, string> {
@@ -354,8 +352,8 @@ export class ClaudeService {
         options: {
           cwd: options.cwd,
           abortController,
-          env: this.config.claude
-        }
+          env: this.config.claude,
+        },
       });
 
       for await (const message of q) {
@@ -468,7 +466,7 @@ export class SettingsController {
 export class WebSocketController {
   constructor(
     private wsService: WebSocketService,
-    private sessionService: SessionService
+    private sessionService: SessionService,
   ) {}
 
   handleConnection(ws: WebSocket) {
@@ -491,7 +489,7 @@ export class WebSocketController {
         case "session.start":
           await this.sessionService.startSession(
             event.payload.sessionId,
-            event.payload.prompt
+            event.payload.prompt,
           );
           break;
 
@@ -504,7 +502,7 @@ export class WebSocketController {
     } catch (error) {
       this.wsService.broadcast({
         type: "error",
-        payload: { message: String(error) }
+        payload: { message: String(error) },
       });
     }
   }
@@ -515,7 +513,10 @@ export class WebSocketController {
 
 ```typescript
 // src/server/routes/sessions.routes.ts
-export function registerSessionRoutes(app: Hono, controller: SessionsController) {
+export function registerSessionRoutes(
+  app: Hono,
+  controller: SessionsController,
+) {
   const router = new Hono();
 
   router.get("/", (c) => controller.list(c));
@@ -541,7 +542,11 @@ export function registerRoutes(app: Hono) {
   // Services
   const wsService = new WebSocketService();
   const claudeService = new ClaudeService(config);
-  const sessionService = new SessionService(sessionRepo, messageRepo, claudeService);
+  const sessionService = new SessionService(
+    sessionRepo,
+    messageRepo,
+    claudeService,
+  );
   const settingsService = new SettingsService(settingsRepo, config);
 
   // Controllers
@@ -566,7 +571,7 @@ export class AppError extends Error {
   constructor(
     public statusCode: number,
     public message: string,
-    public details?: unknown
+    public details?: unknown,
   ) {
     super(message);
     this.name = this.constructor.name;
@@ -595,21 +600,27 @@ export class ApiError extends AppError {
 // src/server/middleware/error-handler.ts
 export function errorHandler(err: Error, c: Context) {
   if (err instanceof AppError) {
-    return c.json({
-      error: {
-        message: err.message,
-        details: err.details
-      }
-    }, err.statusCode);
+    return c.json(
+      {
+        error: {
+          message: err.message,
+          details: err.details,
+        },
+      },
+      err.statusCode,
+    );
   }
 
   // 未知错误
   console.error(err);
-  return c.json({
-    error: {
-      message: "Internal server error"
-    }
-  }, 500);
+  return c.json(
+    {
+      error: {
+        message: "Internal server error",
+      },
+    },
+    500,
+  );
 }
 ```
 
@@ -621,7 +632,7 @@ export enum LogLevel {
   DEBUG = 0,
   INFO = 1,
   WARN = 2,
-  ERROR = 3
+  ERROR = 3,
 }
 
 export class Logger {
@@ -695,7 +706,7 @@ export const migration_001_initial = {
   down: (db: BunDatabase) => {
     db.run("DROP TABLE IF EXISTS messages");
     db.run("DROP TABLE IF EXISTS sessions");
-  }
+  },
 };
 
 // src/server/database/migrations/002_add_settings.ts
@@ -713,7 +724,7 @@ export const migration_002_add_settings = {
   },
   down: (db: BunDatabase) => {
     db.run("DROP TABLE IF EXISTS settings");
-  }
+  },
 };
 ```
 
@@ -735,7 +746,7 @@ describe("SessionService", () => {
     sessionService = new SessionService(
       mockSessionRepo,
       mockMessageRepo,
-      mockClaudeService
+      mockClaudeService,
     );
   });
 
@@ -744,7 +755,7 @@ describe("SessionService", () => {
       const params = {
         title: "Test Session",
         cwd: "/test/path",
-        prompt: "Hello"
+        prompt: "Hello",
       };
 
       const result = await sessionService.createSession(params);
@@ -752,7 +763,7 @@ describe("SessionService", () => {
       expect(mockSessionRepo.create).toHaveBeenCalledWith({
         title: params.title,
         cwd: params.cwd,
-        status: "idle"
+        status: "idle",
       });
 
       expect(result).toBeDefined();

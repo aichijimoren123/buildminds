@@ -107,15 +107,21 @@ import { z } from "zod";
 import { nanoid } from "nanoid";
 
 export const sessions = sqliteTable("sessions", {
-  id: text("id").primaryKey().$defaultFn(() => nanoid()),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
   title: text("title").notNull(),
   claudeSessionId: text("claude_session_id"),
   status: text("status").notNull().default("idle"), // "idle" | "running" | "completed" | "error"
   cwd: text("cwd"),
   allowedTools: text("allowed_tools"), // JSON string
   lastPrompt: text("last_prompt"),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 
 // Zod schemas for validation
@@ -141,13 +147,17 @@ import { relations } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 export const messages = sqliteTable("messages", {
-  id: text("id").primaryKey().$defaultFn(() => nanoid()),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
   sessionId: text("session_id")
     .notNull()
     .references(() => sessions.id, { onDelete: "cascade" }),
   type: text("type").notNull(),
   data: text("data").notNull(), // JSON string - use JSON.stringify/parse
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 
 // Relations
@@ -177,7 +187,9 @@ import { z } from "zod";
 export const settings = sqliteTable("settings", {
   key: text("key").primaryKey(),
   value: text("value").notNull(),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 
 export const insertSettingSchema = createInsertSchema(settings, {
@@ -226,7 +238,9 @@ import { z } from "zod";
 
 const envSchema = z.object({
   // Server
-  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+  NODE_ENV: z
+    .enum(["development", "production", "test"])
+    .default("development"),
   PORT: z.string().transform(Number).default("10086"),
   HOST: z.string().default("0.0.0.0"),
   CORS_ORIGIN: z.string().default("*"),
@@ -340,10 +354,7 @@ import { sessions, type Session, type InsertSession } from "../db/schema";
 export class SessionRepository extends BaseRepository {
   async create(data: InsertSession): Promise<Session> {
     try {
-      const [session] = await this.db
-        .insert(sessions)
-        .values(data)
-        .returning();
+      const [session] = await this.db.insert(sessions).values(data).returning();
       return session;
     } catch (error) {
       this.handleError(error, "create session");
@@ -386,7 +397,10 @@ export class SessionRepository extends BaseRepository {
     }
   }
 
-  async update(id: string, data: Partial<InsertSession>): Promise<Session | null> {
+  async update(
+    id: string,
+    data: Partial<InsertSession>,
+  ): Promise<Session | null> {
     try {
       const [updated] = await this.db
         .update(sessions)
@@ -401,9 +415,7 @@ export class SessionRepository extends BaseRepository {
 
   async delete(id: string): Promise<boolean> {
     try {
-      const result = await this.db
-        .delete(sessions)
-        .where(eq(sessions.id, id));
+      const result = await this.db.delete(sessions).where(eq(sessions.id, id));
       return result.count > 0;
     } catch (error) {
       this.handleError(error, "delete session");
@@ -438,10 +450,7 @@ import { messages, type Message, type InsertMessage } from "../db/schema";
 export class MessageRepository extends BaseRepository {
   async create(data: InsertMessage): Promise<Message> {
     try {
-      const [message] = await this.db
-        .insert(messages)
-        .values(data)
-        .returning();
+      const [message] = await this.db.insert(messages).values(data).returning();
       return message;
     } catch (error) {
       this.handleError(error, "create message");
@@ -473,10 +482,7 @@ export class MessageRepository extends BaseRepository {
 
   async batchCreate(data: InsertMessage[]): Promise<Message[]> {
     try {
-      return await this.db
-        .insert(messages)
-        .values(data)
-        .returning();
+      return await this.db.insert(messages).values(data).returning();
     } catch (error) {
       this.handleError(error, "batch create messages");
     }
@@ -509,10 +515,13 @@ export class SettingsRepository extends BaseRepository {
   async getAll(): Promise<Record<string, string>> {
     try {
       const allSettings = await this.db.select().from(settings);
-      return allSettings.reduce((acc, setting) => {
-        acc[setting.key] = setting.value;
-        return acc;
-      }, {} as Record<string, string>);
+      return allSettings.reduce(
+        (acc, setting) => {
+          acc[setting.key] = setting.value;
+          return acc;
+        },
+        {} as Record<string, string>,
+      );
     } catch (error) {
       this.handleError(error, "get all settings");
     }
@@ -647,7 +656,7 @@ export class SessionService {
   constructor(
     private sessionRepo: SessionRepository,
     private messageRepo: MessageRepository,
-    private claudeService: ClaudeService
+    private claudeService: ClaudeService,
   ) {}
 
   async createSession(data: InsertSession): Promise<Session> {
@@ -726,7 +735,10 @@ export class SessionService {
     await this.sessionRepo.delete(id);
   }
 
-  async updateSession(id: string, data: Partial<InsertSession>): Promise<Session> {
+  async updateSession(
+    id: string,
+    data: Partial<InsertSession>,
+  ): Promise<Session> {
     const updated = await this.sessionRepo.update(id, data);
     if (!updated) {
       throw new NotFoundError(`Session not found: ${id}`);
@@ -760,6 +772,7 @@ export class SessionService {
 SQLite 使用单个文件存储数据，默认路径为 `./webui.db`。
 
 **优势**:
+
 - 零配置，无需单独的数据库服务器
 - 文件级备份和恢复
 - 跨平台兼容
@@ -812,7 +825,11 @@ async function bootstrap() {
   await configService.load();
 
   const claudeService = new ClaudeService(configService);
-  const sessionService = new SessionService(sessionRepo, messageRepo, claudeService);
+  const sessionService = new SessionService(
+    sessionRepo,
+    messageRepo,
+    claudeService,
+  );
 
   // Start server
   console.log("🚀 Server starting...");
@@ -824,6 +841,7 @@ bootstrap().catch(console.error);
 ## ✅ 优势总结
 
 ### Drizzle ORM
+
 1. ✅ **类型安全** - 完整的 TypeScript 支持
 2. ✅ **零运行时开销** - 编译时类型检查
 3. ✅ **SQL-like API** - 接近原生 SQL
@@ -831,6 +849,7 @@ bootstrap().catch(console.error);
 5. ✅ **Zod 集成** - 统一验证
 
 ### SQLite
+
 1. ✅ **零配置** - 无需独立数据库服务器
 2. ✅ **单文件存储** - 易于备份和部署
 3. ✅ **WAL 模式** - 良好的并发读写性能
@@ -840,6 +859,7 @@ bootstrap().catch(console.error);
 7. ✅ **嵌入式** - 与应用一起分发，无需额外安装
 
 ### 架构优势
+
 1. ✅ **清晰分层** - Repository → Service → Controller
 2. ✅ **依赖注入** - 易于测试和替换
 3. ✅ **类型安全** - 端到端类型检查
@@ -849,6 +869,7 @@ bootstrap().catch(console.error);
 ### 适用场景
 
 **SQLite 非常适合本项目**:
+
 - ✅ 桌面应用 - 无需配置数据库服务器
 - ✅ 单用户或小团队使用 - 并发压力不大
 - ✅ 快速部署 - 一个文件搞定
@@ -856,6 +877,7 @@ bootstrap().catch(console.error);
 - ✅ 开发体验好 - 本地开发无需 Docker
 
 **何时考虑切换到 PostgreSQL**:
+
 - 需要高并发写入（100+ 并发用户）
 - 需要分布式部署
 - 需要复杂的全文搜索

@@ -13,7 +13,11 @@ type Variables = {
 const userRepo = new UserRepository(db);
 const githubRepoRepo = new GithubRepoRepository(db);
 const githubService = new GitHubService();
-const repositoryService = new RepositoryService(githubRepoRepo, userRepo, githubService);
+const repositoryService = new RepositoryService(
+  githubRepoRepo,
+  userRepo,
+  githubService,
+);
 
 export const githubRoutes = new Hono<{ Variables: Variables }>();
 

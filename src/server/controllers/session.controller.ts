@@ -9,7 +9,9 @@ export class SessionController {
     try {
       const limitParam = c.req.query("limit");
       const limit = limitParam ? Number(limitParam) : 8;
-      const boundedLimit = Number.isFinite(limit) ? Math.min(Math.max(limit, 1), 20) : 8;
+      const boundedLimit = Number.isFinite(limit)
+        ? Math.min(Math.max(limit, 1), 20)
+        : 8;
       const cwds = await this.sessionService.getRecentCwds(boundedLimit);
       return c.json({ cwds });
     } catch (error) {

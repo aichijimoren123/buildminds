@@ -114,10 +114,10 @@ export function IntegrationsPanel({ onSelectRepo }: IntegrationsPanelProps) {
 
   const filteredRepos = showRepos
     ? availableRepos.filter((repo) =>
-        repo.fullName.toLowerCase().includes(searchQuery.toLowerCase())
+        repo.fullName.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     : repos.filter((repo) =>
-        repo.repoFullName.toLowerCase().includes(searchQuery.toLowerCase())
+        repo.repoFullName.toLowerCase().includes(searchQuery.toLowerCase()),
       );
 
   return (
@@ -165,7 +165,10 @@ export function IntegrationsPanel({ onSelectRepo }: IntegrationsPanelProps) {
       </button>
 
       {/* Expandable Content */}
-      <Collapsible.Root open={expanded && authenticated} onOpenChange={setExpanded}>
+      <Collapsible.Root
+        open={expanded && authenticated}
+        onOpenChange={setExpanded}
+      >
         <Collapsible.Content className="border-t border-ink-900/10">
           <div className="p-4 space-y-3">
             {/* Connected User Info */}
@@ -178,14 +181,20 @@ export function IntegrationsPanel({ onSelectRepo }: IntegrationsPanelProps) {
                     className="w-6 h-6 rounded-full"
                   />
                 )}
-                <span className="text-sm font-medium text-ink-800">{user.username}</span>
+                <span className="text-sm font-medium text-ink-800">
+                  {user.username}
+                </span>
               </div>
             )}
 
             {/* Repositories Section */}
             <div>
               <button
-                onClick={handleShowRepos ? () => setShowRepos(!showRepos) : handleShowRepos}
+                onClick={
+                  handleShowRepos
+                    ? () => setShowRepos(!showRepos)
+                    : handleShowRepos
+                }
                 className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-ink-800 hover:bg-surface-secondary rounded-lg transition-colors"
               >
                 <span>代码库</span>
@@ -225,12 +234,16 @@ export function IntegrationsPanel({ onSelectRepo }: IntegrationsPanelProps) {
 
                   {/* Repository List */}
                   {loadingRepos ? (
-                    <div className="text-sm text-muted px-3 py-2">Loading...</div>
+                    <div className="text-sm text-muted px-3 py-2">
+                      Loading...
+                    </div>
                   ) : (
                     <div className="max-h-64 overflow-y-auto space-y-1">
                       {filteredRepos.length === 0 && !showRepos && (
                         <div className="text-center py-4">
-                          <p className="text-sm text-muted mb-2">No repositories added</p>
+                          <p className="text-sm text-muted mb-2">
+                            No repositories added
+                          </p>
                           <button
                             onClick={handleShowRepos}
                             className="text-xs text-accent hover:text-accent-hover font-medium"
@@ -260,9 +273,10 @@ export function IntegrationsPanel({ onSelectRepo }: IntegrationsPanelProps) {
                           {filteredRepos.map((repo) => {
                             const availableRepo = repo as AvailableRepo;
                             const alreadyAdded = repos.some(
-                              (r) => r.repoFullName === availableRepo.fullName
+                              (r) => r.repoFullName === availableRepo.fullName,
                             );
-                            const isAdding = addingRepo === availableRepo.fullName;
+                            const isAdding =
+                              addingRepo === availableRepo.fullName;
 
                             return (
                               <div
@@ -287,11 +301,17 @@ export function IntegrationsPanel({ onSelectRepo }: IntegrationsPanelProps) {
                                   )}
                                 </div>
                                 <button
-                                  onClick={() => addRepo(availableRepo.fullName)}
+                                  onClick={() =>
+                                    addRepo(availableRepo.fullName)
+                                  }
                                   disabled={alreadyAdded || isAdding}
                                   className="text-xs px-2 py-1 text-accent hover:text-accent-hover disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                                 >
-                                  {isAdding ? "Adding..." : alreadyAdded ? "Added" : "Add"}
+                                  {isAdding
+                                    ? "Adding..."
+                                    : alreadyAdded
+                                      ? "Added"
+                                      : "Add"}
                                 </button>
                               </div>
                             );

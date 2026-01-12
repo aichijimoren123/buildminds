@@ -11,14 +11,17 @@ The `/api/auth/github` endpoint returns 404 because:
 ## Solution
 
 ### Step 1: Rename Claude Sessions Table
+
 - Rename `sessions` → `claude_sessions` to avoid conflict with better-auth's `session` table
 - Update all references in code
 
 ### Step 2: Remove Custom User Schema
+
 - Delete `src/server/db/schema/users.schema.ts`
 - Better-auth will manage the `user` table automatically
 
 ### Step 3: Define Better-auth Tables in Drizzle
+
 Create a new schema file that defines better-auth's expected tables so we can reference them:
 
 ```typescript
@@ -41,14 +44,18 @@ export const session = sqliteTable("session", {
   expiresAt: integer("expiresAt", { mode: "timestamp" }).notNull(),
   ipAddress: text("ipAddress"),
   userAgent: text("userAgent"),
-  userId: text("userId").notNull().references(() => user.id),
+  userId: text("userId")
+    .notNull()
+    .references(() => user.id),
 });
 
 export const account = sqliteTable("account", {
   id: text("id").primaryKey(),
   accountId: text("accountId").notNull(),
   providerId: text("providerId").notNull(),
-  userId: text("userId").notNull().references(() => user.id),
+  userId: text("userId")
+    .notNull()
+    .references(() => user.id),
   accessToken: text("accessToken"),
   refreshToken: text("refreshToken"),
   idToken: text("idToken"),
@@ -65,6 +72,7 @@ export const verification = sqliteTable("verification", {
 ```
 
 ### Step 4: Update Claude Sessions Schema
+
 ```typescript
 // src/server/db/schema/claude-sessions.schema.ts
 import { user } from "./auth.schema";
@@ -77,12 +85,14 @@ export const claudeSessions = sqliteTable("claude_sessions", {
 ```
 
 ### Step 5: Generate and Run Migrations
+
 ```bash
 bun run db:generate
 bun run db:migrate
 ```
 
 ### Step 6: Update Code References
+
 - Update all imports and references from `sessions` to `claudeSessions`
 - Update repository, service, and controller files
 
@@ -95,6 +105,7 @@ Don't try to integrate the schemas. Instead:
 3. Handle the relationship at the application level, not database level
 
 This avoids:
+
 - Complex schema migrations
 - Foreign key constraint issues
 - Schema definition conflicts
@@ -110,6 +121,7 @@ This avoids:
 ## Environment Variables Required
 
 Make sure `.env` has:
+
 ```
 GITHUB_CLIENT_ID=your_actual_client_id
 GITHUB_CLIENT_SECRET=your_actual_client_secret

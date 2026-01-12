@@ -94,6 +94,7 @@ webui.db
 ### Q: 我仍然看到 404 错误
 
 **A**: 确保：
+
 1. `.env` 文件存在并包含正确的 `GITHUB_CLIENT_ID` 和 `GITHUB_CLIENT_SECRET`
 2. GitHub OAuth 应用的 callback URL 设置为 `http://127.0.0.1:10086/api/auth/callback/github`
 3. 服务器正在运行（`bun run dev`）
@@ -126,12 +127,14 @@ sqlite3 webui.db "SELECT name FROM sqlite_master WHERE type='table' ORDER BY nam
 ```
 
 你应该看到：
+
 - claude_sessions
 - github_repos
 - messages
 - settings
 
 在第一次 OAuth 请求后，你还会看到：
+
 - user
 - session
 - account

@@ -5,13 +5,13 @@ import type {
   SDKMessage,
   SDKResultMessage,
   SDKSystemMessage,
-  SDKUserMessage
+  SDKUserMessage,
 } from "@anthropic-ai/claude-agent-sdk";
 import type { StreamMessage } from "../types";
 import type { PermissionRequest } from "../store/useAppStore";
 import MDContent from "../render/markdown";
 import { DecisionPanel } from "./DecisionPanel";
-type MessageContent = SDKAssistantMessage["message"]["content"]
+type MessageContent = SDKAssistantMessage["message"]["content"];
 let toolUseMap = new Map();
 type ToolStatus = "pending" | "success" | "error";
 const toolStatusMap = new Map<string, ToolStatus>();
@@ -32,12 +32,14 @@ type AskUserQuestionInput = {
 
 const getAskUserQuestionSignature = (input?: AskUserQuestionInput | null) => {
   if (!input?.questions?.length) return "";
-  return input.questions.map((question) => {
-    const options = (question.options ?? [])
-      .map((option) => `${option.label}|${option.description ?? ""}`)
-      .join(",");
-    return `${question.question}|${question.header ?? ""}|${question.multiSelect ? "1" : "0"}|${options}`;
-  }).join("||");
+  return input.questions
+    .map((question) => {
+      const options = (question.options ?? [])
+        .map((option) => `${option.label}|${option.description ?? ""}`)
+        .join(",");
+      return `${question.question}|${question.header ?? ""}|${question.multiSelect ? "1" : "0"}|${options}`;
+    })
+    .join("||");
 };
 
 const setToolStatus = (toolUseId: string | undefined, status: ToolStatus) => {
@@ -49,9 +51,9 @@ const setToolStatus = (toolUseId: string | undefined, status: ToolStatus) => {
 };
 
 const useToolStatus = (toolUseId: string | undefined) => {
-  const [status, setStatus] = useState<ToolStatus | undefined>(() => (
-    toolUseId ? toolStatusMap.get(toolUseId) : undefined
-  ));
+  const [status, setStatus] = useState<ToolStatus | undefined>(() =>
+    toolUseId ? toolStatusMap.get(toolUseId) : undefined,
+  );
 
   useEffect(() => {
     if (!toolUseId) {
@@ -72,7 +74,7 @@ const useToolStatus = (toolUseId: string | undefined) => {
 const StatusDot = ({
   variant = "accent",
   isActive = false,
-  isVisible = true
+  isVisible = true,
 }: {
   variant?: "accent" | "success" | "error";
   isActive?: boolean;
@@ -81,22 +83,27 @@ const StatusDot = ({
   if (!isVisible) {
     return null;
   }
-  const colorClass = variant === "success" ? "bg-success" : variant === "error" ? "bg-error" : "bg-accent";
+  const colorClass =
+    variant === "success"
+      ? "bg-success"
+      : variant === "error"
+        ? "bg-error"
+        : "bg-accent";
   return (
     <span className="relative flex h-2 w-2">
       {isActive && (
-        <span className={`absolute inline-flex h-full w-full animate-ping rounded-full ${colorClass} opacity-75`}></span>
+        <span
+          className={`absolute inline-flex h-full w-full animate-ping rounded-full ${colorClass} opacity-75`}
+        ></span>
       )}
-      <span className={`relative inline-flex h-2 w-2 rounded-full ${colorClass}`}></span>
+      <span
+        className={`relative inline-flex h-2 w-2 rounded-full ${colorClass}`}
+      ></span>
     </span>
   );
 };
 
-const SessionResult = ({
-  message,
-}: {
-  message: SDKResultMessage;
-}) => {
+const SessionResult = ({ message }: { message: SDKResultMessage }) => {
   const formatMinutes = (ms: number | undefined) => {
     if (typeof ms !== "number") {
       return "-";
@@ -120,9 +127,7 @@ const SessionResult = ({
 
   return (
     <div className="flex flex-col gap-2 mt-4">
-      <div className="header text-accent-main-100">
-        Session Result
-      </div>
+      <div className="header text-accent-main-100">Session Result</div>
       <div className="flex flex-col bg-bg-200 border-border-100/10 rounded-xl px-4 py-3 border border-[0.5px] bg-bg-100 space-y-2 dark:bg-bg-300">
         <div className="flex flex-wrap items-center gap-2 text-[14px]">
           <span className="font-normal">Duration</span>
@@ -148,35 +153,29 @@ const SessionResult = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export function isMarkdown(text: string): boolean {
-  if (!text || typeof text !== "string") return false
+  if (!text || typeof text !== "string") return false;
 
   const patterns: RegExp[] = [
-    /^#{1,6}\s+/m,                 // 标题
-    /```[\s\S]*?```/,              // 代码块
-  ]
+    /^#{1,6}\s+/m, // 标题
+    /```[\s\S]*?```/, // 代码块
+  ];
 
-  return patterns.some((pattern) => pattern.test(text))
+  return patterns.some((pattern) => pattern.test(text));
 }
-
 
 function hasProp(
   obj: unknown,
-  key: PropertyKey
+  key: PropertyKey,
 ): obj is Record<PropertyKey, unknown> {
-  return typeof obj === "object" && obj !== null && key in obj
+  return typeof obj === "object" && obj !== null && key in obj;
 }
 
-function extractTagContent(
-  input: string,
-  tag: string
-): string | null {
-  const match = input.match(
-    new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`)
-  );
+function extractTagContent(input: string, tag: string): string | null {
+  const match = input.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`));
   return match ? match[1] : null;
 }
 
@@ -191,18 +190,23 @@ const ToolResult = ({
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const isFirstRender = useRef(true);
   let lines: string[] = [];
-  const toolUseId = "tool_use_id" in messageContent && typeof messageContent.tool_use_id === "string"
-    ? messageContent.tool_use_id
-    : undefined;
+  const toolUseId =
+    "tool_use_id" in messageContent &&
+    typeof messageContent.tool_use_id === "string"
+      ? messageContent.tool_use_id
+      : undefined;
   const status: ToolStatus = messageContent.is_error ? "error" : "success";
 
   const isError = messageContent.is_error;
   if (messageContent.is_error) {
-    lines = [extractTagContent(messageContent.content, "tool_use_error") || ""]
+    lines = [extractTagContent(messageContent.content, "tool_use_error") || ""];
   } else {
     try {
       if (Array.isArray(messageContent.content)) {
-        lines = messageContent.content.map((item: any) => item.text).join("\n").split("\n");
+        lines = messageContent.content
+          .map((item: any) => item.text)
+          .join("\n")
+          .split("\n");
       } else {
         lines = messageContent.content.split("\n");
       }
@@ -215,9 +219,10 @@ const ToolResult = ({
   const isMarkdownContent = isMarkdown(lines.join("\n"));
 
   const hasMoreLines = lines.length > MAX_VISIBLE_LINES;
-  const visibleContent = hasMoreLines && !isExpanded
-    ? lines.slice(0, MAX_VISIBLE_LINES).join("\n")
-    : lines.join("\n");
+  const visibleContent =
+    hasMoreLines && !isExpanded
+      ? lines.slice(0, MAX_VISIBLE_LINES).join("\n")
+      : lines.join("\n");
 
   useEffect(() => {
     setToolStatus(toolUseId, status);
@@ -236,19 +241,19 @@ const ToolResult = ({
 
   return (
     <div className="flex flex-col mt-4">
-      <div className="header text-accent-main-100">
-        Output
-      </div>
+      <div className="header text-accent-main-100">Output</div>
       <div className="mt-2 rounded-xl bg-surface-tertiary p-3">
-        <pre className={`text-sm whitespace-pre-wrap break-words font-mono ${isError ? "text-red-500" : "text-ink-700"}`}>
-          {isMarkdownContent ?
+        <pre
+          className={`text-sm whitespace-pre-wrap break-words font-mono ${isError ? "text-red-500" : "text-ink-700"}`}
+        >
+          {isMarkdownContent ? (
             <div>
               Markdown
               <MDContent text={visibleContent} />
             </div>
-            :
+          ) : (
             visibleContent
-          }
+          )}
         </pre>
         {hasMoreLines && (
           <button
@@ -267,12 +272,12 @@ const ToolResult = ({
       </div>
     </div>
   );
-}
+};
 
 const AssistantBlockCard = ({
   title,
   text,
-  showIndicator = false
+  showIndicator = false,
 }: {
   title: string;
   text: string;
@@ -281,7 +286,11 @@ const AssistantBlockCard = ({
   return (
     <div className="flex flex-col mt-4">
       <div className="header text-accent-main-100 flex items-center gap-2">
-        <StatusDot variant="success" isActive={showIndicator} isVisible={showIndicator} />
+        <StatusDot
+          variant="success"
+          isActive={showIndicator}
+          isVisible={showIndicator}
+        />
         {title}
       </div>
       <MDContent text={text} />
@@ -299,7 +308,8 @@ const ToolUseCard = ({
   const toolStatus = useToolStatus(messageContent.id);
   const statusVariant = toolStatus === "error" ? "error" : "success";
   const isPending = !toolStatus || toolStatus === "pending";
-  const shouldShowDot = toolStatus === "success" || toolStatus === "error" || showIndicator;
+  const shouldShowDot =
+    toolStatus === "success" || toolStatus === "error" || showIndicator;
 
   useEffect(() => {
     if (messageContent?.id && !toolStatusMap.has(messageContent.id)) {
@@ -323,7 +333,7 @@ const ToolUseCard = ({
       case "WebFetch":
         return messageContent.input.url || null;
       default:
-        console.log("toolInfo None", messageContent)
+        console.log("toolInfo None", messageContent);
         return null;
     }
   };
@@ -340,30 +350,32 @@ const ToolUseCard = ({
           <span className="inline-flex items-center rounded-md text-accent py-0.5 text-sm font-medium">
             {messageContent.name}
           </span>
-          <span className="text-sm text-muted max-w-full">
-            {getToolInfo()}
-          </span>
+          <span className="text-sm text-muted max-w-full">{getToolInfo()}</span>
         </div>
       </div>
     </div>
   );
-}
+};
 
 const AskUserQuestionCard = ({
   messageContent,
   permissionRequests,
   onPermissionResponse,
-  showIndicator = false
+  showIndicator = false,
 }: {
   messageContent: MessageContent;
   permissionRequests?: PermissionRequest[];
-  onPermissionResponse?: (request: PermissionRequest, result: PermissionResult) => void;
+  onPermissionResponse?: (
+    request: PermissionRequest,
+    result: PermissionResult,
+  ) => void;
   showIndicator?: boolean;
 }) => {
   const toolStatus = useToolStatus(messageContent.id);
   const statusVariant = toolStatus === "error" ? "error" : "success";
   const isPending = !toolStatus || toolStatus === "pending";
-  const shouldShowDot = toolStatus === "success" || toolStatus === "error" || showIndicator;
+  const shouldShowDot =
+    toolStatus === "success" || toolStatus === "error" || showIndicator;
 
   useEffect(() => {
     if (messageContent?.id && !toolStatusMap.has(messageContent.id)) {
@@ -376,7 +388,9 @@ const AskUserQuestionCard = ({
   const signature = getAskUserQuestionSignature(input);
   const matchingRequest = permissionRequests?.find((request) => {
     if (request.toolName !== "AskUserQuestion") return false;
-    const requestSignature = getAskUserQuestionSignature(request.input as AskUserQuestionInput | null);
+    const requestSignature = getAskUserQuestionSignature(
+      request.input as AskUserQuestionInput | null,
+    );
     return requestSignature !== "" && requestSignature === signature;
   });
 
@@ -422,13 +436,17 @@ const AskUserQuestionCard = ({
               >
                 <div className="font-medium">{option.label}</div>
                 {option.description && (
-                  <div className="mt-1 text-xs text-muted">{option.description}</div>
+                  <div className="mt-1 text-xs text-muted">
+                    {option.description}
+                  </div>
                 )}
               </div>
             ))}
           </div>
           {q.multiSelect && (
-            <div className="mt-2 text-xs text-muted">Multiple selections allowed.</div>
+            <div className="mt-2 text-xs text-muted">
+              Multiple selections allowed.
+            </div>
           )}
         </div>
       ))}
@@ -436,19 +454,29 @@ const AskUserQuestionCard = ({
   );
 };
 
-const SystemInfoCard = ({ message, showIndicator = false }: { message: SDKSystemMessage; showIndicator?: boolean }) => {
-  const InfoItem = ({ name, value }: { name: string, value: string }) => {
+const SystemInfoCard = ({
+  message,
+  showIndicator = false,
+}: {
+  message: SDKSystemMessage;
+  showIndicator?: boolean;
+}) => {
+  const InfoItem = ({ name, value }: { name: string; value: string }) => {
     return (
       <div className="text-[14px]">
         <span className="mr-4 font-normal">{name}</span>
         <span className="font-light">{value}</span>
       </div>
-    )
-  }
+    );
+  };
   return (
     <div className="flex flex-col gap-2">
       <div className="header text-accent-main-100 font-serif flex items-center gap-2">
-        <StatusDot variant="success" isActive={showIndicator} isVisible={showIndicator} />
+        <StatusDot
+          variant="success"
+          isActive={showIndicator}
+          isVisible={showIndicator}
+        />
         System Init
       </div>
       <div className="flex flex-col bg-bg-200 border-border-100/10 rounded-xl px-4 py-2 border border-[0.5px] [&_label]:hidden bg-bg-100 space-y-1 dark:bg-bg-300">
@@ -459,7 +487,7 @@ const SystemInfoCard = ({ message, showIndicator = false }: { message: SDKSystem
       </div>
     </div>
   );
-}
+};
 
 const getMessageText = (contentBlock: Record<string, unknown>): string => {
   if (typeof contentBlock.text === "string") return contentBlock.text;
@@ -470,7 +498,7 @@ const getMessageText = (contentBlock: Record<string, unknown>): string => {
 const UserMessageCard = ({
   title,
   message,
-  showIndicator = false
+  showIndicator = false,
 }: {
   title: string;
   message: SDKAssistantMessage | SDKUserMessage;
@@ -479,53 +507,80 @@ const UserMessageCard = ({
   return (
     <div className="flex flex-col mt-4">
       <div className="header text-accent-main-100 flex items-center gap-2">
-        <StatusDot variant="success" isActive={showIndicator} isVisible={showIndicator} />
+        <StatusDot
+          variant="success"
+          isActive={showIndicator}
+          isVisible={showIndicator}
+        />
         {title}
       </div>
       {message.message.content.map((msg: any, index: number) => {
-        return <MDContent key={index} text={getMessageText(msg)} />
+        return <MDContent key={index} text={getMessageText(msg)} />;
       })}
     </div>
-  )
-}
-
+  );
+};
 
 export const MessageCard = function MessageCard({
   message,
   showIndicator = false,
   permissionRequests,
-  onPermissionResponse
+  onPermissionResponse,
 }: {
   message: StreamMessage;
   showIndicator?: boolean;
   permissionRequests?: PermissionRequest[];
-  onPermissionResponse?: (request: PermissionRequest, result: PermissionResult) => void;
+  onPermissionResponse?: (
+    request: PermissionRequest,
+    result: PermissionResult,
+  ) => void;
 }) {
-
-
   // System init message
-  if (message.type === "system" && "subtype" in message && message.subtype === "init") {
-    return <SystemInfoCard message={message} showIndicator={showIndicator} />
+  if (
+    message.type === "system" &&
+    "subtype" in message &&
+    message.subtype === "init"
+  ) {
+    return <SystemInfoCard message={message} showIndicator={showIndicator} />;
   }
 
   if (message.type === "assistant" && message.message.content) {
     return message.message.content.map((messageContent: any, index: number) => {
       const isLastBlock = index === message.message.content.length - 1;
       const blockIndicator = showIndicator && isLastBlock;
-      const key = typeof messageContent.id === "string" ? messageContent.id : `${messageContent.type}-${index}`;
+      const key =
+        typeof messageContent.id === "string"
+          ? messageContent.id
+          : `${messageContent.type}-${index}`;
 
       if (messageContent.type === "thinking") {
-        const text = typeof messageContent.thinking === "string"
-          ? messageContent.thinking
-          : getMessageText(messageContent);
-        return <AssistantBlockCard key={key} title="Thinking" text={text} showIndicator={blockIndicator} />;
+        const text =
+          typeof messageContent.thinking === "string"
+            ? messageContent.thinking
+            : getMessageText(messageContent);
+        return (
+          <AssistantBlockCard
+            key={key}
+            title="Thinking"
+            text={text}
+            showIndicator={blockIndicator}
+          />
+        );
       }
 
       if (messageContent.type === "text") {
-        const text = typeof messageContent.text === "string"
-          ? messageContent.text
-          : getMessageText(messageContent);
-        return <AssistantBlockCard key={key} title="Assistant" text={text} showIndicator={blockIndicator} />;
+        const text =
+          typeof messageContent.text === "string"
+            ? messageContent.text
+            : getMessageText(messageContent);
+        return (
+          <AssistantBlockCard
+            key={key}
+            title="Assistant"
+            text={text}
+            showIndicator={blockIndicator}
+          />
+        );
       }
 
       if (messageContent.type === "tool_use") {
@@ -541,11 +596,20 @@ export const MessageCard = function MessageCard({
             />
           );
         }
-        return <ToolUseCard key={key} messageContent={messageContent} showIndicator={blockIndicator} />;
+        return (
+          <ToolUseCard
+            key={key}
+            messageContent={messageContent}
+            showIndicator={blockIndicator}
+          />
+        );
       }
 
       return (
-        <div key={key} className="rounded-xl border border-ink-900/10 bg-white pb-4 pt-0 px-4 shadow-soft">
+        <div
+          key={key}
+          className="rounded-xl border border-ink-900/10 bg-white pb-4 pt-0 px-4 shadow-soft"
+        >
           <div>Unsupported assistant block</div>
           <pre className="mt-2 whitespace-pre-wrap text-sm text-ink-600 font-mono">
             {JSON.stringify(messageContent, null, 2)}
@@ -556,21 +620,43 @@ export const MessageCard = function MessageCard({
   }
 
   // User tool result
-  if (message.type === "user" && message.message.content && message.message.content[0].type === "tool_result") {
-    return message.message.content.map((messageContent: MessageContent, index: number) => {
-      return <ToolResult key={index} message={message} messageContent={messageContent} />
-    })
+  if (
+    message.type === "user" &&
+    message.message.content &&
+    message.message.content[0].type === "tool_result"
+  ) {
+    return message.message.content.map(
+      (messageContent: MessageContent, index: number) => {
+        return (
+          <ToolResult
+            key={index}
+            message={message}
+            messageContent={messageContent}
+          />
+        );
+      },
+    );
   }
 
   if (message.type === "user" && message.message.role === "user") {
-    return <UserMessageCard title="User" message={message} showIndicator={showIndicator} />
+    return (
+      <UserMessageCard
+        title="User"
+        message={message}
+        showIndicator={showIndicator}
+      />
+    );
   }
 
   if (message.type === "user_prompt") {
     return (
       <div className="flex flex-col mt-4">
         <div className="header text-accent-main-100 flex items-center gap-2">
-          <StatusDot variant="success" isActive={showIndicator} isVisible={showIndicator} />
+          <StatusDot
+            variant="success"
+            isActive={showIndicator}
+            isVisible={showIndicator}
+          />
           User
         </div>
         <MDContent text={message.prompt} />
@@ -581,7 +667,7 @@ export const MessageCard = function MessageCard({
   if (message.type === "stream_event") return null;
 
   if (message.type === "result") {
-    return <SessionResult message={message} />
+    return <SessionResult message={message} />;
   }
 
   // Fallback for unknown message types

@@ -5,6 +5,7 @@
 ### 新增功能
 
 #### 1. 自定义 HTTP 请求日志
+
 - 添加 Hono logger 中间件，格式化显示所有 HTTP 请求
 - 日志格式：`[时间] 方法 路径 状态码 响应时间`
 - 使用颜色区分状态（绿色=成功 2xx/3xx，红色=错误 4xx/5xx）
@@ -14,12 +15,14 @@
 ### Bug 修复
 
 #### 1. 修复 Better Auth OAuth State 验证失败
+
 - 添加 `secret` 配置用于加密 session 和 cookies
 - 启用 `session.cookieCache` 确保 OAuth state 正确保存
 - 添加 `BETTER_AUTH_SECRET` 环境变量
 - 文件：[src/server/auth.ts](src/server/auth.ts:17-23)
 
 #### 2. 修复 GitHub OAuth 登录流程
+
 - 使用 Better Auth 客户端 `authClient.signIn.social()` 方法触发登录
 - 导出完整的 `authClient` 对象以便使用所有 API
 - 设置正确的 `callbackURL` 参数
@@ -30,7 +33,9 @@
 ### 配置说明
 
 #### GitHub OAuth App 回调 URL 配置
+
 确保在 GitHub OAuth App 设置中配置正确的回调 URL：
+
 ```
 http://localhost:10086/api/auth/callback/github
 ```
@@ -38,6 +43,7 @@ http://localhost:10086/api/auth/callback/github
 **注意：** `localhost` 和 `127.0.0.1` 对 OAuth 来说是不同的 URL，必须完全匹配。
 
 #### 新增环境变量
+
 ```bash
 # Better Auth Secret (用于加密 session 和 cookies)
 BETTER_AUTH_SECRET=your-super-secret-key-change-this-to-random-string-in-production
@@ -46,13 +52,16 @@ BETTER_AUTH_SECRET=your-super-secret-key-change-this-to-random-string-in-product
 ### 技术细节
 
 #### 日志中间件实现
+
 使用 Hono 的 logger 中间件并自定义输出格式：
+
 - 解析 Hono 内置日志消息
 - 提取请求方法、路径、状态码、响应时间
 - 使用 ANSI 颜色码美化输出
 - 只显示响应日志（`-->`），隐藏请求日志（`<--`）
 
 #### Better Auth Session 配置
+
 ```typescript
 session: {
   cookieCache: {
@@ -61,6 +70,7 @@ session: {
   },
 }
 ```
+
 这确保了 OAuth state 在 cookie 中正确保存和验证。
 
 ---
@@ -68,11 +78,13 @@ session: {
 ## [2026-01-11] 迁移到 BetterAuth 认证框架
 
 ### 概述
+
 将项目从自定义 GitHub OAuth 实现完全迁移到 BetterAuth 认证框架。BetterAuth 是一个生产级的 TypeScript 认证解决方案，提供了更安全、更易维护的认证系统。
 
 ### 为什么迁移？
 
 **之前的问题：**
+
 - 自定义实现需要手动处理所有 OAuth 流程细节
 - 安全性依赖自行维护和更新
 - 缺少内置的 CSRF、XSS 等安全防护
@@ -80,6 +92,7 @@ session: {
 - 维护成本高
 
 **BetterAuth 的优势：**
+
 - ✅ 生产级安全性（内置 CSRF、XSS 防护）
 - ✅ 自动处理完整的 OAuth 流程
 - ✅ 完整的 TypeScript 支持
@@ -92,7 +105,9 @@ session: {
 #### 1. 后端集成 BetterAuth
 
 **新增文件：**
+
 - `src/server/auth.ts` - BetterAuth 配置和实例
+
   ```typescript
   import { betterAuth } from "better-auth";
   import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -110,7 +125,9 @@ session: {
   ```
 
 **修改文件：**
+
 - `src/server/routes/index.ts` - 使用 BetterAuth handler 处理所有 `/api/auth/*` 路由
+
   ```typescript
   app.on(["GET", "POST"], "/api/auth/**", (c) => {
     return auth.handler(c.req.raw);
@@ -118,6 +135,7 @@ session: {
   ```
 
 - `src/server/middleware/auth.middleware.ts` - 使用 BetterAuth session API 验证请求
+
   ```typescript
   const session = await auth.api.getSession({
     headers: c.req.raw.headers,
@@ -129,13 +147,16 @@ session: {
   - 获取 GitHub access token 用于仓库操作
 
 **删除文件：**
+
 - `src/server/routes/auth.routes.ts` - 不再需要自定义认证路由
 - `src/server/services/auth.service.ts` - BetterAuth 内置所有功能
 
 #### 2. 前端集成 BetterAuth React
 
 **新增文件：**
+
 - `src/lib/auth-client.ts` - BetterAuth React 客户端
+
   ```typescript
   import { createAuthClient } from "better-auth/react";
 
@@ -145,7 +166,9 @@ session: {
   ```
 
 **修改文件：**
+
 - `src/hooks/useAuth.ts` - 使用 BetterAuth hooks
+
   ```typescript
   // 之前：手动 fetch /api/auth/me
   const [authState, setAuthState] = useState<AuthState>({ ... });
@@ -155,6 +178,7 @@ session: {
   ```
 
 - `src/components/GitHubAuthButton.tsx` - 使用 `signIn.social()` 方法
+
   ```typescript
   // 之前：<a href="/api/auth/github">
   // 之后：
@@ -170,12 +194,14 @@ session: {
 #### 3. 数据库表结构
 
 **BetterAuth 自动创建的表：**
+
 - `user` - 用户基本信息（id, name, email, image）
 - `session` - 会话管理（sessionToken, userId, expiresAt）
 - `account` - OAuth 账户信息（包含 access_token）
 - `verification` - 验证令牌
 
 **与现有系统集成：**
+
 - 保留 `github_repos` 表用于仓库管理
 - `sessions` 表继续用于 Claude Code 会话（非认证会话）
 - 通过 `userId` 关联 BetterAuth 的 `user` 表
@@ -185,12 +211,14 @@ session: {
 #### BetterAuth 自动提供的端点
 
 **之前（自定义实现）：**
+
 - `GET /api/auth/github` - 手动实现 OAuth 跳转
 - `GET /api/auth/github/callback` - 手动处理回调
 - `GET /api/auth/me` - 手动查询用户信息
 - `POST /api/auth/logout` - 手动清除 cookie
 
 **之后（BetterAuth）：**
+
 - `GET /api/auth/sign-in/social` - 自动处理所有社交登录
 - `GET /api/auth/session` - 获取当前会话
 - `POST /api/auth/sign-out` - 登出
@@ -199,6 +227,7 @@ session: {
 ### 环境变量
 
 **保持不变：**
+
 ```bash
 GITHUB_CLIENT_ID=你的_client_id
 GITHUB_CLIENT_SECRET=你的_client_secret
@@ -232,6 +261,7 @@ PUBLIC_URL=http://localhost:10086
 #### TypeScript 支持
 
 BetterAuth 提供完整的类型推导：
+
 ```typescript
 // 自动推导 session 类型
 const { data: session } = useSession();
@@ -257,6 +287,7 @@ const result = await auth.api.getSession({ headers });
 ### 向后兼容性
 
 **保持兼容的部分：**
+
 - ✅ GitHub OAuth 应用配置不变
 - ✅ 环境变量配置相同
 - ✅ GitHub 仓库管理功能完全保留
@@ -264,6 +295,7 @@ const result = await auth.api.getSession({ headers });
 - ✅ GitHubRepoSelector 和其他组件继续工作
 
 **数据迁移：**
+
 - 旧的 `users` 表数据需要迁移到 BetterAuth 的表结构
 - 首次登录时 BetterAuth 会自动创建新用户记录
 - 现有用户需要重新登录
@@ -271,6 +303,7 @@ const result = await auth.api.getSession({ headers });
 ### 测试建议
 
 #### 功能测试
+
 1. ✅ 访问应用首页
 2. ✅ 点击 "Connect GitHub" 按钮
 3. ✅ 完成 GitHub OAuth 授权流程
@@ -281,6 +314,7 @@ const result = await auth.api.getSession({ headers });
 8. ✅ 刷新页面验证 session 持久化
 
 #### 安全测试
+
 1. ✅ 验证 CSRF token 保护
 2. ✅ 验证未授权请求被拦截
 3. ✅ 验证 session 过期处理
@@ -289,19 +323,24 @@ const result = await auth.api.getSession({ headers });
 ### 故障排除
 
 #### 问题 1: "GitHub OAuth not configured" 错误
+
 **原因：** 环境变量未配置
 **解决：** 确保 `.env` 文件包含 `GITHUB_CLIENT_ID` 和 `GITHUB_CLIENT_SECRET`
 
 #### 问题 2: 会话无法获取
+
 **原因：** CORS 或 cookie 配置问题
 **解决：**
+
 - 检查 `PUBLIC_URL` 配置正确
 - 确保前后端在同一域名或正确配置 CORS
 - 开发模式下使用 `secure: false`
 
 #### 问题 3: TypeScript 类型错误
+
 **原因：** Hono 上下文类型不匹配
 **解决：** 在路由中定义 Variables 类型：
+
 ```typescript
 type Variables = { userId: string };
 const routes = new Hono<{ Variables: Variables }>();
@@ -310,6 +349,7 @@ const routes = new Hono<{ Variables: Variables }>();
 ### 文档
 
 **新增文档：**
+
 - `BETTER_AUTH_MIGRATION.md` - 详细的迁移指南
   - BetterAuth 配置说明
   - API 端点文档
@@ -343,6 +383,7 @@ BetterAuth 支持的其他功能（可根据需求启用）：
 ### 开发者注意事项
 
 #### 使用 BetterAuth API
+
 ```typescript
 // 服务端验证会话
 import { auth } from "../auth";
@@ -354,7 +395,9 @@ const { data: session, isPending } = useSession();
 ```
 
 #### 扩展认证方式
+
 在 `src/server/auth.ts` 中添加新的 provider：
+
 ```typescript
 socialProviders: {
   github: { ... },
@@ -366,7 +409,9 @@ socialProviders: {
 ```
 
 #### 自定义会话数据
+
 使用 BetterAuth 的 hooks 机制扩展会话：
+
 ```typescript
 export const auth = betterAuth({
   // ... 其他配置
@@ -386,6 +431,7 @@ export const auth = betterAuth({
 ### 性能监控
 
 迁移后监控以下指标：
+
 - 认证请求响应时间
 - Session 查询性能
 - OAuth 回调处理速度
@@ -401,6 +447,7 @@ export const auth = betterAuth({
 ---
 
 **改动统计：**
+
 - 新增文件：2 个
 - 修改文件：5 个
 - 删除文件：2 个
@@ -414,14 +461,17 @@ export const auth = betterAuth({
 ## [2026-01-11] GitHub 集成 UI 实现 (Manus 风格)
 
 ### 概述
+
 基于 Manus UI 参考图实现了 GitHub 集成的可视化界面，提供了类似 Manus 的集成连接器交互体验。用户可以通过侧边栏中的 GitHub 面板进行认证、浏览仓库、搜索和选择代码库，无需手动输入路径。
 
 ### 核心功能
 
 #### 1. IntegrationsPanel 组件
+
 新增 `src/components/IntegrationsPanel.tsx`，实现类似 Manus 的集成连接器面板：
 
 **UI 特性：**
+
 - ✅ GitHub 图标 + 名称标识
 - ✅ Toggle 开关样式（连接/未连接状态）
 - ✅ 可展开/折叠的面板设计
@@ -435,6 +485,7 @@ export const auth = betterAuth({
 - ✅ 配置 GitHub 链接（跳转到 GitHub 设置页面）
 
 **交互流程：**
+
 ```
 未认证状态：
 - 点击 GitHub 面板 → 跳转到 GitHub OAuth 授权
@@ -450,6 +501,7 @@ export const auth = betterAuth({
 ```
 
 **关键实现细节：**
+
 ```typescript
 // 使用 Radix UI Collapsible 实现折叠面板
 import * as Collapsible from "@radix-ui/react-collapsible";
@@ -470,16 +522,19 @@ const filteredRepos = repos.filter((repo) =>
 ```
 
 #### 2. Sidebar 集成
+
 修改 `src/components/Sidebar.tsx`，将 IntegrationsPanel 添加到侧边栏：
 
 **位置：** 在 "Settings" 按钮和会话列表之间
 
 **功能：**
+
 - ✅ 选择仓库后自动更新 App Store 的 `cwd` 和 `selectedGitHubRepoId`
 - ✅ 与侧边栏布局完美融合
 - ✅ 保持移动端响应式设计
 
 **代码变更：**
+
 ```typescript
 // 新增导入
 import { IntegrationsPanel } from "./IntegrationsPanel";
@@ -495,9 +550,11 @@ const handleSelectRepo = (repoId: string, localPath: string) => {
 ```
 
 #### 3. App Store 更新
+
 修改 `src/store/useAppStore.ts`，添加 GitHub 仓库选择状态：
 
 **新增状态：**
+
 ```typescript
 interface AppState {
   // 新增
@@ -509,6 +566,7 @@ interface AppState {
 ```
 
 **初始值：**
+
 ```typescript
 {
   selectedGitHubRepoId: null,
@@ -517,14 +575,17 @@ interface AppState {
 ```
 
 #### 4. Home 页面增强
+
 修改 `src/pages/Home.tsx`，添加 GitHub 仓库选择指示器：
 
 **新增功能：**
+
 - ✅ Working Directory 输入框显示 GitHub 标识（当选择了 GitHub 仓库时）
 - ✅ 手动编辑目录时自动清除 GitHub 仓库选择
 - ✅ GitHub 徽章显示在输入框右侧
 
 **UI 实现：**
+
 ```typescript
 <div className="relative">
   <input
@@ -550,15 +611,18 @@ interface AppState {
 ### UI/UX 设计
 
 #### Manus 风格参考
+
 根据提供的 Manus UI 截图实现：
 
 **集成连接器样式：**
+
 - GitHub 图标 + 名称
 - Toggle 开关（圆角矩形 + 滑动圆点）
 - 连接状态文字提示（"连接" / "未连接"）
 - 淡灰色背景，白色卡片
 
 **代码库列表样式：**
+
 - 搜索框（带放大镜图标）
 - 仓库项显示：
   - 仓库全名（粗体）
@@ -567,6 +631,7 @@ interface AppState {
   - Hover 高亮效果
 
 **交互动画：**
+
 - Toggle 开关滑动动画
 - 面板展开/折叠动画（使用 Radix UI Collapsible）
 - 列表项 Hover 过渡效果
@@ -574,15 +639,17 @@ interface AppState {
 ### 技术实现
 
 #### 依赖变更
+
 ```json
 {
   "dependencies": {
-    "@radix-ui/react-collapsible": "^1.1.12"  // 新增
+    "@radix-ui/react-collapsible": "^1.1.12" // 新增
   }
 }
 ```
 
 #### 组件架构
+
 ```
 Sidebar
 └── IntegrationsPanel
@@ -600,6 +667,7 @@ Sidebar
 #### 状态管理流程
 
 **选择仓库流程：**
+
 ```
 1. 用户在 Sidebar 展开 GitHub 面板
 2. 点击某个仓库
@@ -611,6 +679,7 @@ Sidebar
 ```
 
 **浏览仓库流程：**
+
 ```
 1. 用户点击 "Browse Repositories"
 2. setShowRepos(true)
@@ -624,7 +693,9 @@ Sidebar
 ### 用户体验改进
 
 #### 简化工作流程
+
 **之前：**
+
 1. 在 GITHUB_INTEGRATION.md 文档中查看使用说明
 2. 手动访问 `/api/auth/github` 登录
 3. 使用 API 或 GitHubRepoSelector 组件添加仓库
@@ -632,6 +703,7 @@ Sidebar
 5. 在 Home 页面手动粘贴路径
 
 **现在：**
+
 1. 在 Sidebar 点击 GitHub 面板
 2. 一键登录（如果未登录）
 3. 搜索并选择仓库
@@ -639,6 +711,7 @@ Sidebar
 5. 开始创建 session
 
 #### 视觉反馈
+
 - ✅ 加载状态：克隆仓库时显示 "Adding..."
 - ✅ 连接状态：Toggle 开关实时反映认证状态
 - ✅ 私有仓库：黄色 "Private" 徽章
@@ -646,6 +719,7 @@ Sidebar
 - ✅ Hover 效果：列表项交互反馈
 
 #### 错误处理
+
 - ✅ API 失败时显示 console.error
 - ✅ 加载状态防止重复请求
 - ✅ 已添加仓库显示 "Added" 并禁用按钮
@@ -653,12 +727,14 @@ Sidebar
 ### 文件清单
 
 #### 新增文件（1 个）
+
 ```
 src/components/
 └── IntegrationsPanel.tsx  // GitHub 集成面板组件
 ```
 
 #### 修改文件（3 个）
+
 ```
 src/components/
 └── Sidebar.tsx            // 添加 IntegrationsPanel
@@ -673,6 +749,7 @@ src/pages/
 ### 兼容性
 
 #### 保持不变的部分
+
 - ✅ 所有后端 API 接口
 - ✅ GitHub OAuth 认证流程
 - ✅ 仓库管理逻辑（克隆、同步、提交）
@@ -682,6 +759,7 @@ src/pages/
 - ✅ 环境变量配置
 
 #### 向后兼容
+
 - 原有的 GitHubAuthButton 和 GitHubRepoSelector 组件保留
 - 可以选择在其他页面继续使用独立组件
 - IntegrationsPanel 是新的推荐方式
@@ -689,6 +767,7 @@ src/pages/
 ### 测试建议
 
 #### UI 测试
+
 1. ✅ Sidebar 中显示 GitHub 面板
 2. ✅ 未登录时点击面板跳转到 OAuth 授权
 3. ✅ 登录后显示 Toggle 开关为"连接"状态
@@ -701,6 +780,7 @@ src/pages/
 10. ✅ 手动编辑 cwd 时 GitHub 徽章消失
 
 #### 功能测试
+
 1. ✅ 浏览仓库模式显示所有 GitHub 仓库
 2. ✅ 添加仓库时显示加载状态
 3. ✅ 添加成功后切换回 "My Repos" 视图
@@ -710,6 +790,7 @@ src/pages/
 7. ✅ 移动端面板响应式正常
 
 #### 集成测试
+
 1. ✅ 选择 GitHub 仓库 → 创建 session → 使用正确的路径
 2. ✅ Sidebar 会话列表和 GitHub 面板布局正常
 3. ✅ 刷新页面后认证状态保持
@@ -725,6 +806,7 @@ src/pages/
 ### 视觉示例
 
 #### Sidebar 布局
+
 ```
 ┌─────────────────────────────┐
 │ Sessions       [Connected]  │
@@ -759,6 +841,7 @@ src/pages/
 ```
 
 #### Toggle 开关状态
+
 ```
 未连接：
 ┌──────────┐
@@ -802,6 +885,7 @@ src/pages/
 ### 开发者注意事项
 
 #### 使用 IntegrationsPanel
+
 ```typescript
 import { IntegrationsPanel } from "./components/IntegrationsPanel";
 
@@ -815,13 +899,17 @@ import { IntegrationsPanel } from "./components/IntegrationsPanel";
 ```
 
 #### 扩展集成面板
+
 如果需要添加其他集成（如 GitLab），可以参考 IntegrationsPanel 的结构：
+
 1. 创建新的集成组件（如 `GitLabIntegrationPanel.tsx`）
 2. 实现相同的 UI 模式（图标 + Toggle + 折叠面板）
 3. 在 Sidebar 中添加新的面板
 
 #### 自定义样式
+
 IntegrationsPanel 使用 Tailwind CSS，可以通过修改类名自定义样式：
+
 - Toggle 开关颜色：`bg-accent` → `bg-blue-500`
 - 面板背景：`bg-surface` → 自定义颜色
 - 搜索框样式：修改 input 的类名
@@ -829,6 +917,7 @@ IntegrationsPanel 使用 Tailwind CSS，可以通过修改类名自定义样式�
 ---
 
 **改动统计：**
+
 - 新增文件：1 个
 - 修改文件：3 个
 - 新增代码：~400 行
@@ -839,11 +928,13 @@ IntegrationsPanel 使用 Tailwind CSS，可以通过修改类名自定义样式�
 ## [2026-01-11] GitHub 集成功能实现
 
 ### 概述
+
 实现完整的 GitHub 集成功能，允许用户通过 GitHub OAuth 认证，管理 GitHub 仓库作为 Claude Code 的工作目录。支持公共和私有仓库的克隆、同步、提交和推送操作。
 
 ### 核心功能
 
 #### 1. GitHub OAuth 认证系统
+
 - ✅ 完整的 OAuth 2.0 授权流程
 - ✅ 用户信息管理（头像、用户名、邮箱）
 - ✅ Cookie-based session 管理
@@ -851,6 +942,7 @@ IntegrationsPanel 使用 Tailwind CSS，可以通过修改类名自定义样式�
 - ✅ 安全的认证中间件保护 API
 
 **认证流程：**
+
 ```
 用户点击 "Connect GitHub"
 → 跳转到 GitHub OAuth 页面
@@ -863,6 +955,7 @@ IntegrationsPanel 使用 Tailwind CSS，可以通过修改类名自定义样式�
 ```
 
 #### 2. 仓库管理系统
+
 - ✅ 浏览用户的所有 GitHub 仓库
 - ✅ 克隆仓库到本地（支持浅克隆 --depth 1）
 - ✅ 持久化存储仓库信息
@@ -872,6 +965,7 @@ IntegrationsPanel 使用 Tailwind CSS，可以通过修改类名自定义样式�
 - ✅ 删除本地仓库及数据库记录
 
 **仓库存储结构：**
+
 ```
 .claude-repos/
 ├── owner-repo-name-1/
@@ -880,6 +974,7 @@ IntegrationsPanel 使用 Tailwind CSS，可以通过修改类名自定义样式�
 ```
 
 #### 3. Session 与 GitHub 仓库关联
+
 - ✅ 创建 session 时可选择 GitHub 仓库
 - ✅ Session 自动使用仓库的本地路径作为 cwd
 - ✅ Session 启动前自动同步仓库
@@ -890,6 +985,7 @@ IntegrationsPanel 使用 Tailwind CSS，可以通过修改类名自定义样式�
 #### 新增表
 
 **users 表**
+
 ```sql
 CREATE TABLE users (
   id TEXT PRIMARY KEY,
@@ -905,6 +1001,7 @@ CREATE TABLE users (
 ```
 
 **github_repos 表**
+
 ```sql
 CREATE TABLE github_repos (
   id TEXT PRIMARY KEY,
@@ -925,19 +1022,23 @@ CREATE TABLE github_repos (
 #### 修改表
 
 **sessions 表新增字段：**
+
 - `user_id` - 关联到 users 表（CASCADE 删除）
 - `github_repo_id` - 关联到 github_repos 表（SET NULL 删除）
 
 ### API 端点
 
 #### 认证相关 (`/api/auth/*`)
+
 - `GET /api/auth/github` - GitHub OAuth 授权跳转
 - `GET /api/auth/github/callback` - OAuth 回调处理
 - `GET /api/auth/me` - 获取当前登录用户信息
 - `POST /api/auth/logout` - 退出登录
 
 #### GitHub 仓库管理 (`/api/github/*`)
+
 所有端点需要认证：
+
 - `GET /api/github/repos` - 列出已添加的仓库
 - `GET /api/github/browse` - 浏览 GitHub 上的所有仓库
 - `POST /api/github/repos` - 添加（克隆）新仓库
@@ -952,18 +1053,21 @@ CREATE TABLE github_repos (
 #### 新增服务层
 
 **AuthService** (`src/server/services/auth.service.ts`)
+
 - 处理 GitHub OAuth 流程
 - 交换 authorization code 获取 access token
 - 获取 GitHub 用户信息
 - 创建/更新用户记录
 
 **GitHubService** (`src/server/services/github.service.ts`)
+
 - 封装 simple-git 和 @octokit/rest
 - 实现 Git 操作：clone, pull, push, commit
 - 获取仓库状态
 - 列出用户的 GitHub 仓库
 
 **RepositoryService** (`src/server/services/repository.service.ts`)
+
 - 管理仓库生命周期
 - 协调 GitHubService 和数据库操作
 - 处理仓库添加、同步、删除逻辑
@@ -972,11 +1076,13 @@ CREATE TABLE github_repos (
 #### 新增 Repository 层
 
 **UserRepository** (`src/server/repositories/user.repository.ts`)
+
 - CRUD 操作 users 表
 - 根据 GitHub ID 查找用户
 - upsert 用户信息
 
 **GithubRepoRepository** (`src/server/repositories/github-repo.repository.ts`)
+
 - CRUD 操作 github_repos 表
 - 根据用户 ID 查询仓库列表
 - 根据用户和仓库名查找仓库
@@ -984,6 +1090,7 @@ CREATE TABLE github_repos (
 #### 认证中间件
 
 **authMiddleware** (`src/server/middleware/auth.middleware.ts`)
+
 - 从 cookie 中提取 userId
 - 验证用户登录状态
 - 保护需要认证的 API 路由
@@ -993,6 +1100,7 @@ CREATE TABLE github_repos (
 #### 新增 Hook
 
 **useAuth** (`src/hooks/useAuth.ts`)
+
 ```typescript
 // 功能：
 - 管理认证状态（authenticated, user, loading）
@@ -1004,12 +1112,14 @@ CREATE TABLE github_repos (
 #### 新增组件
 
 **GitHubAuthButton** (`src/components/GitHubAuthButton.tsx`)
+
 - 未登录：显示 "Connect GitHub" 按钮
 - 已登录：显示用户头像、用户名和 Logout 按钮
 - 自动检测认证状态
 - 一键跳转到 GitHub OAuth 授权页面
 
 **GitHubRepoSelector** (`src/components/GitHubRepoSelector.tsx`)
+
 - 显示已添加的 GitHub 仓库列表
 - 支持浏览和添加新仓库
 - 仓库卡片显示：全名、私有标识、描述、语言
@@ -1020,6 +1130,7 @@ CREATE TABLE github_repos (
 ### 新增文件清单
 
 #### 后端文件（13 个）
+
 ```
 src/server/db/schema/
 ├── users.schema.ts                     // 用户表 schema
@@ -1046,6 +1157,7 @@ scripts/
 ```
 
 #### 前端文件（3 个）
+
 ```
 src/hooks/
 └── useAuth.ts                          // 认证 Hook
@@ -1056,6 +1168,7 @@ src/components/
 ```
 
 #### 配置文件（2 个）
+
 ```
 .env.example                            // 环境变量模板
 GITHUB_INTEGRATION.md                   // 详细使用文档
@@ -1064,19 +1177,23 @@ GITHUB_INTEGRATION.md                   // 详细使用文档
 ### 修改文件
 
 **src/server/db/schema/sessions.schema.ts**
+
 - 添加 `userId` 字段（外键关联 users 表）
 - 添加 `githubRepoId` 字段（外键关联 github_repos 表）
 
 **src/server/db/schema/index.ts**
+
 - 导出 users 和 github_repos schema
 
 **src/server/routes/index.ts**
+
 - 注册 `/api/auth` 路由
 - 注册 `/api/github` 路由
 
 ### 依赖变更
 
 **新增依赖：**
+
 ```json
 {
   "dependencies": {
@@ -1090,6 +1207,7 @@ GITHUB_INTEGRATION.md                   // 详细使用文档
 ### 环境变量
 
 **新增环境变量：**
+
 ```bash
 # GitHub OAuth 配置（必需）
 GITHUB_CLIENT_ID=your_github_client_id
@@ -1105,6 +1223,7 @@ GITHUB_REPOS_PATH=./.claude-repos
 ### 配置步骤
 
 #### 1. 创建 GitHub OAuth App
+
 1. 访问 https://github.com/settings/developers
 2. 点击 "New OAuth App"
 3. 填写：
@@ -1114,17 +1233,20 @@ GITHUB_REPOS_PATH=./.claude-repos
 4. 获取 Client ID 和 Client Secret
 
 #### 2. 配置环境变量
+
 ```bash
 cp .env.example .env
 # 编辑 .env 文件，填入 GITHUB_CLIENT_ID 和 GITHUB_CLIENT_SECRET
 ```
 
 #### 3. 运行数据库迁移
+
 ```bash
 bun run scripts/run-migration.ts
 ```
 
 #### 4. 启动应用
+
 ```bash
 bun run dev
 ```
@@ -1132,24 +1254,28 @@ bun run dev
 ### 使用流程
 
 #### 1. GitHub 认证
+
 1. 访问应用首页
 2. 点击 "Connect GitHub" 按钮
 3. 在 GitHub 上授权应用访问仓库
 4. 自动返回应用，显示用户头像和用户名
 
 #### 2. 添加 GitHub 仓库
+
 1. 点击 "Browse Repositories" 按钮
 2. 浏览所有 GitHub 仓库（包括私有仓库）
 3. 点击 "Add" 按钮克隆仓库到本地
 4. 等待克隆完成（显示 "Adding..." 状态）
 
 #### 3. 创建 Session
+
 1. 在创建 session 时选择 "GitHub Repository" tab
 2. 从列表中选择已添加的仓库
 3. 输入任务描述
 4. 启动 session（自动使用仓库路径作为 cwd）
 
 #### 4. 使用 Claude Code
+
 - Claude 可以读取、修改仓库中的文件
 - 所有操作在本地仓库中进行
 - 可以通过 API 提交并推送更改到 GitHub
@@ -1157,6 +1283,7 @@ bun run dev
 ### 技术亮点
 
 #### 1. 安全性
+
 - ✅ Access Token 加密存储在数据库
 - ✅ 使用 httpOnly Cookie 存储 session
 - ✅ 认证中间件保护所有敏感 API
@@ -1164,12 +1291,14 @@ bun run dev
 - ✅ GitHub OAuth scope 最小化（仅 repo + user）
 
 #### 2. 性能优化
+
 - ✅ 浅克隆（--depth 1）减少网络传输
 - ✅ 持久化仓库，避免重复克隆
 - ✅ 自动清理机制（删除未使用的仓库）
 - ✅ 并发支持（多个仓库可同时操作）
 
 #### 3. 用户体验
+
 - ✅ 实时加载状态反馈
 - ✅ 清晰的错误提示
 - ✅ 私有仓库标识
@@ -1178,6 +1307,7 @@ bun run dev
 - ✅ 自动认证状态刷新
 
 #### 4. 可扩展性
+
 - ✅ Repository 层抽象数据访问
 - ✅ Service 层封装业务逻辑
 - ✅ 支持添加更多 Git 操作
@@ -1209,6 +1339,7 @@ bun run dev
 ### 测试建议
 
 #### 功能测试
+
 1. ✅ GitHub OAuth 授权流程
 2. ✅ 用户信息正确显示
 3. ✅ 浏览 GitHub 仓库（公共 + 私有）
@@ -1219,6 +1350,7 @@ bun run dev
 8. ✅ 退出登录
 
 #### API 测试
+
 ```bash
 # 获取当前用户
 curl http://localhost:10086/api/auth/me
@@ -1235,15 +1367,18 @@ curl -b cookies.txt -X POST http://localhost:10086/api/github/repos \
 ### 故障排除
 
 **问题 1: OAuth 回调失败**
+
 - 检查 `PUBLIC_URL` 配置
 - 确认 GitHub OAuth App 回调 URL 正确
 
 **问题 2: 仓库克隆失败**
+
 - 检查 access token 权限（需要 `repo` scope）
 - 确认网络连接
 - 检查磁盘空间
 
 **问题 3: 认证状态丢失**
+
 - 检查 cookie 配置
 - 开发模式使用 `secure: false`
 
@@ -1257,6 +1392,7 @@ curl -b cookies.txt -X POST http://localhost:10086/api/github/repos \
 ### 文档
 
 **详细使用文档：** `GITHUB_INTEGRATION.md`
+
 - 完整配置步骤
 - API 端点说明
 - 前端集成指南
@@ -1291,6 +1427,7 @@ curl -b cookies.txt -X POST http://localhost:10086/api/github/repos \
 ---
 
 **改动统计：**
+
 - 新增文件：18 个
 - 修改文件：3 个
 - 新增代码：~2,800 行
@@ -1302,6 +1439,7 @@ curl -b cookies.txt -X POST http://localhost:10086/api/github/repos \
 ## [2026-01-11] 添加欢迎页面与 React Router v7 集成
 
 ### 概述
+
 实现了 Manus 风格的欢迎页面，并集成 React Router v7 实现多页面路由导航。用户现在可以通过独立的欢迎页面创建会话，并通过 URL 路由在不同会话间切换。
 
 ### 更新记录
@@ -1309,6 +1447,7 @@ curl -b cookies.txt -X POST http://localhost:10086/api/github/repos \
 #### [2026-01-11 更新] 修复自动跳转问题 & 优化首页 UI
 
 **修复的问题：**
+
 1. **自动跳转问题**：之前访问首页时，如果存在活跃会话会立即跳转到聊天页面
    - 新增 `isStartingSession` ref 来跟踪用户是否主动启动会话
    - 只有在用户点击"启动"按钮后才会跳转到聊天页面
@@ -1330,6 +1469,7 @@ curl -b cookies.txt -X POST http://localhost:10086/api/github/repos \
 **详细改动：**
 
 `src/pages/Home.tsx`:
+
 - 新增 `isStartingSession` ref 来控制跳转逻辑
 - 新增 `showAdvanced` state 控制高级选项面板显示
 - 重构输入区域为单一大输入框 + 底部工具栏的设计
@@ -1339,17 +1479,20 @@ curl -b cookies.txt -X POST http://localhost:10086/api/github/repos \
 - 提示文字改为键盘快捷键显示（⌘+Enter）
 
 `src/components/Sidebar.tsx`:
+
 - 会话列表容器添加 `flex-1 min-h-0` 类，确保占满剩余空间
 
 ### 新增功能
 
 #### 1. 路由系统
+
 - 集成 React Router v7 (`react-router@7.12.0`)
 - 实现基于 URL 的页面导航
 - 支持浏览器前进/后退按钮
 - 支持直接访问特定会话 URL
 
 **路由结构：**
+
 ```
 / → 欢迎页面 (Home)
 /chat/:sessionId → 会话界面 (Chat)
@@ -1357,6 +1500,7 @@ curl -b cookies.txt -X POST http://localhost:10086/api/github/repos \
 ```
 
 #### 2. 欢迎页面 (Home)
+
 - 居中显示大标题："我能为你做什么？"
 - 工作目录输入框，支持最近使用的目录快捷选择
 - 任务描述输入框（支持 ⌘+Enter 快捷键启动）
@@ -1366,7 +1510,9 @@ curl -b cookies.txt -X POST http://localhost:10086/api/github/repos \
 ### 新增文件
 
 #### `src/components/Layout.tsx`
+
 **功能：** 共享布局组件
+
 - 管理侧边栏显示/隐藏状态
 - 集中管理 WebSocket 连接
 - 为子路由提供上下文（connected, sendEvent, sessionsLoaded）
@@ -1374,6 +1520,7 @@ curl -b cookies.txt -X POST http://localhost:10086/api/github/repos \
 - 管理设置模态框
 
 **核心逻辑：**
+
 ```typescript
 - WebSocket 事件处理和分发
 - 使用 Outlet 渲染子路由内容
@@ -1382,13 +1529,16 @@ curl -b cookies.txt -X POST http://localhost:10086/api/github/repos \
 ```
 
 #### `src/pages/Home.tsx`
+
 **功能：** 欢迎页面组件
+
 - 显示欢迎界面和输入表单
 - 获取默认工作目录和最近使用的目录
 - 处理会话启动逻辑
 - 监听 activeSessionId 变化并自动导航到聊天页面
 
 **核心逻辑：**
+
 ```typescript
 - 从 API 获取默认 cwd 和最近的 cwd 列表
 - 使用 usePromptActions hook 处理会话启动
@@ -1397,13 +1547,16 @@ curl -b cookies.txt -X POST http://localhost:10086/api/github/repos \
 ```
 
 #### `src/pages/Chat.tsx`
+
 **功能：** 会话聊天界面
+
 - 从 URL 参数获取 sessionId
 - 显示消息流
 - 处理权限请求（DecisionPanel）
 - 支持继续对话（PromptInput）
 
 **核心逻辑：**
+
 ```typescript
 - 使用 useParams() 从 URL 获取 sessionId
 - 自动加载会话历史记录
@@ -1416,14 +1569,17 @@ curl -b cookies.txt -X POST http://localhost:10086/api/github/repos \
 ### 修改文件
 
 #### `src/App.tsx`
+
 **改动：** 从完整的应用逻辑简化为路由容器
 
 **之前：**
+
 - 直接渲染 Sidebar、消息流、输入框等所有组件
 - 管理所有状态和 WebSocket 连接
 - 处理模态框显示逻辑
 
 **之后：**
+
 ```typescript
 - 只负责设置 BrowserRouter 和路由配置
 - 使用嵌套路由结构，Layout 为父路由
@@ -1433,15 +1589,19 @@ curl -b cookies.txt -X POST http://localhost:10086/api/github/repos \
 **代码变化：** 从 ~290 行减少到 ~20 行
 
 #### `src/components/Sidebar.tsx`
+
 **改动：** 集成路由导航功能
 
 **新增导入：**
+
 ```typescript
 import { useNavigate, useLocation } from "react-router";
 ```
 
 **核心改动：**
+
 1. **使用 `useNavigate` 进行导航**
+
    ```typescript
    const handleSelectSession = (sessionId: string) => {
      navigate(`/chat/${sessionId}`);
@@ -1450,6 +1610,7 @@ import { useNavigate, useLocation } from "react-router";
    ```
 
 2. **基于 URL 判断活跃会话**
+
    ```typescript
    const urlSessionId = location.pathname.match(/^\/chat\/([^/]+)/)?.[1];
    const isSessionActive = (sessionId: string) => urlSessionId === sessionId;
@@ -1460,19 +1621,23 @@ import { useNavigate, useLocation } from "react-router";
    - 之后：基于 `isSessionActive(session.id)` (从 URL 获取)
 
 #### `src/store/useAppStore.ts`
+
 **改动：** 移除模态框相关状态
 
 **删除的状态：**
+
 ```typescript
 - showStartModal: boolean  // 不再需要，改用路由导航到 /
 ```
 
 **删除的方法：**
+
 ```typescript
 - setShowStartModal: (show: boolean) => void
 ```
 
 **更新的事件处理逻辑：**
+
 1. **session.list 事件**
    - 移除：`set({ showStartModal: !hasSessions })`
    - 原因：现在通过路由控制页面显示
@@ -1488,6 +1653,7 @@ import { useNavigate, useLocation } from "react-router";
 ### 技术架构变化
 
 #### 组件层次结构
+
 ```
 App (BrowserRouter)
 └── Routes
@@ -1499,6 +1665,7 @@ App (BrowserRouter)
 #### 状态管理流程
 
 **会话创建流程：**
+
 1. 用户在 Home 页面输入 prompt 和 cwd
 2. 点击 "Start Session" 触发 `handleStartFromModal()`
 3. 发送 `session.start` 事件到后端
@@ -1509,6 +1676,7 @@ App (BrowserRouter)
 8. Chat 组件渲染，加载会话历史
 
 **会话切换流程：**
+
 1. 用户点击侧边栏中的会话
 2. `handleSelectSession(sessionId)` 调用 `navigate(/chat/${sessionId})`
 3. URL 变化触发 Chat 组件重新渲染
@@ -1518,14 +1686,17 @@ App (BrowserRouter)
 #### WebSocket 管理
 
 **位置变化：**
+
 - 之前：在 App.tsx 中管理
 - 之后：在 Layout.tsx 中管理
 
 **连接状态共享：**
+
 - 通过 React Router 的 `<Outlet context={...} />` 传递
 - 子路由通过 `useOutletContext<LayoutContext>()` 访问
 
 **部分消息处理：**
+
 - Layout 维护一个 `partialMessageHandlerRef`
 - Chat 组件注册自己的 `handlePartialMessages` 函数
 - Layout 在收到 WebSocket 事件时同时调用注册的处理器
@@ -1534,6 +1705,7 @@ App (BrowserRouter)
 ### 保持兼容性
 
 #### 不变的部分
+
 - ✅ WebSocket 协议和消息格式
 - ✅ 后端 API 接口
 - ✅ Store 的核心状态结构（sessions, messages 等）
@@ -1543,11 +1715,13 @@ App (BrowserRouter)
 - ✅ 移动端响应式设计
 
 #### 弃用的组件
+
 - `StartSessionModal.tsx` - 功能已被 Home 页面替代，但文件保留以便向后兼容
 
 ### 视觉设计
 
 #### Home 页面
+
 - **背景色：** `bg-surface-cream` (#FAF9F6)
 - **主标题：** 4xl 字体，深色墨水色 (`text-ink-800`)
 - **表单卡片：** 白色背景，圆角边框，阴影效果
@@ -1555,6 +1729,7 @@ App (BrowserRouter)
 - **按钮：** 橙棕色强调色 (`bg-accent`)
 
 #### Chat 页面
+
 - 保持原有设计，奶油色背景
 - 消息卡片、权限面板、输入框等样式不变
 
@@ -1563,7 +1738,7 @@ App (BrowserRouter)
 ```json
 {
   "dependencies": {
-    "react-router": "^7.12.0"  // 新增
+    "react-router": "^7.12.0" // 新增
   }
 }
 ```
@@ -1571,6 +1746,7 @@ App (BrowserRouter)
 ### 测试建议
 
 #### 功能测试
+
 1. ✅ 访问 `/` 显示欢迎页面
 2. ✅ 输入 cwd 和 prompt，启动会话
 3. ✅ 自动导航到 `/chat/:sessionId`
@@ -1583,6 +1759,7 @@ App (BrowserRouter)
 10. ✅ 移动端侧边栏切换正常
 
 #### 边界情况
+
 - 无效的 sessionId URL 会重定向到首页
 - WebSocket 断开重连逻辑正常
 - 删除正在查看的会话时优雅处理
@@ -1606,15 +1783,20 @@ App (BrowserRouter)
 ### 开发者注意事项
 
 #### 添加新路由
+
 在 `App.tsx` 的 `<Routes>` 中添加新的 `<Route>` 组件。
 
 #### 访问路由上下文
+
 在子路由组件中使用：
+
 ```typescript
-const { connected, sendEvent, sessionsLoaded } = useOutletContext<LayoutContext>();
+const { connected, sendEvent, sessionsLoaded } =
+  useOutletContext<LayoutContext>();
 ```
 
 #### 导航到其他页面
+
 ```typescript
 import { useNavigate } from "react-router";
 const navigate = useNavigate();
@@ -1622,6 +1804,7 @@ navigate("/path");
 ```
 
 #### 获取 URL 参数
+
 ```typescript
 import { useParams } from "react-router";
 const { sessionId } = useParams<{ sessionId: string }>();
@@ -1630,6 +1813,7 @@ const { sessionId } = useParams<{ sessionId: string }>();
 ---
 
 **改动统计：**
+
 - 新增文件：3 个
 - 修改文件：4 个
 - 新增代码：~600 行

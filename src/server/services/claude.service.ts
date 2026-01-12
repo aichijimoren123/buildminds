@@ -1,4 +1,8 @@
-import { query, type SDKMessage, type PermissionResult } from "@anthropic-ai/claude-agent-sdk";
+import {
+  query,
+  type SDKMessage,
+  type PermissionResult,
+} from "@anthropic-ai/claude-agent-sdk";
 import type { ServerEvent, StreamMessage } from "../../types";
 import type { PendingPermission } from "../../libs/session-store";
 
@@ -19,10 +23,20 @@ const DEFAULT_CWD = process.cwd();
 
 export class ClaudeService {
   private activeRunners = new Map<string, AbortController>();
-  private pendingPermissions = new Map<string, Map<string, PendingPermission>>();
+  private pendingPermissions = new Map<
+    string,
+    Map<string, PendingPermission>
+  >();
 
   async run(options: RunClaudeOptions): Promise<RunnerHandle> {
-    const { sessionId, prompt, cwd, claudeSessionId, onEvent, onSessionUpdate } = options;
+    const {
+      sessionId,
+      prompt,
+      cwd,
+      claudeSessionId,
+      onEvent,
+      onSessionUpdate,
+    } = options;
     const abortController = new AbortController();
 
     // Store abort controller
@@ -38,14 +52,18 @@ export class ClaudeService {
     const sendMessage = (message: SDKMessage) => {
       onEvent({
         type: "stream.message",
-        payload: { sessionId, message }
+        payload: { sessionId, message },
       });
     };
 
-    const sendPermissionRequest = (toolUseId: string, toolName: string, input: unknown) => {
+    const sendPermissionRequest = (
+      toolUseId: string,
+      toolName: string,
+      input: unknown,
+    ) => {
       onEvent({
         type: "permission.request",
-        payload: { sessionId, toolUseId, toolName, input }
+        payload: { sessionId, toolUseId, toolName, input },
       });
     };
 
@@ -79,7 +97,7 @@ export class ClaudeService {
                     resolve: (result) => {
                       sessionPendingPermissions.delete(toolUseId);
                       resolve(result as PermissionResult);
-                    }
+                    },
                   });
 
                   // Handle abort
@@ -92,14 +110,18 @@ export class ClaudeService {
 
               // Auto-approve other tools
               return { behavior: "allow", updatedInput: input };
-            }
-          }
+            },
+          },
         });
 
         // Capture session_id from init message
         for await (const message of q) {
           // Extract session_id from system init message
-          if (message.type === "system" && "subtype" in message && message.subtype === "init") {
+          if (
+            message.type === "system" &&
+            "subtype" in message &&
+            message.subtype === "init"
+          ) {
             const sdkSessionId = message.session_id;
             if (sdkSessionId) {
               onSessionUpdate?.({ claudeSessionId: sdkSessionId });
@@ -111,10 +133,11 @@ export class ClaudeService {
 
           // Check for result to update session status
           if (message.type === "result") {
-            const status = message.subtype === "success" ? "completed" : "error";
+            const status =
+              message.subtype === "success" ? "completed" : "error";
             onEvent({
               type: "session.status",
-              payload: { sessionId, status }
+              payload: { sessionId, status },
             });
           }
         }
@@ -122,7 +145,7 @@ export class ClaudeService {
         // Query completed normally
         onEvent({
           type: "session.status",
-          payload: { sessionId, status: "completed" }
+          payload: { sessionId, status: "completed" },
         });
       } catch (error) {
         if ((error as Error).name === "AbortError") {
@@ -131,7 +154,7 @@ export class ClaudeService {
         }
         onEvent({
           type: "session.status",
-          payload: { sessionId, status: "error", error: String(error) }
+          payload: { sessionId, status: "error", error: String(error) },
         });
       } finally {
         // Cleanup
@@ -141,7 +164,7 @@ export class ClaudeService {
     })();
 
     return {
-      abort: () => this.abort(sessionId)
+      abort: () => this.abort(sessionId),
     };
   }
 
@@ -155,7 +178,15 @@ export class ClaudeService {
     this.pendingPermissions.delete(sessionId);
   }
 
-  resolvePermission(sessionId: string, toolUseId: string, result: { behavior: "allow" | "deny"; updatedInput?: unknown; message?: string }): void {
+  resolvePermission(
+    sessionId: string,
+    toolUseId: string,
+    result: {
+      behavior: "allow" | "deny";
+      updatedInput?: unknown;
+      message?: string;
+    },
+  ): void {
     const sessionPermissions = this.pendingPermissions.get(sessionId);
     if (sessionPermissions) {
       const pending = sessionPermissions.get(toolUseId);

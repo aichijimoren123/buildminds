@@ -5,7 +5,11 @@ export type PendingPermission = {
   toolUseId: string;
   toolName: string;
   input: unknown;
-  resolve: (result: { behavior: "allow" | "deny"; updatedInput?: unknown; message?: string }) => void;
+  resolve: (result: {
+    behavior: "allow" | "deny";
+    updatedInput?: unknown;
+    message?: string;
+  }) => void;
 };
 
 export type Session = {
@@ -47,7 +51,12 @@ export class SessionStore {
     this.loadSessions();
   }
 
-  createSession(options: { cwd?: string; allowedTools?: string; prompt?: string, title: string }): Session {
+  createSession(options: {
+    cwd?: string;
+    allowedTools?: string;
+    prompt?: string;
+    title: string;
+  }): Session {
     const id = crypto.randomUUID();
     const now = Date.now();
     const session: Session = {
@@ -57,14 +66,14 @@ export class SessionStore {
       cwd: options.cwd,
       allowedTools: options.allowedTools,
       lastPrompt: options.prompt,
-      pendingPermissions: new Map()
+      pendingPermissions: new Map(),
     };
     this.sessions.set(id, session);
     this.db
       .prepare(
         `insert into sessions
           (id, title, claude_session_id, status, cwd, allowed_tools, last_prompt, created_at, updated_at)
-         values (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+         values (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         id,
@@ -75,7 +84,7 @@ export class SessionStore {
         session.allowedTools ?? null,
         session.lastPrompt ?? null,
         now,
-        now
+        now,
       );
     return session;
   }
@@ -89,7 +98,7 @@ export class SessionStore {
       .query(
         `select id, title, claude_session_id, status, cwd, allowed_tools, last_prompt, created_at, updated_at
          from sessions
-         order by updated_at desc`
+         order by updated_at desc`,
       )
       .all() as Array<Record<string, unknown>>;
     return rows.map((row) => ({
@@ -99,9 +108,11 @@ export class SessionStore {
       cwd: row.cwd ? String(row.cwd) : undefined,
       allowedTools: row.allowed_tools ? String(row.allowed_tools) : undefined,
       lastPrompt: row.last_prompt ? String(row.last_prompt) : undefined,
-      claudeSessionId: row.claude_session_id ? String(row.claude_session_id) : undefined,
+      claudeSessionId: row.claude_session_id
+        ? String(row.claude_session_id)
+        : undefined,
       createdAt: Number(row.created_at),
-      updatedAt: Number(row.updated_at)
+      updatedAt: Number(row.updated_at),
     }));
   }
 
@@ -113,7 +124,7 @@ export class SessionStore {
          where cwd is not null and trim(cwd) != ''
          group by cwd
          order by latest desc
-         limit ?`
+         limit ?`,
       )
       .all(limit) as Array<Record<string, unknown>>;
     return rows.map((row) => String(row.cwd));
@@ -124,17 +135,18 @@ export class SessionStore {
       .query(
         `select id, title, claude_session_id, status, cwd, allowed_tools, last_prompt, created_at, updated_at
          from sessions
-         where id = ?`
+         where id = ?`,
       )
       .get(id) as Record<string, unknown> | null;
     if (!sessionRow) return null;
 
-    const messages = (this.db
-      .query(
-        `select data from messages where session_id = ? order by created_at asc`
-      )
-      .all(id) as Array<Record<string, unknown>>)
-      .map((row) => JSON.parse(String(row.data)) as StreamMessage);
+    const messages = (
+      this.db
+        .query(
+          `select data from messages where session_id = ? order by created_at asc`,
+        )
+        .all(id) as Array<Record<string, unknown>>
+    ).map((row) => JSON.parse(String(row.data)) as StreamMessage);
 
     return {
       session: {
@@ -142,13 +154,19 @@ export class SessionStore {
         title: String(sessionRow.title),
         status: sessionRow.status as SessionStatus,
         cwd: sessionRow.cwd ? String(sessionRow.cwd) : undefined,
-        allowedTools: sessionRow.allowed_tools ? String(sessionRow.allowed_tools) : undefined,
-        lastPrompt: sessionRow.last_prompt ? String(sessionRow.last_prompt) : undefined,
-        claudeSessionId: sessionRow.claude_session_id ? String(sessionRow.claude_session_id) : undefined,
+        allowedTools: sessionRow.allowed_tools
+          ? String(sessionRow.allowed_tools)
+          : undefined,
+        lastPrompt: sessionRow.last_prompt
+          ? String(sessionRow.last_prompt)
+          : undefined,
+        claudeSessionId: sessionRow.claude_session_id
+          ? String(sessionRow.claude_session_id)
+          : undefined,
         createdAt: Number(sessionRow.created_at),
-        updatedAt: Number(sessionRow.updated_at)
+        updatedAt: Number(sessionRow.updated_at),
       },
-      messages
+      messages,
     };
   }
 
@@ -160,17 +178,23 @@ export class SessionStore {
     return session;
   }
 
-  setAbortController(id: string, controller: AbortController | undefined): void {
+  setAbortController(
+    id: string,
+    controller: AbortController | undefined,
+  ): void {
     const session = this.sessions.get(id);
     if (!session) return;
     session.abortController = controller;
   }
 
   recordMessage(sessionId: string, message: StreamMessage): void {
-    const id = ('uuid' in message && message.uuid) ? String(message.uuid) : crypto.randomUUID();
+    const id =
+      "uuid" in message && message.uuid
+        ? String(message.uuid)
+        : crypto.randomUUID();
     this.db
       .prepare(
-        `insert or ignore into messages (id, session_id, data, created_at) values (?, ?, ?, ?)`
+        `insert or ignore into messages (id, session_id, data, created_at) values (?, ?, ?, ?)`,
       )
       .run(id, sessionId, JSON.stringify(message), Date.now());
   }
@@ -181,10 +205,13 @@ export class SessionStore {
       this.sessions.delete(id);
     }
     this.db.prepare(`delete from messages where session_id = ?`).run(id);
-    const result = this.db.prepare(`delete from sessions where id = ?`).run(id) as {
+    const result = this.db
+      .prepare(`delete from sessions where id = ?`)
+      .run(id) as {
       changes?: number;
     };
-    const removedFromDb = typeof result.changes === "number" ? result.changes > 0 : true;
+    const removedFromDb =
+      typeof result.changes === "number" ? result.changes > 0 : true;
     return removedFromDb || Boolean(existing);
   }
 
@@ -196,7 +223,7 @@ export class SessionStore {
       status: "status",
       cwd: "cwd",
       allowedTools: "allowed_tools",
-      lastPrompt: "last_prompt"
+      lastPrompt: "last_prompt",
     } as const;
 
     for (const key of Object.keys(updates) as Array<keyof typeof updatable>) {
@@ -239,7 +266,7 @@ export class SessionStore {
       .prepare(
         `insert into settings (key, value, updated_at)
          values (?, ?, ?)
-         on conflict(key) do update set value = ?, updated_at = ?`
+         on conflict(key) do update set value = ?, updated_at = ?`,
       )
       .run(key, value, Date.now(), value, Date.now());
   }
@@ -269,7 +296,7 @@ export class SessionStore {
         last_prompt text,
         created_at integer not null,
         updated_at integer not null
-      )`
+      )`,
     );
     this.db.run(
       `create table if not exists messages (
@@ -278,15 +305,17 @@ export class SessionStore {
         data text not null,
         created_at integer not null,
         foreign key (session_id) references sessions(id)
-      )`
+      )`,
     );
-    this.db.run(`create index if not exists messages_session_id on messages(session_id)`);
+    this.db.run(
+      `create index if not exists messages_session_id on messages(session_id)`,
+    );
     this.db.run(
       `create table if not exists settings (
         key text primary key,
         value text not null,
         updated_at integer not null
-      )`
+      )`,
     );
   }
 
@@ -294,19 +323,21 @@ export class SessionStore {
     const rows = this.db
       .query(
         `select id, title, claude_session_id, status, cwd, allowed_tools, last_prompt
-         from sessions`
+         from sessions`,
       )
       .all();
     for (const row of rows as Array<Record<string, unknown>>) {
       const session: Session = {
         id: String(row.id),
         title: String(row.title),
-        claudeSessionId: row.claude_session_id ? String(row.claude_session_id) : undefined,
+        claudeSessionId: row.claude_session_id
+          ? String(row.claude_session_id)
+          : undefined,
         status: row.status as SessionStatus,
         cwd: row.cwd ? String(row.cwd) : undefined,
         allowedTools: row.allowed_tools ? String(row.allowed_tools) : undefined,
         lastPrompt: row.last_prompt ? String(row.last_prompt) : undefined,
-        pendingPermissions: new Map()
+        pendingPermissions: new Map(),
       };
       this.sessions.set(session.id, session);
     }

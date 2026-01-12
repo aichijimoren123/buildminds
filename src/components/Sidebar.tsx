@@ -20,7 +20,7 @@ export function Sidebar({
   onDeleteSession,
   onOpenSettings,
   isMobileOpen = false,
-  onMobileClose
+  onMobileClose,
 }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -89,7 +89,9 @@ export function Sidebar({
   };
 
   const setCwd = useAppStore((state) => state.setCwd);
-  const setSelectedGitHubRepoId = useAppStore((state) => state.setSelectedGitHubRepoId);
+  const setSelectedGitHubRepoId = useAppStore(
+    (state) => state.setSelectedGitHubRepoId,
+  );
 
   const handleSelectRepo = (repoId: string, localPath: string) => {
     // Store the selected repo info in app store for use when creating a new session
@@ -111,17 +113,19 @@ export function Sidebar({
         />
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex h-full w-[80vw] max-w-[320px] flex-col gap-4 border-r border-ink-900/5 bg-[#FAF9F6] p-4 shadow-xl transition-transform duration-300 ease-out lg:fixed lg:inset-y-0 lg:left-0 lg:z-auto lg:w-[280px] lg:translate-x-0 lg:shadow-none ${isMobileOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
+        className={`fixed inset-y-0 left-0 z-40 flex h-full w-[80vw] max-w-[320px] flex-col gap-4 border-r border-ink-900/5 bg-[#FAF9F6] p-4 shadow-xl transition-transform duration-300 ease-out lg:fixed lg:inset-y-0 lg:left-0 lg:z-auto lg:w-[280px] lg:translate-x-0 lg:shadow-none ${
+          isMobileOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
         <div className="flex items-center justify-between gap-3">
           <div className="text-sm font-semibold text-ink-800">Sessions</div>
           <div className="flex items-center gap-2">
             <span
-              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${connected
-                ? "bg-success-light text-success"
-                : "bg-error-light text-error"
-                }`}
+              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                connected
+                  ? "bg-success-light text-success"
+                  : "bg-error-light text-error"
+              }`}
             >
               {connected ? "Connected" : "Offline"}
             </span>
@@ -131,7 +135,13 @@ export function Sidebar({
                 onClick={onMobileClose}
                 aria-label="Close sessions"
               >
-                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <path d="M6 6l12 12M18 6l-12 12" />
                 </svg>
               </button>
@@ -163,10 +173,11 @@ export function Sidebar({
           {sessionList.map((session) => (
             <div
               key={session.id}
-              className={`cursor-pointer rounded-xl border px-2 py-3 text-left transition ${isSessionActive(session.id)
-                ? "border-accent/30 bg-accent-subtle"
-                : "border-ink-900/5 bg-surface hover:bg-surface-tertiary"
-                }`}
+              className={`cursor-pointer rounded-xl border px-2 py-3 text-left transition ${
+                isSessionActive(session.id)
+                  ? "border-accent/30 bg-accent-subtle"
+                  : "border-ink-900/5 bg-surface hover:bg-surface-tertiary"
+              }`}
               onClick={() => handleSelectSession(session.id)}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
@@ -179,20 +190,21 @@ export function Sidebar({
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
-                  <div className={`text-[12px] font-medium text-ink-800 ${session.status === "running"
-                    ? "text-info/70"
-                    : session.status === "completed"
-                      ? "text-success/70"
-                      : session.status === "error"
-                        ? "text-error/70"
-                        : "text-muted"
-                    }`}>
+                  <div
+                    className={`text-[12px] font-medium text-ink-800 ${
+                      session.status === "running"
+                        ? "text-info/70"
+                        : session.status === "completed"
+                          ? "text-success/70"
+                          : session.status === "error"
+                            ? "text-error/70"
+                            : "text-muted"
+                    }`}
+                  >
                     {session.title}
                   </div>
                   <div className="flex items-center justify-between mt-0.5 text-xs text-muted">
-                    <span className="truncate">
-                      {formatCwd(session.cwd)}
-                    </span>
+                    <span className="truncate">{formatCwd(session.cwd)}</span>
                   </div>
                 </div>
 
@@ -204,7 +216,12 @@ export function Sidebar({
                       onClick={(event) => event.stopPropagation()}
                       onPointerDown={(event) => event.stopPropagation()}
                     >
-                      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="h-4 w-4"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
                         <circle cx="5" cy="12" r="1.7" />
                         <circle cx="12" cy="12" r="1.7" />
                         <circle cx="19" cy="12" r="1.7" />
@@ -258,18 +275,29 @@ export function Sidebar({
             </div>
           ))}
         </div>
-        <Dialog.Root open={!!resumeSessionId} onOpenChange={(open) => !open && setResumeSessionId(null)}>
+        <Dialog.Root
+          open={!!resumeSessionId}
+          onOpenChange={(open) => !open && setResumeSessionId(null)}
+        >
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 bg-ink-900/40 backdrop-blur-sm" />
             <Dialog.Content className="fixed left-1/2 top-1/2 w-[92vw] max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl">
               <div className="flex items-start justify-between gap-4">
-                <Dialog.Title className="text-lg font-semibold text-ink-800">Resume</Dialog.Title>
+                <Dialog.Title className="text-lg font-semibold text-ink-800">
+                  Resume
+                </Dialog.Title>
                 <Dialog.Close asChild>
                   <button
                     className="rounded-full p-1 text-ink-500 hover:bg-ink-900/10"
                     aria-label="Close dialog"
                   >
-                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
                       <path d="M6 6l12 12M18 6l-12 12" />
                     </svg>
                   </button>
@@ -285,11 +313,23 @@ export function Sidebar({
                   aria-label="Copy resume command"
                 >
                   {copied ? (
-                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
                       <path d="M5 12l4 4L19 6" />
                     </svg>
                   ) : (
-                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                    >
                       <rect x="9" y="9" width="11" height="11" rx="2" />
                       <path d="M5 15V5a2 2 0 0 1 2-2h10" />
                     </svg>

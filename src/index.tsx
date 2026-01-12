@@ -13,13 +13,14 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = resolve(__dirname, "..");
 const distDir = resolve(rootDir, "dist");
 const distIndex = resolve(distDir, "index.html");
-const useDist = process.env.CLAUDE_CODE_WEBUI_USE_DIST !== "0" && existsSync(distIndex);
+const useDist =
+  process.env.CLAUDE_CODE_WEBUI_USE_DIST !== "0" && existsSync(distIndex);
 const distPrefix = distDir + sep;
 const devIndex = useDist ? null : (await import("./index.html")).default;
 const indexFile = useDist ? Bun.file(distIndex) : devIndex;
 const indexRoutes = {
   "/": indexFile,
-  "/index.html": indexFile
+  "/index.html": indexFile,
 };
 
 const staticContentTypes: Record<string, string> = {
@@ -35,45 +36,59 @@ const staticContentTypes: Record<string, string> = {
   ".mjs": "application/javascript; charset=utf-8",
   ".png": "image/png",
   ".svg": "image/svg+xml",
-  ".webp": "image/webp"
+  ".webp": "image/webp",
 };
 
 // Server configuration
 const PORT = Number(process.env.PORT ?? 10086);
 const rawCorsOrigin = process.env.CORS_ORIGIN ?? "*";
-const corsOrigins = rawCorsOrigin.split(",").map((origin) => origin.trim()).filter(Boolean);
+const corsOrigins = rawCorsOrigin
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 const corsOrigin = corsOrigins.length === 1 ? corsOrigins[0] : corsOrigins;
 
 // Initialize Hono app
 const app = new Hono();
 
 // Logger middleware - custom formatted request logs
-app.use("*", logger((message, ...rest) => {
-  // Parse the log message to extract method, path, status, and time
-  const match = message.match(/^(-->|<--)\s+(\w+)\s+(.+?)(?:\s+(\d+)\s+(.+))?$/);
-  if (match) {
-    const [, arrow, method, path, status, time] = match;
-    if (arrow === "-->") {
-      // Response log with status code
-      const statusColor = status && parseInt(status) >= 400 ? "\x1b[31m" : "\x1b[32m";
-      const methodColor = "\x1b[36m"; // Cyan
-      const reset = "\x1b[0m";
-      const dim = "\x1b[2m";
-      console.log(`${dim}[${new Date().toLocaleTimeString('zh-CN', { hour12: false })}]${reset} ${methodColor}${method}${reset} ${path} ${statusColor}${status}${reset} ${dim}${time}${reset}`);
+app.use(
+  "*",
+  logger((message, ...rest) => {
+    // Parse the log message to extract method, path, status, and time
+    const match = message.match(
+      /^(-->|<--)\s+(\w+)\s+(.+?)(?:\s+(\d+)\s+(.+))?$/,
+    );
+    if (match) {
+      const [, arrow, method, path, status, time] = match;
+      if (arrow === "-->") {
+        // Response log with status code
+        const statusColor =
+          status && parseInt(status) >= 400 ? "\x1b[31m" : "\x1b[32m";
+        const methodColor = "\x1b[36m"; // Cyan
+        const reset = "\x1b[0m";
+        const dim = "\x1b[2m";
+        console.log(
+          `${dim}[${new Date().toLocaleTimeString("zh-CN", { hour12: false })}]${reset} ${methodColor}${method}${reset} ${path} ${statusColor}${status}${reset} ${dim}${time}${reset}`,
+        );
+      }
+    } else {
+      // Fallback to original message
+      console.log(message, ...rest);
     }
-  } else {
-    // Fallback to original message
-    console.log(message, ...rest);
-  }
-}));
+  }),
+);
 
 // CORS middleware
-app.use("*", cors({
-  origin: corsOrigin,
-  allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowHeaders: ["Content-Type", "Authorization"],
-  credentials: corsOrigin !== "*",
-}));
+app.use(
+  "*",
+  cors({
+    origin: corsOrigin,
+    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
+    credentials: corsOrigin !== "*",
+  }),
+);
 
 // Setup all routes and get WebSocket controller
 const { wsController } = setupRoutes(app);
@@ -107,8 +122,8 @@ const server = serve({
             if (contentType) {
               return new Response(file, {
                 headers: {
-                  "Content-Type": contentType
-                }
+                  "Content-Type": contentType,
+                },
               });
             }
             return file;
@@ -128,7 +143,7 @@ const server = serve({
     },
     message(ws, message) {
       wsController.handleMessage(ws, message);
-    }
+    },
   },
   development: process.env.NODE_ENV !== "production" && {
     // Enable browser hot reloading in development

@@ -73,6 +73,8 @@ try {
 
 // Better-auth will create its own tables (user, session, account, verification) automatically
 console.log("✓ Database initialized");
-console.log("Note: Better-auth tables (user, session, account, verification) will be created automatically on first request");
+console.log(
+  "Note: Better-auth tables (user, session, account, verification) will be created automatically on first request",
+);
 
 db.close();

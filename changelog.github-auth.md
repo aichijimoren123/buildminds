@@ -3,10 +3,13 @@
 ## 2026-01-12 - Better Auth Database Schema Implementation
 
 ### Overview
+
 Successfully implemented Better Auth database schema and resolved the GitHub OAuth "404 Not Found" issue by creating the required authentication tables.
 
 ### Problem
+
 When clicking the "Connect GitHub" button, the application returned:
+
 ```
 找不到以下 Web 地址的网页： http://localhost:10086/api/auth/github
 HTTP/1.1 404 Not Found
@@ -17,7 +20,9 @@ HTTP/1.1 404 Not Found
 ### Solution
 
 #### 1. Generated Better Auth Schema
+
 Used Better Auth CLI to generate the official Drizzle ORM schema:
+
 ```bash
 bunx @better-auth/cli@latest generate
 ```
@@ -25,6 +30,7 @@ bunx @better-auth/cli@latest generate
 This created `auth-schema.ts` with the complete Better Auth table definitions following the official specification.
 
 #### 2. Organized Schema Files
+
 Refactored the generated schema into modular files under `src/server/database/schema/`:
 
 - **[user.schema.ts](src/server/database/schema/user.schema.ts)**
@@ -57,10 +63,11 @@ Refactored the generated schema into modular files under `src/server/database/sc
 #### 3. Updated Configuration Files
 
 **Updated [drizzle.config.ts](drizzle.config.ts)**:
+
 ```typescript
 export default defineConfig({
   schema: "./src/server/database/schema/index.ts", // ✅ Fixed path
-  out: "./src/server/database/migrations",        // ✅ Fixed path
+  out: "./src/server/database/migrations", // ✅ Fixed path
   dialect: "sqlite",
   dbCredentials: {
     url: process.env.DB_PATH || "./webui.db",
@@ -69,6 +76,7 @@ export default defineConfig({
 ```
 
 **Updated [src/server/database/schema/index.ts](src/server/database/schema/index.ts)**:
+
 ```typescript
 // Better Auth tables
 export * from "./user.schema";
@@ -83,11 +91,13 @@ export * from "./auth-relations";
 Created migration script: [scripts/migrate-auth-tables.ts](scripts/migrate-auth-tables.ts)
 
 Executed migration:
+
 ```bash
 bun run scripts/migrate-auth-tables.ts
 ```
 
 **Migration Results**:
+
 ```
 ✅ Better Auth tables created successfully!
 
@@ -105,6 +115,7 @@ All tables in database:
 ### Database Schema Details
 
 #### User Table
+
 ```sql
 CREATE TABLE "user" (
   "id" text PRIMARY KEY NOT NULL,
@@ -119,6 +130,7 @@ CREATE UNIQUE INDEX "user_email_unique" ON "user" ("email");
 ```
 
 #### Session Table
+
 ```sql
 CREATE TABLE "session" (
   "id" text PRIMARY KEY NOT NULL,
@@ -136,6 +148,7 @@ CREATE INDEX "session_userId_idx" ON "session" ("user_id");
 ```
 
 #### Account Table (OAuth)
+
 ```sql
 CREATE TABLE "account" (
   "id" text PRIMARY KEY NOT NULL,
@@ -157,6 +170,7 @@ CREATE INDEX "account_userId_idx" ON "account" ("user_id");
 ```
 
 #### Verification Table
+
 ```sql
 CREATE TABLE "verification" (
   "id" text PRIMARY KEY NOT NULL,
@@ -185,6 +199,7 @@ CREATE INDEX "verification_identifier_idx" ON "verification" ("identifier");
 ### Environment Variables
 
 Confirmed `.env` configuration:
+
 ```bash
 PUBLIC_URL=http://localhost:10086
 GITHUB_CLIENT_ID=Ov23livPBc1K4W2bNhTZ
@@ -194,6 +209,7 @@ GITHUB_CLIENT_SECRET=a2e3db0063ade31ad1ef18f79b7b0d14b598dcb9
 ### GitHub OAuth Configuration
 
 **Authorization callback URL** in GitHub OAuth App settings:
+
 ```
 http://127.0.0.1:10086/api/auth/callback/github
 ```
@@ -205,6 +221,7 @@ Note: Better Auth automatically handles the `/api/auth/callback/github` endpoint
 To complete the setup:
 
 1. **Restart the development server**:
+
    ```bash
    bun run dev
    ```
@@ -215,6 +232,7 @@ To complete the setup:
    - After authorization, redirect back with user session
 
 3. **Verify authentication endpoints**:
+
    ```bash
    # Check session endpoint
    curl http://localhost:10086/api/auth/session
@@ -250,6 +268,7 @@ open http://localhost:10086/api/auth/sign-in/social
 ### Troubleshooting
 
 If GitHub OAuth still shows 404:
+
 1. Ensure server is restarted after migration
 2. Check `.env` has correct `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`
 3. Verify GitHub OAuth app callback URL matches: `http://127.0.0.1:10086/api/auth/callback/github`

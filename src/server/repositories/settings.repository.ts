@@ -19,10 +19,13 @@ export class SettingsRepository extends BaseRepository {
   async getAll(): Promise<Record<string, string>> {
     try {
       const allSettings = await this.db.select().from(settings);
-      return allSettings.reduce((acc, setting) => {
-        acc[setting.key] = setting.value;
-        return acc;
-      }, {} as Record<string, string>);
+      return allSettings.reduce(
+        (acc, setting) => {
+          acc[setting.key] = setting.value;
+          return acc;
+        },
+        {} as Record<string, string>,
+      );
     } catch (error) {
       this.handleError(error, "get all settings");
     }

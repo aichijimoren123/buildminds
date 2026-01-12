@@ -12,7 +12,9 @@ export function GitHubAuthButton() {
   };
 
   if (loading) {
-    return <div className="h-8 w-24 bg-surface-secondary animate-pulse rounded-lg" />;
+    return (
+      <div className="h-8 w-24 bg-surface-secondary animate-pulse rounded-lg" />
+    );
   }
 
   if (authenticated && user) {
@@ -26,7 +28,9 @@ export function GitHubAuthButton() {
               className="w-6 h-6 rounded-full"
             />
           )}
-          <span className="text-sm font-medium text-ink-800">{user.username}</span>
+          <span className="text-sm font-medium text-ink-800">
+            {user.username}
+          </span>
         </div>
         <button
           onClick={logout}

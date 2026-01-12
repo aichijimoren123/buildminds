@@ -24,7 +24,9 @@ export class GitHubService {
   private baseRepoPath: string;
 
   constructor() {
-    this.baseRepoPath = process.env.GITHUB_REPOS_PATH || path.join(process.cwd(), ".claude-repos");
+    this.baseRepoPath =
+      process.env.GITHUB_REPOS_PATH ||
+      path.join(process.cwd(), ".claude-repos");
   }
 
   async ensureRepoDirectory(): Promise<void> {
@@ -39,7 +41,7 @@ export class GitHubService {
         sort: "updated",
         affiliation: "owner,collaborator,organization_member",
       });
-      return data.map(repo => ({
+      return data.map((repo) => ({
         name: repo.name,
         fullName: repo.full_name,
         cloneUrl: repo.clone_url,
@@ -54,10 +56,17 @@ export class GitHubService {
     }
   }
 
-  async cloneRepo(cloneUrl: string, repoFullName: string, accessToken: string): Promise<string> {
+  async cloneRepo(
+    cloneUrl: string,
+    repoFullName: string,
+    accessToken: string,
+  ): Promise<string> {
     await this.ensureRepoDirectory();
 
-    const localPath = path.join(this.baseRepoPath, repoFullName.replace("/", "-"));
+    const localPath = path.join(
+      this.baseRepoPath,
+      repoFullName.replace("/", "-"),
+    );
 
     try {
       await fs.rm(localPath, { recursive: true, force: true });
@@ -66,7 +75,10 @@ export class GitHubService {
     }
 
     try {
-      const authenticatedUrl = cloneUrl.replace("https://", `https://x-access-token:${accessToken}@`);
+      const authenticatedUrl = cloneUrl.replace(
+        "https://",
+        `https://x-access-token:${accessToken}@`,
+      );
       const git: SimpleGit = simpleGit();
       await git.clone(authenticatedUrl, localPath, ["--depth", "1"]);
 
@@ -83,7 +95,10 @@ export class GitHubService {
 
       const remoteUrl = (await git.getRemotes(true))[0]?.refs?.fetch;
       if (remoteUrl) {
-        const authenticatedUrl = remoteUrl.replace("https://", `https://x-access-token:${accessToken}@`);
+        const authenticatedUrl = remoteUrl.replace(
+          "https://",
+          `https://x-access-token:${accessToken}@`,
+        );
         await git.remote(["set-url", "origin", authenticatedUrl]);
       }
 
@@ -94,7 +109,11 @@ export class GitHubService {
     }
   }
 
-  async commitAndPush(localPath: string, message: string, accessToken: string): Promise<void> {
+  async commitAndPush(
+    localPath: string,
+    message: string,
+    accessToken: string,
+  ): Promise<void> {
     try {
       const git: SimpleGit = simpleGit(localPath);
 
@@ -110,7 +129,10 @@ export class GitHubService {
 
       const remoteUrl = (await git.getRemotes(true))[0]?.refs?.fetch;
       if (remoteUrl) {
-        const authenticatedUrl = remoteUrl.replace("https://", `https://x-access-token:${accessToken}@`);
+        const authenticatedUrl = remoteUrl.replace(
+          "https://",
+          `https://x-access-token:${accessToken}@`,
+        );
         await git.remote(["set-url", "origin", authenticatedUrl]);
       }
 

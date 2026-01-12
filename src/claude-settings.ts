@@ -12,10 +12,12 @@ export const CLAUDE_SETTINGS_ENV_KEYS = [
   "ANTHROPIC_DEFAULT_SONNET_MODEL",
   "ANTHROPIC_MODEL",
   "API_TIMEOUT_MS",
-  "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"
+  "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
 ] as const;
 
-export function loadClaudeSettingsEnv(sessionStore?: SessionStore): ClaudeSettingsEnv {
+export function loadClaudeSettingsEnv(
+  sessionStore?: SessionStore,
+): ClaudeSettingsEnv {
   // First, try loading from ~/.claude/settings.json
   try {
     const settingsPath = join(homedir(), ".claude", "settings.json");
@@ -23,7 +25,11 @@ export function loadClaudeSettingsEnv(sessionStore?: SessionStore): ClaudeSettin
     const parsed = JSON.parse(raw) as { env?: Record<string, unknown> };
     if (parsed.env) {
       for (const [key, value] of Object.entries(parsed.env)) {
-        if (process.env[key] === undefined && value !== undefined && value !== null) {
+        if (
+          process.env[key] === undefined &&
+          value !== undefined &&
+          value !== null
+        ) {
           process.env[key] = String(value);
         }
       }
@@ -50,4 +56,3 @@ export function loadClaudeSettingsEnv(sessionStore?: SessionStore): ClaudeSettin
 }
 
 export const claudeCodeEnv = loadClaudeSettingsEnv();
-

@@ -5,14 +5,54 @@ interface SettingsModalProps {
 }
 
 const SETTINGS_FIELDS = [
-  { key: "ANTHROPIC_AUTH_TOKEN", label: "API Key", type: "password" as const, placeholder: "sk-ant-..." },
-  { key: "ANTHROPIC_BASE_URL", label: "Base URL", type: "text" as const, placeholder: "https://api.anthropic.com" },
-  { key: "ANTHROPIC_MODEL", label: "Default Model", type: "text" as const, placeholder: "claude-sonnet-4-5-20250929" },
-  { key: "ANTHROPIC_DEFAULT_SONNET_MODEL", label: "Sonnet Model", type: "text" as const, placeholder: "claude-sonnet-4-5-20250929" },
-  { key: "ANTHROPIC_DEFAULT_OPUS_MODEL", label: "Opus Model", type: "text" as const, placeholder: "claude-opus-4-5-20251101" },
-  { key: "ANTHROPIC_DEFAULT_HAIKU_MODEL", label: "Haiku Model", type: "text" as const, placeholder: "claude-3-5-haiku-20241022" },
-  { key: "API_TIMEOUT_MS", label: "API Timeout (ms)", type: "text" as const, placeholder: "600000" },
-  { key: "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", label: "Disable Non-Essential Traffic", type: "text" as const, placeholder: "false" }
+  {
+    key: "ANTHROPIC_AUTH_TOKEN",
+    label: "API Key",
+    type: "password" as const,
+    placeholder: "sk-ant-...",
+  },
+  {
+    key: "ANTHROPIC_BASE_URL",
+    label: "Base URL",
+    type: "text" as const,
+    placeholder: "https://api.anthropic.com",
+  },
+  {
+    key: "ANTHROPIC_MODEL",
+    label: "Default Model",
+    type: "text" as const,
+    placeholder: "claude-sonnet-4-5-20250929",
+  },
+  {
+    key: "ANTHROPIC_DEFAULT_SONNET_MODEL",
+    label: "Sonnet Model",
+    type: "text" as const,
+    placeholder: "claude-sonnet-4-5-20250929",
+  },
+  {
+    key: "ANTHROPIC_DEFAULT_OPUS_MODEL",
+    label: "Opus Model",
+    type: "text" as const,
+    placeholder: "claude-opus-4-5-20251101",
+  },
+  {
+    key: "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+    label: "Haiku Model",
+    type: "text" as const,
+    placeholder: "claude-3-5-haiku-20241022",
+  },
+  {
+    key: "API_TIMEOUT_MS",
+    label: "API Timeout (ms)",
+    type: "text" as const,
+    placeholder: "600000",
+  },
+  {
+    key: "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
+    label: "Disable Non-Essential Traffic",
+    type: "text" as const,
+    placeholder: "false",
+  },
 ];
 
 export function SettingsModal({ onClose }: SettingsModalProps) {
@@ -44,9 +84,9 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
       const response = await fetch("/api/settings", {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ settings })
+        body: JSON.stringify({ settings }),
       });
 
       if (!response.ok) {
@@ -82,7 +122,13 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
             onClick={onClose}
             aria-label="Close"
           >
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              viewBox="0 0 24 24"
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
@@ -127,7 +173,10 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
 
         <div className="flex items-center justify-between gap-3 border-t border-ink-900/10 p-6">
           <div className="text-xs text-muted">
-            Values saved here override <code className="rounded bg-ink-900/5 px-1.5 py-0.5">~/.claude/settings.json</code>
+            Values saved here override{" "}
+            <code className="rounded bg-ink-900/5 px-1.5 py-0.5">
+              ~/.claude/settings.json
+            </code>
           </div>
           <div className="flex gap-3">
             <button

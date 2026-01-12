@@ -1,5 +1,9 @@
 import { desc, eq } from "drizzle-orm";
-import { githubRepos, type GithubRepo, type InsertGithubRepo } from "../database/schema";
+import {
+  githubRepos,
+  type GithubRepo,
+  type InsertGithubRepo,
+} from "../database/schema";
 import { BaseRepository } from "./base.repository";
 
 export class GithubRepoRepository extends BaseRepository {
@@ -37,7 +41,10 @@ export class GithubRepoRepository extends BaseRepository {
     }
   }
 
-  async findByUserIdAndRepoName(userId: string, repoFullName: string): Promise<GithubRepo | null> {
+  async findByUserIdAndRepoName(
+    userId: string,
+    repoFullName: string,
+  ): Promise<GithubRepo | null> {
     try {
       const [repo] = await this.db
         .select()
@@ -51,7 +58,10 @@ export class GithubRepoRepository extends BaseRepository {
     }
   }
 
-  async update(id: string, data: Partial<InsertGithubRepo>): Promise<GithubRepo | null> {
+  async update(
+    id: string,
+    data: Partial<InsertGithubRepo>,
+  ): Promise<GithubRepo | null> {
     try {
       const [updated] = await this.db
         .update(githubRepos)
@@ -66,7 +76,9 @@ export class GithubRepoRepository extends BaseRepository {
 
   async delete(id: string): Promise<boolean> {
     try {
-      const result = await this.db.delete(githubRepos).where(eq(githubRepos.id, id));
+      const result = await this.db
+        .delete(githubRepos)
+        .where(eq(githubRepos.id, id));
       return result.rowsAffected > 0;
     } catch (error) {
       this.handleError(error, "delete github repo");

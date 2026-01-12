@@ -54,12 +54,16 @@ try {
   const columns = tableInfo.map((col: any) => col.name);
 
   if (!columns.includes("user_id")) {
-    db.run("ALTER TABLE sessions ADD COLUMN user_id TEXT REFERENCES users(id) ON DELETE CASCADE");
+    db.run(
+      "ALTER TABLE sessions ADD COLUMN user_id TEXT REFERENCES users(id) ON DELETE CASCADE",
+    );
     console.log("✓ Added user_id column to sessions");
   }
 
   if (!columns.includes("github_repo_id")) {
-    db.run("ALTER TABLE sessions ADD COLUMN github_repo_id TEXT REFERENCES github_repos(id) ON DELETE SET NULL");
+    db.run(
+      "ALTER TABLE sessions ADD COLUMN github_repo_id TEXT REFERENCES github_repos(id) ON DELETE SET NULL",
+    );
     console.log("✓ Added github_repo_id column to sessions");
   }
 

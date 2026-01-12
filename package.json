@@ -37,6 +37,7 @@
     "highlight.js": "^11.10.0",
     "hono": "^4.11.3",
     "localforage": "^1.10.0",
+    "lucide-react": "^0.562.0",
     "nanoid": "^5.1.6",
     "react": "^19",
     "react-dom": "^19",
@@ -58,6 +59,7 @@
     "bun-plugin-tailwind": "^0.1.2",
     "drizzle-kit": "^0.31.8",
     "postcss": "^8.4.38",
+    "prettier": "3.7.4",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.4.5"
   },

@@ -10,12 +10,11 @@ pre code.hljs {
 :root {
   color-scheme: light;
   --always-white: 0 0% 100%;
-  --always-black: 0 0% 0%
+  --always-black: 0 0% 0%;
 }
 
-
-[data-theme=claude],
-[data-theme=claude][data-mode=light] {
+[data-theme="claude"],
+[data-theme="claude"][data-mode="light"] {
   --accent-brand: 15 63.1% 59.6%;
   --accent-main-000: 15 54.2% 51.2%;
   --accent-main-100: 15 54.2% 51.2%;
@@ -63,10 +62,10 @@ pre code.hljs {
   --warning-000: 45 91.8% 19%;
   --warning-100: 39 88.8% 28%;
   --warning-200: 39 88.8% 28%;
-  --warning-900: 38 65.9% 92%
+  --warning-900: 38 65.9% 92%;
 }
 
-[data-theme=claude][data-mode=dark] {
+[data-theme="claude"][data-mode="dark"] {
   --accent-brand: 15 63.1% 59.6%;
   --accent-main-000: 15 54.2% 51.2%;
   --accent-main-100: 15 63.1% 59.6%;
@@ -114,11 +113,11 @@ pre code.hljs {
   --warning-000: 40 71% 50%;
   --warning-100: 39 93.4% 35.9%;
   --warning-200: 39 93.4% 35.9%;
-  --warning-900: 45 94.8% 15.1%
+  --warning-900: 45 94.8% 15.1%;
 }
 
 @media (prefers-color-scheme: dark) {
-  [data-theme=claude] {
+  [data-theme="claude"] {
     --accent-brand: 15 63.1% 59.6%;
     --accent-main-000: 15 54.2% 51.2%;
     --accent-main-100: 15 63.1% 59.6%;
@@ -166,12 +165,12 @@ pre code.hljs {
     --warning-000: 40 71% 50%;
     --warning-100: 39 93.4% 35.9%;
     --warning-200: 39 93.4% 35.9%;
-    --warning-900: 45 94.8% 15.1%
+    --warning-900: 45 94.8% 15.1%;
   }
 }
 
-[data-theme=console],
-[data-theme=console][data-mode=dark] {
+[data-theme="console"],
+[data-theme="console"][data-mode="dark"] {
   --accent-brand: 15 63.1% 59.6%;
   --accent-main-000: 18 50.4% 47.5%;
   --accent-main-100: 18 56.8% 43.5%;
@@ -219,7 +218,7 @@ pre code.hljs {
   --warning-000: 40 71% 50%;
   --warning-100: 39 93.4% 35.9%;
   --warning-200: 39 93.4% 35.9%;
-  --warning-900: 45 94.8% 15.1%
+  --warning-900: 45 94.8% 15.1%;
 }
 
 html,
@@ -229,9 +228,14 @@ body,
 }
 
 body {
-  font-family: "Söhne", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  background-color: #FFFFFF;
-  color: #1A1915;
+  font-family:
+    "Söhne",
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    sans-serif;
+  background-color: #ffffff;
+  color: #1a1915;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -270,16 +274,17 @@ input.mono {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #D1D1CC;
+  background: #d1d1cc;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #9B9B96;
+  background: #9b9b96;
 }
 
 .font-serif {
   font-family: sans-serif;
 }
 
-@layer components {}
+@layer components {
+}

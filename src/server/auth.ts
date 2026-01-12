@@ -14,7 +14,9 @@ export const auth = betterAuth({
   },
   baseURL: process.env.PUBLIC_URL || "http://localhost:10086",
   trustedOrigins: [process.env.PUBLIC_URL || "http://localhost:10086"],
-  secret: process.env.BETTER_AUTH_SECRET || "your-secret-key-change-this-in-production",
+  secret:
+    process.env.BETTER_AUTH_SECRET ||
+    "your-secret-key-change-this-in-production",
   session: {
     cookieCache: {
       enabled: true,

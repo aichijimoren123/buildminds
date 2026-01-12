@@ -29,18 +29,23 @@ export function setupRoutes(app: Hono) {
       // Get all settings synchronously from settingsRepo
       // This is a workaround to match the SessionStore interface
       const result: Record<string, string> = {};
-      settingsRepo.getAll().then(settings => {
+      settingsRepo.getAll().then((settings) => {
         Object.assign(result, settings);
       });
       return result;
-    }
+    },
   };
   loadClaudeSettingsEnv(sessionStoreLike as any);
 
   // Initialize services
   const wsService = new WebSocketService();
   const claudeService = new ClaudeService();
-  const sessionService = new SessionService(sessionRepo, messageRepo, claudeService, wsService);
+  const sessionService = new SessionService(
+    sessionRepo,
+    messageRepo,
+    claudeService,
+    wsService,
+  );
   const settingsService = new SettingsService(settingsRepo);
 
   // Initialize controllers

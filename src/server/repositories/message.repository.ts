@@ -5,10 +5,7 @@ import { BaseRepository } from "./base.repository";
 export class MessageRepository extends BaseRepository {
   async create(data: InsertMessage): Promise<Message> {
     try {
-      const [message] = await this.db
-        .insert(messages)
-        .values(data)
-        .returning();
+      const [message] = await this.db.insert(messages).values(data).returning();
       return message;
     } catch (error) {
       this.handleError(error, "create message");
@@ -41,10 +38,7 @@ export class MessageRepository extends BaseRepository {
 
   async batchCreate(data: InsertMessage[]): Promise<Message[]> {
     try {
-      return await this.db
-        .insert(messages)
-        .values(data)
-        .returning();
+      return await this.db.insert(messages).values(data).returning();
     } catch (error) {
       this.handleError(error, "batch create messages");
     }

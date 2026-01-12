@@ -1,12 +1,60 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ClientEvent } from "../types";
 import { useAppStore } from "../store/useAppStore";
+import {
+  ArrowUp,
+  Cable,
+  Mic,
+  Plus,
+  Square,
+  Github,
+  Globe,
+  Mail,
+  HardDrive,
+  Calendar,
+  Slack,
+  Settings,
+} from "lucide-react";
 
 const DEFAULT_ALLOWED_TOOLS = "Read,Edit,Bash";
 
 interface PromptInputProps {
   sendEvent: (event: ClientEvent) => void;
+  variant?: "home" | "chat";
 }
+
+const CONNECTORS = [
+  {
+    id: "github",
+    name: "GitHub",
+    icon: Github,
+    type: "toggle",
+    connected: true,
+  },
+  {
+    id: "browser",
+    name: "My Browser",
+    icon: Globe,
+    type: "action",
+    action: "安装",
+  },
+  { id: "gmail", name: "Gmail", icon: Mail, type: "action", action: "连接" },
+  {
+    id: "drive",
+    name: "Google Drive",
+    icon: HardDrive,
+    type: "action",
+    action: "连接",
+  },
+  {
+    id: "calendar",
+    name: "Google Calendar",
+    icon: Calendar,
+    type: "action",
+    action: "连接",
+  },
+  { id: "slack", name: "Slack", icon: Slack, type: "action", action: "连接" },
+];
 
 export function usePromptActions(sendEvent: (event: ClientEvent) => void) {
   const prompt = useAppStore((state) => state.prompt);
@@ -42,20 +90,22 @@ export function usePromptActions(sendEvent: (event: ClientEvent) => void) {
           title,
           prompt,
           cwd: cwd.trim() || undefined,
-          allowedTools: DEFAULT_ALLOWED_TOOLS
-        }
+          allowedTools: DEFAULT_ALLOWED_TOOLS,
+        },
       });
     } else {
       if (activeSession?.status === "running") {
-        setGlobalError("Session is still running. Please wait for it to finish.");
+        setGlobalError(
+          "Session is still running. Please wait for it to finish.",
+        );
         return;
       }
       sendEvent({
         type: "session.continue",
         payload: {
           sessionId: activeSessionId,
-          prompt
-        }
+          prompt,
+        },
       });
     }
 
@@ -68,14 +118,14 @@ export function usePromptActions(sendEvent: (event: ClientEvent) => void) {
     sendEvent,
     setGlobalError,
     setPendingStart,
-    setPrompt
+    setPrompt,
   ]);
 
   const handleStop = useCallback(() => {
     if (!activeSessionId) return;
     sendEvent({
       type: "session.stop",
-      payload: { sessionId: activeSessionId }
+      payload: { sessionId: activeSessionId },
     });
   }, [activeSessionId, sendEvent]);
 
@@ -93,13 +143,35 @@ export function usePromptActions(sendEvent: (event: ClientEvent) => void) {
     isRunning,
     handleSend,
     handleStop,
-    handleStartFromModal
+    handleStartFromModal,
   };
 }
 
-export function PromptInput({ sendEvent }: PromptInputProps) {
-  const { prompt, setPrompt, isRunning, handleSend, handleStop } = usePromptActions(sendEvent);
+export function PromptInput({ sendEvent, variant = "chat" }: PromptInputProps) {
+  const { prompt, setPrompt, isRunning, handleSend, handleStop } =
+    usePromptActions(sendEvent);
   const promptRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const [showConnectors, setShowConnectors] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Click outside to close
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowConnectors(false);
+      }
+    }
+    if (showConnectors) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showConnectors]);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key !== "Enter" || event.shiftKey) return;
@@ -123,40 +195,139 @@ export function PromptInput({ sendEvent }: PromptInputProps) {
     promptRef.current.style.height = `${promptRef.current.scrollHeight}px`;
   }, [prompt]);
 
+  const containerClasses =
+    variant === "chat"
+      ? "w-full bottom-0 left-0 right-0 pb-6 px-4 lg:pb-10 pt-4 z-50"
+      : "relative w-full z-50";
+
   return (
-    <section className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-surface via-surface to-transparent pb-6 px-2 lg:pb-8 pt-8 lg:ml-[280px]">
-      <div className="mx-auto flex w-full max-w-full items-end gap-3 rounded-2xl border border-ink-900/10 bg-surface px-4 py-3 shadow-card lg:max-w-3xl">
-        <textarea
-          rows={1}
-          className="flex-1 resize-none bg-transparent py-1.5 text-sm text-ink-800 placeholder:text-muted focus:outline-none"
-          placeholder="Describe what you want Claude Code to handle..."
-          value={prompt}
-          onChange={(event) => setPrompt(event.target.value)}
-          onKeyDown={handleKeyDown}
-          onInput={handleInput}
-          ref={promptRef}
-        />
-        <button
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors ${isRunning
-            ? "bg-error text-white hover:bg-error/90"
-            : "bg-accent text-white hover:bg-accent-hover"
-            }`}
-          onClick={isRunning ? handleStop : handleSend}
-          aria-label={isRunning ? "Stop session" : "Send prompt"}
-        >
-          {isRunning ? (
-            <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-              <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" />
-            </svg>
-          ) : (
-            <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-              <path
-                d="M3.4 20.6 21 12 3.4 3.4l2.8 7.2L16 12l-9.8 1.4-2.8 7.2Z"
-                fill="currentColor"
-              />
-            </svg>
-          )}
-        </button>
+    <section className={containerClasses}>
+      <div className="mx-auto w-full max-w-3xl">
+        {/* 主容器：大圆角，白色背景，移除阴影 */}
+        <div className="relative flex flex-col rounded-[32px] bg-white ring-1 ring-black/5">
+          {/* 上半部分：输入框 + 操作按钮 */}
+          <div className="p-5 pb-3">
+            {/* 1. 文本输入区域 */}
+            <textarea
+              rows={1}
+              className="w-full resize-none bg-transparent text-lg text-[#1A1915] placeholder:text-gray-300 focus:outline-none min-h-[56px] leading-relaxed"
+              placeholder="分配一个任务或提问任何问题"
+              value={prompt}
+              onChange={(event) => setPrompt(event.target.value)}
+              onKeyDown={handleKeyDown}
+              onInput={handleInput}
+              ref={promptRef}
+            />
+
+            {/* 2. 中间操作行：左右对齐 */}
+            <div className="flex items-center justify-between mt-3 relative">
+              {/* 左侧：加号和 Connectors */}
+              <div className="flex items-center gap-3" ref={dropdownRef}>
+                <button
+                  className="group cursor-pointer flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition-colors hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700"
+                  aria-label="添加附件"
+                >
+                  <Plus size={20} />
+                </button>
+                <div className="relative">
+                  <button
+                    className={`group cursor-pointer flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${
+                      showConnectors
+                        ? "border-gray-800 bg-gray-800 text-white"
+                        : "border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700"
+                    }`}
+                    aria-label="Connectors"
+                    onClick={() => {
+                      setShowConnectors(!showConnectors);
+                    }}
+                  >
+                    <Cable size={20} />
+                  </button>
+
+                  {/* Connectors Dropdown */}
+                  {showConnectors && (
+                    <div className="absolute top-12 left-0 w-64 rounded-xl bg-white dark:bg-gray-800 py-2 shadow-2xl ring-1 ring-black/5 dark:ring-white/10 text-gray-900 dark:text-white z-[60]">
+                      <div className="flex flex-col">
+                        {CONNECTORS.map((connector) => (
+                          <div
+                            key={connector.id}
+                            className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-white/10 cursor-pointer transition-colors"
+                          >
+                            <div className="flex items-center gap-3">
+                              <connector.icon
+                                size={18}
+                                className="text-gray-500 dark:text-gray-300"
+                              />
+                              <span className="text-sm font-medium">
+                                {connector.name}
+                              </span>
+                            </div>
+                            {connector.type === "toggle" ? (
+                              <div
+                                className={`h-5 w-9 rounded-full relative transition-colors ${connector.connected ? "bg-black dark:bg-white" : "bg-gray-200 dark:bg-gray-600"}`}
+                              >
+                                <div
+                                  className={`absolute top-1 h-3 w-3 rounded-full bg-white dark:bg-gray-900 transition-all ${connector.connected ? "left-5" : "left-1"}`}
+                                />
+                              </div>
+                            ) : (
+                              <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">
+                                {connector.action}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+
+                        <div className="my-1.5 h-px bg-gray-100 dark:bg-white/10" />
+
+                        <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-white/10 cursor-pointer text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
+                          <Plus size={18} />
+                          <span className="text-sm font-medium">
+                            添加连接器
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-white/10 cursor-pointer text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">
+                          <Settings size={18} />
+                          <span className="text-sm font-medium">
+                            管理连接器
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 右侧：语音和发送 */}
+              <div className="flex items-center gap-4">
+                <button
+                  className="text-gray-400 cursor-pointer transition-colors hover:text-gray-600"
+                  aria-label="语音输入"
+                >
+                  <Mic size={22} />
+                </button>
+
+                <button
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all cursor-pointer ${
+                    isRunning
+                      ? "bg-red-500 text-white hover:bg-red-600"
+                      : prompt.trim()
+                        ? "bg-black text-white hover:bg-gray-800"
+                        : "bg-gray-100 text-gray-400"
+                  }`}
+                  onClick={isRunning ? handleStop : handleSend}
+                  disabled={!isRunning && !prompt.trim()}
+                >
+                  {isRunning ? (
+                    <Square size={12} fill="currentColor" />
+                  ) : (
+                    <ArrowUp size={20} strokeWidth={2.5} />
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );

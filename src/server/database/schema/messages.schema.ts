@@ -4,12 +4,16 @@ import { relations } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 export const messages = sqliteTable("messages", {
-  id: text("id").primaryKey().$defaultFn(() => nanoid()),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
   sessionId: text("session_id")
     .notNull()
     .references(() => sessions.id, { onDelete: "cascade" }),
   data: text("data").notNull(), // JSON string - use JSON.stringify/parse
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 
 // Relations

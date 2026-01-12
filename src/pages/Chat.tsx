@@ -13,19 +13,26 @@ interface LayoutContext {
   connected: boolean;
   sendEvent: (event: ClientEvent) => void;
   sessionsLoaded: boolean;
-  partialMessageHandlerRef: React.MutableRefObject<((event: ServerEvent) => void) | null>;
+  partialMessageHandlerRef: React.MutableRefObject<
+    ((event: ServerEvent) => void) | null
+  >;
 }
 
 export function Chat() {
   const { sessionId } = useParams<{ sessionId: string }>();
-  const { connected, sendEvent, partialMessageHandlerRef } = useOutletContext<LayoutContext>();
+  const { connected, sendEvent, partialMessageHandlerRef } =
+    useOutletContext<LayoutContext>();
   const navigate = useNavigate();
 
   const sessions = useAppStore((state) => state.sessions);
   const globalError = useAppStore((state) => state.globalError);
   const historyRequested = useAppStore((state) => state.historyRequested);
-  const markHistoryRequested = useAppStore((state) => state.markHistoryRequested);
-  const resolvePermissionRequest = useAppStore((state) => state.resolvePermissionRequest);
+  const markHistoryRequested = useAppStore(
+    (state) => state.markHistoryRequested,
+  );
+  const resolvePermissionRequest = useAppStore(
+    (state) => state.resolvePermissionRequest,
+  );
   const setActiveSessionId = useAppStore((state) => state.setActiveSessionId);
   const handleServerEvent = useAppStore((state) => state.handleServerEvent);
 
@@ -52,7 +59,11 @@ export function Chat() {
 
   // Handle partial messages
   const handlePartialMessages = (particalEvent: ServerEvent) => {
-    if (particalEvent.type !== "stream.message" || particalEvent.payload.message.type !== "stream_event") return;
+    if (
+      particalEvent.type !== "stream.message" ||
+      particalEvent.payload.message.type !== "stream_event"
+    )
+      return;
 
     const message = particalEvent.payload.message as any;
     if (message.event.type === "content_block_start") {
@@ -101,9 +112,16 @@ export function Chat() {
     markHistoryRequested(sessionId);
     sendEvent({
       type: "session.history",
-      payload: { sessionId }
+      payload: { sessionId },
     });
-  }, [connected, sessionId, sessions, historyRequested, markHistoryRequested, sendEvent]);
+  }, [
+    connected,
+    sessionId,
+    sessions,
+    historyRequested,
+    markHistoryRequested,
+    sendEvent,
+  ]);
 
   // Auto-scroll when new messages are added
   const messagesLength = activeSession?.messages.length ?? 0;
@@ -115,7 +133,7 @@ export function Chat() {
 
   const handlePermissionResponse = (
     request: PermissionRequest,
-    result: PermissionResult
+    result: PermissionResult,
   ) => {
     if (!sessionId) return;
     sendEvent({
@@ -123,8 +141,8 @@ export function Chat() {
       payload: {
         sessionId,
         toolUseId: request.toolUseId,
-        result
-      }
+        result,
+      },
     });
 
     resolvePermissionRequest(sessionId, request.toolUseId);
@@ -135,8 +153,12 @@ export function Chat() {
     return (
       <div className="flex min-h-full items-center justify-center bg-surface-cream px-6 py-12">
         <div className="text-center">
-          <h2 className="text-2xl font-semibold text-ink-800 mb-4">No Session Selected</h2>
-          <p className="text-muted">Please select a session from the sidebar or create a new one.</p>
+          <h2 className="text-2xl font-semibold text-ink-800 mb-4">
+            No Session Selected
+          </h2>
+          <p className="text-muted">
+            Please select a session from the sidebar or create a new one.
+          </p>
         </div>
       </div>
     );
@@ -152,9 +174,18 @@ export function Chat() {
 
       {activeSession && activeSession.permissionRequests.length > 0 && (
         <DecisionPanel
-          request={activeSession.permissionRequests[activeSession.permissionRequests.length - 1]}
+          request={
+            activeSession.permissionRequests[
+              activeSession.permissionRequests.length - 1
+            ]
+          }
           onSubmit={(result) =>
-            handlePermissionResponse(activeSession.permissionRequests[activeSession.permissionRequests.length - 1], result)
+            handlePermissionResponse(
+              activeSession.permissionRequests[
+                activeSession.permissionRequests.length - 1
+              ],
+              result,
+            )
           }
         />
       )}
@@ -165,7 +196,8 @@ export function Chat() {
           {activeSession?.messages.length ? (
             activeSession.messages.map((message, index) => {
               const isLast = index === activeSession.messages.length - 1;
-              const showIndicator = isLast && activeSession.status === "running";
+              const showIndicator =
+                isLast && activeSession.status === "running";
               const key = "uuid" in message ? message.uuid : `msg-${index}`;
               return (
                 <MessageCard

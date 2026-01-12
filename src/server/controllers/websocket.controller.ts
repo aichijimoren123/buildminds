@@ -5,7 +5,7 @@ import { WebSocketService } from "../services/websocket.service";
 export class WebSocketController {
   constructor(
     private sessionService: SessionService,
-    private wsService: WebSocketService
+    private wsService: WebSocketService,
   ) {}
 
   handleOpen(ws: unknown) {
@@ -23,7 +23,7 @@ export class WebSocketController {
     } catch (error) {
       this.wsService.broadcast({
         type: "runner.error",
-        payload: { message: `Invalid message: ${String(error)}` }
+        payload: { message: `Invalid message: ${String(error)}` },
       });
     }
   }
@@ -33,17 +33,19 @@ export class WebSocketController {
       const sessions = await this.sessionService.listSessions();
       this.wsService.broadcast({
         type: "session.list",
-        payload: { sessions }
+        payload: { sessions },
       });
       return;
     }
 
     if (event.type === "session.history") {
-      const history = await this.sessionService.getSessionHistory(event.payload.sessionId);
+      const history = await this.sessionService.getSessionHistory(
+        event.payload.sessionId,
+      );
       if (!history) {
         this.wsService.broadcast({
           type: "runner.error",
-          payload: { message: "Unknown session" }
+          payload: { message: "Unknown session" },
         });
         return;
       }
@@ -52,8 +54,8 @@ export class WebSocketController {
         payload: {
           sessionId: history.session.id,
           status: history.session.status,
-          messages: history.messages
-        }
+          messages: history.messages,
+        },
       });
       return;
     }
@@ -63,24 +65,26 @@ export class WebSocketController {
         cwd: event.payload.cwd,
         title: event.payload.title,
         allowedTools: event.payload.allowedTools,
-        prompt: event.payload.prompt
+        prompt: event.payload.prompt,
       });
 
       await this.sessionService.startSession(
         session.id,
         event.payload.prompt,
         session.title,
-        session.cwd
+        session.cwd,
       );
       return;
     }
 
     if (event.type === "session.continue") {
-      const session = await this.sessionService.getSession(event.payload.sessionId);
+      const session = await this.sessionService.getSession(
+        event.payload.sessionId,
+      );
       if (!session) {
         this.wsService.broadcast({
           type: "runner.error",
-          payload: { message: "Unknown session" }
+          payload: { message: "Unknown session" },
         });
         return;
       }
@@ -88,7 +92,10 @@ export class WebSocketController {
       if (!session.claudeSessionId) {
         this.wsService.broadcast({
           type: "runner.error",
-          payload: { sessionId: session.id, message: "Session has no resume id yet." }
+          payload: {
+            sessionId: session.id,
+            message: "Session has no resume id yet.",
+          },
         });
         return;
       }
@@ -97,7 +104,7 @@ export class WebSocketController {
         session.id,
         event.payload.prompt,
         session.title,
-        session.cwd
+        session.cwd,
       );
       return;
     }
@@ -108,17 +115,19 @@ export class WebSocketController {
     }
 
     if (event.type === "session.delete") {
-      const deleted = await this.sessionService.deleteSession(event.payload.sessionId);
+      const deleted = await this.sessionService.deleteSession(
+        event.payload.sessionId,
+      );
       if (!deleted) {
         this.wsService.broadcast({
           type: "runner.error",
-          payload: { message: "Unknown session" }
+          payload: { message: "Unknown session" },
         });
         return;
       }
       this.wsService.broadcast({
         type: "session.deleted",
-        payload: { sessionId: event.payload.sessionId }
+        payload: { sessionId: event.payload.sessionId },
       });
       return;
     }
@@ -127,7 +136,7 @@ export class WebSocketController {
       this.sessionService.resolvePermission(
         event.payload.sessionId,
         event.payload.toolUseId,
-        event.payload.result
+        event.payload.result,
       );
       return;
     }

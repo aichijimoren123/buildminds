@@ -1,5 +1,4 @@
-
-[简体中文](README_ZH.md) 
+[简体中文](README_ZH.md)
 
 # Claude Code WebUI
 
@@ -21,6 +20,7 @@ while **sharing the exact same configuration as your local Claude Code**.
 Claude Code is powerful — but it’s **terminal-bound**.
 
 That means:
+
 - ❌ Not usable on mobile or iPad
 - ❌ Hard to access remotely
 - ❌ Awkward for demos, monitoring, or quick edits
@@ -49,7 +49,7 @@ curl -fsSL https://bun.sh/install | bash
 
 # Install Claude Code
 npm install -g @anthropic-ai/claude-code
-````
+```
 
 ---
 
@@ -81,37 +81,37 @@ PORT=3000 bunx @devagentforge/claude-code-webui@latest
 
 ### 🤖 Claude Code — in the Browser
 
-* Natural language interaction with Claude Code
-* **Real-time streaming output** (word-by-word)
-* Markdown + syntax-highlighted code rendering
-* Clean, Claude-style UI
+- Natural language interaction with Claude Code
+- **Real-time streaming output** (word-by-word)
+- Markdown + syntax-highlighted code rendering
+- Clean, Claude-style UI
 
 ---
 
 ### 📂 Session & Workspace Management
 
-* Create sessions with **custom working directories**
-* Resume any previous conversation
-* Full local session history (SQLite-backed)
-* Safe deletion & automatic persistence
+- Create sessions with **custom working directories**
+- Resume any previous conversation
+- Full local session history (SQLite-backed)
+- Safe deletion & automatic persistence
 
 ---
 
 ### 🔐 Tool Permission Control
 
-* Explicit approval for tool execution
-* Allow / deny per tool
-* Bulk permission policies
-* Manual handling for AskUserQuestion flows
+- Explicit approval for tool execution
+- Allow / deny per tool
+- Bulk permission policies
+- Manual handling for AskUserQuestion flows
 
 ---
 
 ### 📱 Mobile-First UI
 
-* Fully responsive (desktop / phone / iPad)
-* Claude-style light theme
-* Fast session switching
-* Touch-friendly interactions
+- Fully responsive (desktop / phone / iPad)
+- Claude-style light theme
+- Fast session switching
+- Touch-friendly interactions
 
 ---
 
@@ -127,10 +127,10 @@ It directly reuses:
 
 Which means:
 
-* Same API keys
-* Same base URL
-* Same models
-* Same behavior
+- Same API keys
+- Same base URL
+- Same models
+- Same behavior
 
 > Configure Claude Code once — use it everywhere.
 
@@ -140,20 +140,20 @@ Which means:
 
 ### Frontend
 
-* React 19 + TypeScript
-* Tailwind CSS 4
-* Radix UI
-* Zustand
-* Markdown + syntax highlighting
-* Streaming-first rendering
+- React 19 + TypeScript
+- Tailwind CSS 4
+- Radix UI
+- Zustand
+- Markdown + syntax highlighting
+- Streaming-first rendering
 
 ### Backend
 
-* Bun runtime
-* Hono web framework
-* WebSocket-based streaming
-* SQLite (WAL mode)
-* Claude Agent SDK
+- Bun runtime
+- Hono web framework
+- WebSocket-based streaming
+- SQLite (WAL mode)
+- Claude Agent SDK
 
 ---
 
@@ -180,14 +180,14 @@ CORS_ORIGIN=*
 
 Claude-related config is shared with Claude Code:
 
-* `ANTHROPIC_AUTH_TOKEN`
-* `ANTHROPIC_BASE_URL`
-* `ANTHROPIC_MODEL`
-* `ANTHROPIC_DEFAULT_SONNET_MODEL`
-* `ANTHROPIC_DEFAULT_OPUS_MODEL`
-* `ANTHROPIC_DEFAULT_HAIKU_MODEL`
-* `API_TIMEOUT_MS`
-* `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`
+- `ANTHROPIC_AUTH_TOKEN`
+- `ANTHROPIC_BASE_URL`
+- `ANTHROPIC_MODEL`
+- `ANTHROPIC_DEFAULT_SONNET_MODEL`
+- `ANTHROPIC_DEFAULT_OPUS_MODEL`
+- `ANTHROPIC_DEFAULT_HAIKU_MODEL`
+- `API_TIMEOUT_MS`
+- `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`
 
 ---
 
@@ -195,11 +195,11 @@ Claude-related config is shared with Claude Code:
 
 Planned features:
 
-* 🌐 Web-based configuration for Base URL & API Key
-* 🐙 Use **GitHub repositories as working directories**
-* 🧠 Partial replacement of Claude Code Web
-* 👥 Multi-session & multi-agent improvements
-* 🚧 More coming soon
+- 🌐 Web-based configuration for Base URL & API Key
+- 🐙 Use **GitHub repositories as working directories**
+- 🧠 Partial replacement of Claude Code Web
+- 👥 Multi-session & multi-agent improvements
+- 🚧 More coming soon
 
 ---
 
@@ -218,9 +218,9 @@ PRs are welcome.
 
 If you’ve ever wanted:
 
-* Claude Code on your phone
-* Claude Code on an iPad
-* Claude Code without a terminal
+- Claude Code on your phone
+- Claude Code on an iPad
+- Claude Code without a terminal
 
 This project is for you.
 

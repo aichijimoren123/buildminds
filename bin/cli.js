@@ -14,7 +14,9 @@ const child = spawn(bunBin, [entry, ...process.argv.slice(2)], {
 
 child.on("error", (error) => {
   if (error && error.code === "ENOENT") {
-    console.error("Bun is required to run claude-code-webui. Install it from https://bun.sh and retry.");
+    console.error(
+      "Bun is required to run claude-code-webui. Install it from https://bun.sh and retry.",
+    );
   } else {
     console.error(error);
   }

@@ -7,7 +7,7 @@ const result = await Bun.build({
   minify: true,
   sourcemap: "external",
   define: {
-    "process.env.NODE_ENV": "\"production\"",
+    "process.env.NODE_ENV": '"production"',
   },
   env: "BUN_PUBLIC_*",
   plugins: [tailwind],

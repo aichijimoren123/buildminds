@@ -1,5 +1,10 @@
-import { create } from 'zustand';
-import type { ServerEvent, SessionStatus, SessionInfo, StreamMessage } from "../types";
+import { create } from "zustand";
+import type {
+  ServerEvent,
+  SessionStatus,
+  SessionInfo,
+  StreamMessage,
+} from "../types";
 
 export type PermissionRequest = {
   toolUseId: string;
@@ -49,7 +54,14 @@ interface AppState {
 const LAST_SESSION_KEY = "cc-webui:last-session-id";
 
 function createSession(id: string): SessionView {
-  return { id, title: "", status: "idle", messages: [], permissionRequests: [], hydrated: false };
+  return {
+    id,
+    title: "",
+    status: "idle",
+    messages: [],
+    permissionRequests: [],
+    hydrated: false,
+  };
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -65,7 +77,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setPrompt: (prompt) => set({ prompt }),
   setCwd: (cwd) => set({ cwd }),
-  setSelectedGitHubRepoId: (selectedGitHubRepoId) => set({ selectedGitHubRepoId }),
+  setSelectedGitHubRepoId: (selectedGitHubRepoId) =>
+    set({ selectedGitHubRepoId }),
   setPendingStart: (pendingStart) => set({ pendingStart }),
   setGlobalError: (globalError) => set({ globalError }),
 
@@ -95,9 +108,11 @@ export const useAppStore = create<AppState>((set, get) => ({
           ...state.sessions,
           [sessionId]: {
             ...existing,
-            permissionRequests: existing.permissionRequests.filter(req => req.toolUseId !== toolUseId)
-          }
-        }
+            permissionRequests: existing.permissionRequests.filter(
+              (req) => req.toolUseId !== toolUseId,
+            ),
+          },
+        },
       };
     });
   },
@@ -109,20 +124,21 @@ export const useAppStore = create<AppState>((set, get) => ({
       case "session.list": {
         const nextSessions: Record<string, SessionView> = {};
         for (const session of event.payload.sessions) {
-          const existing = state.sessions[session.id] ?? createSession(session.id);
+          const existing =
+            state.sessions[session.id] ?? createSession(session.id);
           nextSessions[session.id] = {
             ...existing,
             status: session.status,
             title: session.title,
             cwd: session.cwd,
             createdAt: session.createdAt,
-            updatedAt: session.updatedAt
+            updatedAt: session.updatedAt,
           };
         }
 
         set({
           sessions: nextSessions,
-          sessionsLoaded: true
+          sessionsLoaded: true,
         });
 
         if (!event.payload.sessions.length) {
@@ -142,7 +158,7 @@ export const useAppStore = create<AppState>((set, get) => ({
           }
         } else if (state.activeSessionId) {
           const stillExists = event.payload.sessions.some(
-            (session) => session.id === state.activeSessionId
+            (session) => session.id === state.activeSessionId,
           );
           if (!stillExists) {
             get().setActiveSessionId(null);
@@ -154,7 +170,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       case "session.history": {
         const { sessionId, messages, status } = event.payload;
         set((state) => {
-          const existing = state.sessions[sessionId] ?? createSession(sessionId);
+          const existing =
+            state.sessions[sessionId] ?? createSession(sessionId);
 
           return {
             sessions: {
@@ -163,9 +180,9 @@ export const useAppStore = create<AppState>((set, get) => ({
                 ...existing,
                 status,
                 messages,
-                hydrated: true
-              }
-            }
+                hydrated: true,
+              },
+            },
           };
         });
         break;
@@ -174,7 +191,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       case "session.status": {
         const { sessionId, status, title, cwd } = event.payload;
         set((state) => {
-          const existing = state.sessions[sessionId] ?? createSession(sessionId);
+          const existing =
+            state.sessions[sessionId] ?? createSession(sessionId);
           return {
             sessions: {
               ...state.sessions,
@@ -183,9 +201,9 @@ export const useAppStore = create<AppState>((set, get) => ({
                 status,
                 title: title ?? existing.title,
                 cwd: cwd ?? existing.cwd,
-                updatedAt: Date.now()
-              }
-            }
+                updatedAt: Date.now(),
+              },
+            },
           };
         });
 
@@ -203,11 +221,11 @@ export const useAppStore = create<AppState>((set, get) => ({
         const nextSessions = { ...state.sessions };
         delete nextSessions[sessionId];
         set({
-          sessions: nextSessions
+          sessions: nextSessions,
         });
         if (state.activeSessionId === sessionId) {
           const remaining = Object.values(nextSessions).sort(
-            (a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0)
+            (a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0),
           );
           get().setActiveSessionId(remaining[0]?.id ?? null);
         }
@@ -217,15 +235,16 @@ export const useAppStore = create<AppState>((set, get) => ({
       case "stream.message": {
         const { sessionId, message } = event.payload;
         set((state) => {
-          const existing = state.sessions[sessionId] ?? createSession(sessionId);
+          const existing =
+            state.sessions[sessionId] ?? createSession(sessionId);
           return {
             sessions: {
               ...state.sessions,
               [sessionId]: {
                 ...existing,
-                messages: [...existing.messages, message]
-              }
-            }
+                messages: [...existing.messages, message],
+              },
+            },
           };
         });
         break;
@@ -234,15 +253,19 @@ export const useAppStore = create<AppState>((set, get) => ({
       case "stream.user_prompt": {
         const { sessionId, prompt } = event.payload;
         set((state) => {
-          const existing = state.sessions[sessionId] ?? createSession(sessionId);
+          const existing =
+            state.sessions[sessionId] ?? createSession(sessionId);
           return {
             sessions: {
               ...state.sessions,
               [sessionId]: {
                 ...existing,
-                messages: [...existing.messages, { type: "user_prompt", prompt }]
-              }
-            }
+                messages: [
+                  ...existing.messages,
+                  { type: "user_prompt", prompt },
+                ],
+              },
+            },
           };
         });
         break;
@@ -251,15 +274,19 @@ export const useAppStore = create<AppState>((set, get) => ({
       case "permission.request": {
         const { sessionId, toolUseId, toolName, input } = event.payload;
         set((state) => {
-          const existing = state.sessions[sessionId] ?? createSession(sessionId);
+          const existing =
+            state.sessions[sessionId] ?? createSession(sessionId);
           return {
             sessions: {
               ...state.sessions,
               [sessionId]: {
                 ...existing,
-                permissionRequests: [...existing.permissionRequests, { toolUseId, toolName, input }]
-              }
-            }
+                permissionRequests: [
+                  ...existing.permissionRequests,
+                  { toolUseId, toolName, input },
+                ],
+              },
+            },
           };
         });
         break;
@@ -270,5 +297,5 @@ export const useAppStore = create<AppState>((set, get) => ({
         break;
       }
     }
-  }
+  },
 }));

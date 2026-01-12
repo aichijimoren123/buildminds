@@ -37,11 +37,11 @@ export class SettingsService {
         // so loadClaudeSettingsEnv can use them directly
         const settings: Record<string, string> = {};
         return settings;
-      }
+      },
     };
 
     // Load settings from database and update process.env
-    this.settingsRepo.getAll().then(settings => {
+    this.settingsRepo.getAll().then((settings) => {
       for (const [key, value] of Object.entries(settings)) {
         if (value !== undefined && value !== null && value !== "") {
           process.env[key] = value;

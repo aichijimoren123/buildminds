@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ServerEvent, ClientEvent } from "../types";
 
-
 export function useWebSocket(onEvent: (event: ServerEvent) => void) {
   const [connected, setConnected] = useState(false);
   const socketRef = useRef<WebSocket | null>(null);

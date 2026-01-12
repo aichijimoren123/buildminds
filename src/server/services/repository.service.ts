@@ -8,29 +8,35 @@ export class RepositoryService {
   constructor(
     private githubRepoRepo: GithubRepoRepository,
     private userRepo: UserRepository,
-    private githubService: GitHubService
+    private githubService: GitHubService,
   ) {}
 
-  async addRepository(userId: string, repoFullName: string): Promise<GithubRepo> {
+  async addRepository(
+    userId: string,
+    repoFullName: string,
+  ): Promise<GithubRepo> {
     const user = await this.userRepo.findById(userId);
     if (!user) throw new Error("User not found");
 
     // Check if already exists
-    const existing = await this.githubRepoRepo.findByUserIdAndRepoName(userId, repoFullName);
+    const existing = await this.githubRepoRepo.findByUserIdAndRepoName(
+      userId,
+      repoFullName,
+    );
     if (existing) {
       return existing;
     }
 
     // Get repo info from GitHub
     const repos = await this.githubService.listUserRepos(user.accessToken);
-    const repo = repos.find(r => r.fullName === repoFullName);
+    const repo = repos.find((r) => r.fullName === repoFullName);
     if (!repo) throw new Error("Repository not found on GitHub");
 
     // Clone repo
     const localPath = await this.githubService.cloneRepo(
       repo.cloneUrl,
       repo.fullName,
-      user.accessToken
+      user.accessToken,
     );
 
     // Save to database
@@ -55,8 +61,14 @@ export class RepositoryService {
     const repoExists = await this.githubService.checkRepoExists(repo.localPath);
 
     if (!repoExists) {
-      console.log(`Repository not found locally, cloning: ${repo.repoFullName}`);
-      await this.githubService.cloneRepo(repo.cloneUrl, repo.repoFullName, user.accessToken);
+      console.log(
+        `Repository not found locally, cloning: ${repo.repoFullName}`,
+      );
+      await this.githubService.cloneRepo(
+        repo.cloneUrl,
+        repo.repoFullName,
+        user.accessToken,
+      );
     } else {
       await this.githubService.pullRepo(repo.localPath, user.accessToken);
     }
@@ -106,7 +118,11 @@ export class RepositoryService {
     const user = await this.userRepo.findById(repo.userId);
     if (!user) throw new Error("User not found");
 
-    await this.githubService.commitAndPush(repo.localPath, message, user.accessToken);
+    await this.githubService.commitAndPush(
+      repo.localPath,
+      message,
+      user.accessToken,
+    );
     await this.githubRepoRepo.update(repoId, { lastSynced: new Date() });
   }
 }

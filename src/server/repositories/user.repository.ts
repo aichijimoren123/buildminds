@@ -16,7 +16,9 @@ export class UserRepository {
     try {
       // Query both user and account tables from better-auth
       // Use the raw SQLite connection since Drizzle doesn't support raw SQL easily
-      const result = sqlite.query(`
+      const result = sqlite
+        .query(
+          `
         SELECT
           u.id,
           u.name,
@@ -27,7 +29,9 @@ export class UserRepository {
         LEFT JOIN account a ON u.id = a.user_id
         WHERE u.id = ? AND a.provider_id = 'github'
         LIMIT 1
-      `).get(userId) as any;
+      `,
+        )
+        .get(userId) as any;
 
       if (!result) {
         return null;

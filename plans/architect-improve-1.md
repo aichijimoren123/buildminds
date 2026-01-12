@@ -63,12 +63,12 @@ No changes needed - `dialect: "sqlite"` works with both drivers.
 
 #### API Differences
 
-| Operation | better-sqlite3 | bun:sqlite |
-|-----------|----------------|------------|
-| **Import** | `import Database from "better-sqlite3"` | `import { Database } from "bun:sqlite"` |
-| **Pragma** | `db.pragma("key = value")` | `db.run("PRAGMA key = value")` |
-| **Query** | `db.prepare(sql).get()` | `db.query(sql).get()` |
-| **Drizzle Init** | `drizzle(sqlite, { schema })` | `drizzle({ client: sqlite, schema })` |
+| Operation        | better-sqlite3                          | bun:sqlite                              |
+| ---------------- | --------------------------------------- | --------------------------------------- |
+| **Import**       | `import Database from "better-sqlite3"` | `import { Database } from "bun:sqlite"` |
+| **Pragma**       | `db.pragma("key = value")`              | `db.run("PRAGMA key = value")`          |
+| **Query**        | `db.prepare(sql).get()`                 | `db.query(sql).get()`                   |
+| **Drizzle Init** | `drizzle(sqlite, { schema })`           | `drizzle({ client: sqlite, schema })`   |
 
 #### Benefits
 
@@ -92,11 +92,13 @@ No changes needed - `dialect: "sqlite"` works with both drivers.
 #### Problem Statement
 
 **Before**:
+
 - Working directory input was required (enforced by `required` attribute)
 - Users had to manually type or select a path every time
 - Created unnecessary friction for the most common use case (current directory)
 
 **After**:
+
 - Working directory is auto-filled with the server's current directory
 - Users can accept the default or modify it as needed
 - Only the prompt is required to start a session
@@ -136,11 +138,15 @@ useEffect(() => {
   // Fetch default cwd and recent cwds in parallel
   Promise.all([
     fetch(`/api/sessions/default-cwd`, { signal: controller.signal })
-      .then((response) => (response.ok ? response.json() : Promise.reject(response)))
+      .then((response) =>
+        response.ok ? response.json() : Promise.reject(response),
+      )
       .catch(() => ({ cwd: "" })),
     fetch(`/api/sessions/recent-cwd?limit=8`, { signal: controller.signal })
-      .then((response) => (response.ok ? response.json() : Promise.reject(response)))
-      .catch(() => ({ cwds: [] }))
+      .then((response) =>
+        response.ok ? response.json() : Promise.reject(response),
+      )
+      .catch(() => ({ cwds: [] })),
   ]).then(([defaultData, recentData]) => {
     // Auto-fill default cwd if current cwd is empty
     if (defaultData?.cwd && !cwd) {
@@ -162,17 +168,22 @@ useEffect(() => {
 ##### UI Updates (`src/components/StartSessionModal.tsx`)
 
 **Label Update**:
+
 ```tsx
 <span className="text-xs font-medium text-muted">
-  Working Directory <span className="text-muted-light font-normal">(default: current directory)</span>
+  Working Directory{" "}
+  <span className="text-muted-light font-normal">
+    (default: current directory)
+  </span>
 </span>
 ```
 
 **Input Update**:
+
 ```tsx
 <input
   className="..."
-  placeholder="Uses current directory if empty"  // Was: "/path/to/project"
+  placeholder="Uses current directory if empty" // Was: "/path/to/project"
   value={cwd}
   onChange={(event) => onCwdChange(event.target.value)}
   // removed: required
@@ -180,6 +191,7 @@ useEffect(() => {
 ```
 
 **Button State**:
+
 ```tsx
 <button
   disabled={pendingStart || !prompt.trim()}  // Was: !cwd.trim() || !prompt.trim()
@@ -228,6 +240,7 @@ cwd: session.cwd ?? DEFAULT_CWD,
 ## 🧪 Testing Checklist
 
 ### Database Migration
+
 - [x] Server starts without errors
 - [x] Sessions can be created
 - [x] Messages are persisted correctly
@@ -236,6 +249,7 @@ cwd: session.cwd ?? DEFAULT_CWD,
 - [x] Drizzle migrations work
 
 ### Default CWD Feature
+
 - [x] API endpoint returns current directory
 - [x] Frontend auto-fills on modal open
 - [x] Empty cwd is handled gracefully
@@ -248,11 +262,13 @@ cwd: session.cwd ?? DEFAULT_CWD,
 ## 📊 Impact Analysis
 
 ### Database Migration
+
 - **Performance**: ~2-3x faster database operations (native Bun implementation)
 - **Build Size**: Reduced by ~500KB (removed native addon)
 - **Compatibility**: No breaking changes for existing databases
 
 ### UX Improvement
+
 - **Time Saved**: ~5-10 seconds per session creation
 - **Click Reduction**: 1-2 fewer interactions required
 - **Error Reduction**: Eliminates "missing cwd" validation errors

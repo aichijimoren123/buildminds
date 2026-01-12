@@ -5,10 +5,7 @@ import { BaseRepository } from "./base.repository";
 export class SessionRepository extends BaseRepository {
   async create(data: InsertSession): Promise<Session> {
     try {
-      const [session] = await this.db
-        .insert(sessions)
-        .values(data)
-        .returning();
+      const [session] = await this.db.insert(sessions).values(data).returning();
       return session;
     } catch (error) {
       this.handleError(error, "create session");
@@ -51,7 +48,10 @@ export class SessionRepository extends BaseRepository {
     }
   }
 
-  async update(id: string, data: Partial<InsertSession>): Promise<Session | null> {
+  async update(
+    id: string,
+    data: Partial<InsertSession>,
+  ): Promise<Session | null> {
     try {
       const [updated] = await this.db
         .update(sessions)
@@ -66,9 +66,7 @@ export class SessionRepository extends BaseRepository {
 
   async delete(id: string): Promise<boolean> {
     try {
-      const result = await this.db
-        .delete(sessions)
-        .where(eq(sessions.id, id));
+      const result = await this.db.delete(sessions).where(eq(sessions.id, id));
       // Drizzle returns changes count in rowsAffected or count
       return (result as any).changes > 0;
     } catch (error) {

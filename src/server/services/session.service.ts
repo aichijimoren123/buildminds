@@ -16,7 +16,7 @@ export class SessionService {
     private sessionRepo: SessionRepository,
     private messageRepo: MessageRepository,
     private claudeService: ClaudeService,
-    private wsService: WebSocketService
+    private wsService: WebSocketService,
   ) {}
 
   async createSession(options: {
@@ -49,7 +49,9 @@ export class SessionService {
     if (!session) return null;
 
     const messageRecords = await this.messageRepo.findBySessionId(id);
-    const messages = messageRecords.map((msg) => JSON.parse(msg.data) as StreamMessage);
+    const messages = messageRecords.map(
+      (msg) => JSON.parse(msg.data) as StreamMessage,
+    );
 
     return {
       session,
@@ -57,7 +59,10 @@ export class SessionService {
     };
   }
 
-  async updateSession(id: string, data: Partial<InsertSession>): Promise<Session | null> {
+  async updateSession(
+    id: string,
+    data: Partial<InsertSession>,
+  ): Promise<Session | null> {
     return await this.sessionRepo.update(id, data);
   }
 
@@ -76,7 +81,12 @@ export class SessionService {
     return await this.sessionRepo.getRecentCwds(limit);
   }
 
-  async startSession(id: string, prompt: string, title?: string, cwd?: string): Promise<void> {
+  async startSession(
+    id: string,
+    prompt: string,
+    title?: string,
+    cwd?: string,
+  ): Promise<void> {
     const session = await this.sessionRepo.findById(id);
     if (!session) {
       throw new NotFoundError("Session not found");
@@ -162,22 +172,40 @@ export class SessionService {
     // Emit status change
     this.wsService.broadcast({
       type: "session.status",
-      payload: { sessionId: id, status: "idle", title: session.title, cwd: session.cwd },
+      payload: {
+        sessionId: id,
+        status: "idle",
+        title: session.title,
+        cwd: session.cwd,
+      },
     });
   }
 
-  resolvePermission(sessionId: string, toolUseId: string, result: { behavior: "allow" | "deny"; updatedInput?: unknown; message?: string }): void {
+  resolvePermission(
+    sessionId: string,
+    toolUseId: string,
+    result: {
+      behavior: "allow" | "deny";
+      updatedInput?: unknown;
+      message?: string;
+    },
+  ): void {
     this.claudeService.resolvePermission(sessionId, toolUseId, result);
   }
 
   private recordMessage(sessionId: string, message: StreamMessage): void {
-    const id = ('uuid' in message && message.uuid) ? String(message.uuid) : crypto.randomUUID();
-    this.messageRepo.create({
-      id,
-      sessionId,
-      data: JSON.stringify(message),
-    }).catch((error) => {
-      console.error("Failed to record message:", error);
-    });
+    const id =
+      "uuid" in message && message.uuid
+        ? String(message.uuid)
+        : crypto.randomUUID();
+    this.messageRepo
+      .create({
+        id,
+        sessionId,
+        data: JSON.stringify(message),
+      })
+      .catch((error) => {
+        console.error("Failed to record message:", error);
+      });
   }
 }

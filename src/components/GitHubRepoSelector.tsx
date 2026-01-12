@@ -22,7 +22,10 @@ interface GitHubRepoSelectorProps {
   selectedRepoId?: string | null;
 }
 
-export function GitHubRepoSelector({ onSelect, selectedRepoId }: GitHubRepoSelectorProps) {
+export function GitHubRepoSelector({
+  onSelect,
+  selectedRepoId,
+}: GitHubRepoSelectorProps) {
   const [repos, setRepos] = useState<GithubRepo[]>([]);
   const [loading, setLoading] = useState(true);
   const [showBrowse, setShowBrowse] = useState(false);
@@ -91,7 +94,9 @@ export function GitHubRepoSelector({ onSelect, selectedRepoId }: GitHubRepoSelec
   if (repos.length === 0 && !showBrowse) {
     return (
       <div className="text-center py-8">
-        <p className="text-sm text-muted mb-4">No GitHub repositories added yet</p>
+        <p className="text-sm text-muted mb-4">
+          No GitHub repositories added yet
+        </p>
         <button
           onClick={() => {
             setShowBrowse(true);
@@ -109,7 +114,9 @@ export function GitHubRepoSelector({ onSelect, selectedRepoId }: GitHubRepoSelec
     return (
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-ink-800">Browse GitHub Repositories</h3>
+          <h3 className="text-sm font-medium text-ink-800">
+            Browse GitHub Repositories
+          </h3>
           <button
             onClick={() => setShowBrowse(false)}
             className="text-sm text-muted hover:text-ink-700"
@@ -123,7 +130,9 @@ export function GitHubRepoSelector({ onSelect, selectedRepoId }: GitHubRepoSelec
         ) : (
           <div className="max-h-80 overflow-y-auto space-y-2">
             {availableRepos.map((repo) => {
-              const alreadyAdded = repos.some(r => r.repoFullName === repo.fullName);
+              const alreadyAdded = repos.some(
+                (r) => r.repoFullName === repo.fullName,
+              );
               const isAdding = addingRepo === repo.fullName;
 
               return (
@@ -144,10 +153,14 @@ export function GitHubRepoSelector({ onSelect, selectedRepoId }: GitHubRepoSelec
                         )}
                       </div>
                       {repo.description && (
-                        <p className="text-xs text-muted mt-1 line-clamp-2">{repo.description}</p>
+                        <p className="text-xs text-muted mt-1 line-clamp-2">
+                          {repo.description}
+                        </p>
                       )}
                       {repo.language && (
-                        <span className="text-xs text-muted mt-1 inline-block">{repo.language}</span>
+                        <span className="text-xs text-muted mt-1 inline-block">
+                          {repo.language}
+                        </span>
                       )}
                     </div>
                     <button
@@ -203,7 +216,9 @@ export function GitHubRepoSelector({ onSelect, selectedRepoId }: GitHubRepoSelec
                 </span>
               )}
             </div>
-            <div className="text-xs text-muted mt-1 truncate">{repo.localPath}</div>
+            <div className="text-xs text-muted mt-1 truncate">
+              {repo.localPath}
+            </div>
           </button>
         ))}
       </div>

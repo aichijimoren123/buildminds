@@ -6,7 +6,9 @@ import { nanoid } from "nanoid";
 
 // Rename to claude_sessions to avoid conflict with better-auth's session table
 export const claudeSessions = sqliteTable("claude_sessions", {
-  id: text("id").primaryKey().$defaultFn(() => nanoid()),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
   title: text("title").notNull(),
   claudeSessionId: text("claude_session_id"),
   status: text("status").notNull().default("idle"), // "idle" | "running" | "completed" | "error"
@@ -16,8 +18,12 @@ export const claudeSessions = sqliteTable("claude_sessions", {
   // Store user_id as simple string (no FK) - better-auth manages users
   userId: text("user_id"),
   githubRepoId: text("github_repo_id"),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 
 // Zod schemas for validation

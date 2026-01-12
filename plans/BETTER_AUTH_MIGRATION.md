@@ -7,11 +7,13 @@
 ## 更改的文件
 
 ### 新增文件
+
 - `src/server/auth.ts` - BetterAuth 配置
 - `src/lib/auth-client.ts` - 前端认证客户端
 - `src/server/repositories/user.repository.ts` - 用户仓库（重写以支持 BetterAuth 表结构）
 
 ### 修改的文件
+
 - `src/server/routes/index.ts` - 使用 BetterAuth handler
 - `src/server/routes/github.routes.ts` - 添加类型支持
 - `src/server/middleware/auth.middleware.ts` - 使用 BetterAuth session API
@@ -19,6 +21,7 @@
 - `src/components/GitHubAuthButton.tsx` - 使用 BetterAuth signIn
 
 ### 删除的文件
+
 - `src/server/routes/auth.routes.ts` - 不再需要自定义路由
 - `src/server/services/auth.service.ts` - BetterAuth 内置
 - 旧的 `src/server/repositories/user.repository.ts` - 已重写
@@ -57,13 +60,13 @@ BetterAuth 自动提供以下端点：
 ## 前端使用
 
 ```tsx
-import { useSession, signIn, signOut } from '../lib/auth-client';
+import { useSession, signIn, signOut } from "../lib/auth-client";
 
 // 使用会话
 const { data: session, isPending } = useSession();
 
 // GitHub 登录
-await signIn.social({ provider: 'github', callbackURL: '/' });
+await signIn.social({ provider: "github", callbackURL: "/" });
 
 // 登出
 await signOut();
@@ -72,6 +75,7 @@ await signOut();
 ## 验证迁移
 
 1. 启动开发服务器：
+
 ```bash
 bun run dev
 ```
