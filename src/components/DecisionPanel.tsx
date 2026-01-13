@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { PermissionResult } from "@anthropic-ai/claude-agent-sdk";
-import type { PermissionRequest } from "../store/useAppStore";
+import type { PermissionRequest } from "../store/useMessageStore";
 
 type AskUserQuestionInput = {
   questions?: Array<{

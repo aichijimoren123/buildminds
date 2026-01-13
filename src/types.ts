@@ -24,6 +24,40 @@ export type StreamMessage = SDKMessage | UserPromptMessage;
 // Session status
 export type SessionStatus = "idle" | "running" | "completed" | "error";
 
+// WorkTree status
+export type WorkTreeStatus =
+  | "active"
+  | "pending"
+  | "merged"
+  | "abandoned"
+  | "archived";
+
+// File change info
+export type FileChange = {
+  path: string;
+  status: "added" | "modified" | "deleted";
+  additions: number;
+  deletions: number;
+};
+
+// WorkTree info
+export type WorkTreeInfo = {
+  id: string;
+  workspaceId: string;
+  name: string;
+  branchName: string;
+  localPath: string;
+  baseBranch: string;
+  status: WorkTreeStatus;
+  changesStats?: {
+    added: number;
+    modified: number;
+    deleted: number;
+  };
+  createdAt: number;
+  updatedAt: number;
+};
+
 // Session info
 export type SessionInfo = {
   id: string;
@@ -31,6 +65,8 @@ export type SessionInfo = {
   status: SessionStatus;
   claudeSessionId?: string;
   cwd?: string;
+  worktreeId?: string; // WorkTree 关联
+  githubRepoId?: string; // Workspace 关联
   createdAt: number;
   updatedAt: number;
 };
@@ -74,7 +110,30 @@ export type ServerEvent =
         input: unknown;
       };
     }
-  | { type: "runner.error"; payload: { sessionId?: string; message: string } };
+  | { type: "runner.error"; payload: { sessionId?: string; message: string } }
+  // WorkTree events
+  | {
+      type: "worktree.created";
+      payload: { worktree: WorkTreeInfo };
+    }
+  | {
+      type: "worktree.list";
+      payload: { workspaceId: string; worktrees: WorkTreeInfo[] };
+    }
+  | {
+      type: "worktree.changes";
+      payload: { worktreeId: string; changes: FileChange[] };
+    }
+  | {
+      type: "worktree.diff";
+      payload: { worktreeId: string; filePath: string; diff: string };
+    }
+  | { type: "worktree.merged"; payload: { worktreeId: string } }
+  | { type: "worktree.abandoned"; payload: { worktreeId: string } }
+  | {
+      type: "worktree.prCreated";
+      payload: { worktreeId: string; url: string; number: number };
+    };
 
 // Client -> Server events
 export type ClientEvent =
@@ -84,6 +143,7 @@ export type ClientEvent =
         title?: string;
         prompt: string;
         cwd?: string;
+        workspaceId?: string; // 可选：指定 Workspace 来创建 WorkTree
         allowedTools?: string;
       };
     }
@@ -99,4 +159,17 @@ export type ClientEvent =
         toolUseId: string;
         result: PermissionResult;
       };
+    }
+  // WorkTree events
+  | { type: "worktree.list"; payload: { workspaceId: string } }
+  | { type: "worktree.changes"; payload: { worktreeId: string } }
+  | {
+      type: "worktree.diff";
+      payload: { worktreeId: string; filePath: string };
+    }
+  | { type: "worktree.merge"; payload: { worktreeId: string } }
+  | { type: "worktree.abandon"; payload: { worktreeId: string } }
+  | {
+      type: "worktree.createPR";
+      payload: { worktreeId: string; title: string; body?: string };
     };

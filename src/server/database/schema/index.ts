@@ -1,3 +1,5 @@
+// Note: worktrees must be exported before sessions due to dependency
+export * from "./worktrees.schema";
 export * from "./sessions.schema";
 export * from "./messages.schema";
 export * from "./settings.schema";

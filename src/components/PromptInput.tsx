@@ -12,7 +12,10 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAppStore } from "../store/useAppStore";
+import { useSessionsStore } from "../store/useSessionsStore";
 import type { ClientEvent } from "../types";
+import { ModelSelector } from "./ModelSelector";
+import { QualitySelector } from "./QualitySelector";
 
 const DEFAULT_ALLOWED_TOOLS = "Read,Edit,Bash";
 
@@ -42,11 +45,15 @@ const CONNECTORS = [
 export function usePromptActions(sendEvent: (event: ClientEvent) => void) {
   const prompt = useAppStore((state) => state.prompt);
   const cwd = useAppStore((state) => state.cwd);
-  const activeSessionId = useAppStore((state) => state.activeSessionId);
-  const sessions = useAppStore((state) => state.sessions);
+  const selectedGitHubRepoId = useAppStore(
+    (state) => state.selectedGitHubRepoId,
+  );
   const setPrompt = useAppStore((state) => state.setPrompt);
   const setPendingStart = useAppStore((state) => state.setPendingStart);
   const setGlobalError = useAppStore((state) => state.setGlobalError);
+
+  const activeSessionId = useSessionsStore((state) => state.activeSessionId);
+  const sessions = useSessionsStore((state) => state.sessions);
 
   const activeSession = activeSessionId ? sessions[activeSessionId] : undefined;
   const isRunning = activeSession?.status === "running";
@@ -61,6 +68,7 @@ export function usePromptActions(sendEvent: (event: ClientEvent) => void) {
         payload: {
           prompt,
           cwd: cwd.trim() || undefined,
+          workspaceId: selectedGitHubRepoId || undefined,
           allowedTools: DEFAULT_ALLOWED_TOOLS,
         },
       });
@@ -86,6 +94,7 @@ export function usePromptActions(sendEvent: (event: ClientEvent) => void) {
     activeSessionId,
     cwd,
     prompt,
+    selectedGitHubRepoId,
     sendEvent,
     setGlobalError,
     setPendingStart,
@@ -263,8 +272,17 @@ export function PromptInput({ sendEvent, variant = "chat" }: PromptInputProps) {
                 </Menu.Root>
               </div>
 
-              {/* 右侧：语音和发送 */}
-              <div className="flex items-center gap-4">
+              {/* 右侧：模型选择、质量选择、语音和发送 */}
+              <div className="flex items-center gap-2">
+                {/* Model selector */}
+                <ModelSelector />
+
+                {/* Quality selector */}
+                <QualitySelector />
+
+                {/* Divider */}
+                <div className="h-5 w-px bg-border-100/20 mx-1" />
+
                 <button
                   className="text-text-500 cursor-pointer transition-colors hover:text-text-300"
                   aria-label="语音输入"

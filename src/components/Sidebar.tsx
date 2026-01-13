@@ -1,9 +1,12 @@
 import { Dialog } from "@base-ui/react/dialog";
 import { Menu } from "@base-ui/react/menu";
+import { GitBranch, MoreHorizontal, Settings, Trash2, Terminal } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useAppStore } from "../store/useAppStore";
-import { IntegrationsPanel } from "./IntegrationsPanel";
+import { useSessionsSortedByDate } from "../store/useSessionsStore";
+import { useWorktreeStore } from "../store/useWorktreeStore";
+import { WorkspaceSelector } from "./WorkspaceSelector";
 
 interface SidebarProps {
   connected: boolean;
@@ -24,12 +27,15 @@ export function Sidebar({
 }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const sessions = useAppStore((state) => state.sessions);
-  const activeSessionId = useAppStore((state) => state.activeSessionId);
-  const setActiveSessionId = useAppStore((state) => state.setActiveSessionId);
+  const activeWorkspaceId = useAppStore((state) => state.activeWorkspaceId);
+  const worktrees = useWorktreeStore((state) => state.worktrees);
+
   const [resumeSessionId, setResumeSessionId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const closeTimerRef = useRef<number | null>(null);
+
+  // Use filtered sessions based on workspace
+  const sessionList = useSessionsSortedByDate(activeWorkspaceId);
 
   const formatCwd = (cwd?: string) => {
     if (!cwd) return "Working dir unavailable";
@@ -37,12 +43,6 @@ export function Sidebar({
     const tail = parts.slice(-2).join("/");
     return `/${tail || cwd}`;
   };
-
-  const sessionList = useMemo(() => {
-    const list = Object.values(sessions);
-    list.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
-    return list;
-  }, [sessions]);
 
   useEffect(() => {
     setCopied(false);
@@ -88,20 +88,19 @@ export function Sidebar({
     onMobileClose?.();
   };
 
-  const setCwd = useAppStore((state) => state.setCwd);
-  const setSelectedGitHubRepoId = useAppStore(
-    (state) => state.setSelectedGitHubRepoId,
-  );
-
-  const handleSelectRepo = (repoId: string, localPath: string) => {
-    // Store the selected repo info in app store for use when creating a new session
-    setCwd(localPath);
-    setSelectedGitHubRepoId(repoId);
-  };
-
   // Determine active session from URL
   const urlSessionId = location.pathname.match(/^\/chat\/([^/]+)/)?.[1];
   const isSessionActive = (sessionId: string) => urlSessionId === sessionId;
+
+  // Get branch name for a session
+  const getBranchName = (worktreeId?: string) => {
+    if (!worktreeId) return null;
+    const worktree = worktrees[worktreeId];
+    if (!worktree) return null;
+    // Extract just the branch name from full path
+    const parts = worktree.branchName.split("/");
+    return parts[parts.length - 1] || worktree.branchName;
+  };
 
   return (
     <>
@@ -113,11 +112,12 @@ export function Sidebar({
         />
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex h-full w-[80vw] max-w-[320px] flex-col gap-4 border-r border-ink-900/5 bg-[#FAF9F6] p-4 shadow-xl transition-transform duration-300 ease-out lg:fixed lg:inset-y-0 lg:left-0 lg:z-auto lg:w-[280px] lg:translate-x-0 lg:shadow-none ${
+        className={`fixed inset-y-0 left-0 z-40 flex h-full w-[80vw] max-w-[320px] flex-col border-r border-ink-900/5 bg-[#FAF9F6] p-4 shadow-xl transition-transform duration-300 ease-out lg:fixed lg:inset-y-0 lg:left-0 lg:z-auto lg:w-[280px] lg:translate-x-0 lg:shadow-none ${
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between gap-3">
+        {/* Header with connection status */}
+        <div className="flex items-center justify-between gap-3 mb-4">
           <div className="text-sm font-semibold text-ink-800">Sessions</div>
           <div className="flex items-center gap-2">
             <span
@@ -148,141 +148,125 @@ export function Sidebar({
             )}
           </div>
         </div>
+
+        {/* Workspace Selector */}
+        <WorkspaceSelector />
+
+        {/* New Session Button */}
         <button
-          className="w-full rounded-xl border border-ink-900/10 bg-surface px-4 py-2.5 text-sm font-medium text-ink-700 hover:bg-surface-tertiary hover:border-ink-900/20 transition-colors"
+          className="w-full rounded-xl border border-ink-900/10 bg-surface px-4 py-2.5 text-sm font-medium text-ink-700 hover:bg-surface-tertiary hover:border-ink-900/20 transition-colors mb-4"
           onClick={handleNewSession}
         >
           + New Session
         </button>
 
-        {/* Integrations Panel */}
-        <IntegrationsPanel onSelectRepo={handleSelectRepo} />
-
+        {/* Session List */}
         <div className="flex flex-1 flex-col gap-2 overflow-y-auto min-h-0">
           {sessionList.length === 0 && (
             <div className="rounded-xl border border-ink-900/5 bg-surface px-4 py-5 text-center text-xs text-muted">
               No sessions yet. Start by sending a prompt.
             </div>
           )}
-          {sessionList.map((session) => (
-            <div
-              key={session.id}
-              className={`cursor-pointer rounded-xl border px-2 py-3 text-left transition ${
-                isSessionActive(session.id)
-                  ? "border-accent/30 bg-accent-subtle"
-                  : "border-ink-900/5 bg-surface hover:bg-surface-tertiary"
-              }`}
-              onClick={() => handleSelectSession(session.id)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  handleSelectSession(session.id);
-                }
-              }}
-              role="button"
-              tabIndex={0}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
-                  <div
-                    className={`text-[12px] font-medium text-ink-800 ${
-                      session.status === "running"
-                        ? "text-info/70"
-                        : session.status === "completed"
-                          ? "text-success/70"
-                          : session.status === "error"
-                            ? "text-error/70"
-                            : "text-muted"
-                    }`}
-                  >
-                    {session.title}
-                  </div>
-                  <div className="flex items-center justify-between mt-0.5 text-xs text-muted">
-                    <span className="truncate">{formatCwd(session.cwd)}</span>
-                  </div>
-                </div>
-
-                <Menu.Root>
-                  <Menu.Trigger
-                    className="flex-shrink-0 rounded-full p-1.5 text-ink-500 hover:bg-ink-900/10"
-                    aria-label="Open session menu"
-                    onClick={(event) => event.stopPropagation()}
-                    onPointerDown={(event) => event.stopPropagation()}
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="h-4 w-4"
-                      fill="currentColor"
-                      aria-hidden="true"
+          {sessionList.map((session) => {
+            const branchName = getBranchName(session.worktreeId);
+            return (
+              <div
+                key={session.id}
+                className={`cursor-pointer rounded-xl border px-3 py-3 text-left transition ${
+                  isSessionActive(session.id)
+                    ? "border-accent/30 bg-accent-subtle"
+                    : "border-ink-900/5 bg-surface hover:bg-surface-tertiary"
+                }`}
+                onClick={() => handleSelectSession(session.id)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    handleSelectSession(session.id);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
+                    {/* Title with status color */}
+                    <div
+                      className={`text-[13px] font-medium truncate ${
+                        session.status === "running"
+                          ? "text-info"
+                          : session.status === "completed"
+                            ? "text-success"
+                            : session.status === "error"
+                              ? "text-error"
+                              : "text-ink-800"
+                      }`}
                     >
-                      <circle cx="5" cy="12" r="1.7" />
-                      <circle cx="12" cy="12" r="1.7" />
-                      <circle cx="19" cy="12" r="1.7" />
-                    </svg>
-                  </Menu.Trigger>
-                  <Menu.Portal>
-                    <Menu.Popup className="z-50 min-w-[220px] rounded-xl border border-ink-900/10 bg-white p-1 shadow-lg">
-                      <Menu.Item
-                        className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-700 outline-none hover:bg-ink-900/5"
-                        onSelect={() => onDeleteSession(session.id)}
-                      >
-                        <svg
-                          viewBox="0 0 24 24"
-                          className="h-4 w-4 text-error/80"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
+                      {session.title || "Untitled Session"}
+                    </div>
+
+                    {/* Working directory */}
+                    <div className="text-xs text-muted mt-0.5 truncate">
+                      {formatCwd(session.cwd)}
+                    </div>
+
+                    {/* Branch badge */}
+                    {branchName && (
+                      <div className="flex items-center gap-1 mt-1.5">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/10 text-accent text-[11px] font-medium">
+                          <GitBranch className="w-3 h-3" />
+                          {branchName}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Session menu */}
+                  <Menu.Root>
+                    <Menu.Trigger
+                      className="flex-shrink-0 rounded-full p-1.5 text-ink-500 hover:bg-ink-900/10"
+                      aria-label="Open session menu"
+                      onClick={(event) => event.stopPropagation()}
+                      onPointerDown={(event) => event.stopPropagation()}
+                    >
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Menu.Trigger>
+                    <Menu.Portal>
+                      <Menu.Popup className="z-50 min-w-[200px] rounded-xl border border-ink-900/10 bg-white p-1 shadow-lg">
+                        <Menu.Item
+                          className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-700 outline-none hover:bg-ink-900/5"
+                          onSelect={() => setResumeSessionId(session.id)}
                         >
-                          <path d="M4 7h16" />
-                          <path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-                          <path d="M7 7l1 12a1 1 0 0 0 1 .9h6a1 1 0 0 0 1-.9l1-12" />
-                        </svg>
-                        Delete this session
-                      </Menu.Item>
-                      <Menu.Item
-                        className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-700 outline-none hover:bg-ink-900/5"
-                        onSelect={() => setResumeSessionId(session.id)}
-                      >
-                        <svg
-                          viewBox="0 0 24 24"
-                          className="h-4 w-4 text-ink-500"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
+                          <Terminal className="w-4 h-4 text-ink-500" />
+                          Resume in Claude Code
+                        </Menu.Item>
+                        <Menu.Item
+                          className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-error/80 outline-none hover:bg-ink-900/5"
+                          onSelect={() => onDeleteSession(session.id)}
                         >
-                          <path d="M4 5h16v14H4z" />
-                          <path d="M7 9h10M7 12h6" />
-                          <path d="M13 15l3 2-3 2" />
-                        </svg>
-                        Resume in Claude Code
-                      </Menu.Item>
-                    </Menu.Popup>
-                  </Menu.Portal>
-                </Menu.Root>
+                          <Trash2 className="w-4 h-4" />
+                          Delete session
+                        </Menu.Item>
+                      </Menu.Popup>
+                    </Menu.Portal>
+                  </Menu.Root>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
-        <div className="border-t border-ink-900/5 p-3">
+        {/* Settings button */}
+        <div className="border-t border-ink-900/5 pt-3 mt-3">
           <button
             className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-ink-700 hover:bg-surface-tertiary transition-colors"
             onClick={onOpenSettings}
           >
-            <svg
-              viewBox="0 0 24 24"
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
+            <Settings className="w-4 h-4" />
             Settings
           </button>
         </div>
 
+        {/* Resume Dialog */}
         <Dialog.Root
           open={!!resumeSessionId}
           onOpenChange={(open) => !open && setResumeSessionId(null)}
@@ -292,25 +276,23 @@ export function Sidebar({
             <Dialog.Popup className="fixed left-1/2 top-1/2 w-[92vw] max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl">
               <div className="flex items-start justify-between gap-4">
                 <Dialog.Title className="text-lg font-semibold text-ink-800">
-                  Resume
+                  Resume in Terminal
                 </Dialog.Title>
-                <Dialog.Trigger>
-                  <button
-                    className="rounded-full p-1 text-ink-500 hover:bg-ink-900/10"
-                    aria-label="Close dialog"
+                <Dialog.Close className="rounded-full p-1 text-ink-500 hover:bg-ink-900/10">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
                   >
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path d="M6 6l12 12M18 6l-12 12" />
-                    </svg>
-                  </button>
-                </Dialog.Trigger>
+                    <path d="M6 6l12 12M18 6l-12 12" />
+                  </svg>
+                </Dialog.Close>
               </div>
+              <p className="mt-2 text-sm text-muted">
+                Run this command in your terminal to resume the session:
+              </p>
               <div className="mt-4 flex items-center gap-2 rounded-xl border border-ink-900/10 bg-surface px-3 py-2 font-mono text-xs text-ink-700">
                 <span className="flex-1 break-all">
                   {resumeSessionId ? `claude --resume ${resumeSessionId}` : ""}
@@ -323,7 +305,7 @@ export function Sidebar({
                   {copied ? (
                     <svg
                       viewBox="0 0 24 24"
-                      className="h-4 w-4"
+                      className="h-4 w-4 text-success"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2"

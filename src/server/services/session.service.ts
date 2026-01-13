@@ -1,10 +1,11 @@
-import type { StreamMessage } from "../../types";
-import type { InsertSession, Session } from "../database/schema";
+import type { StreamMessage, WorkTreeInfo, SessionStatus } from "../../types";
+import type { InsertSession, Session, WorkTree } from "../database/schema";
 import { MessageRepository } from "../repositories/message.repository";
 import { SessionRepository } from "../repositories/session.repository";
 import { NotFoundError } from "../utils/errors";
 import { ClaudeService } from "./claude.service";
 import { WebSocketService } from "./websocket.service";
+import { WorkTreeService } from "./worktree.service";
 
 export type SessionHistory = {
   session: Session;
@@ -12,6 +13,8 @@ export type SessionHistory = {
 };
 
 export class SessionService {
+  private worktreeService: WorkTreeService | null = null;
+
   constructor(
     private sessionRepo: SessionRepository,
     private messageRepo: MessageRepository,
@@ -19,21 +22,63 @@ export class SessionService {
     private wsService: WebSocketService,
   ) {}
 
+  /**
+   * 设置 WorkTreeService（可选依赖，避免循环依赖）
+   */
+  setWorktreeService(worktreeService: WorkTreeService): void {
+    this.worktreeService = worktreeService;
+  }
+
   async createSession(options: {
     title: string;
     cwd?: string;
+    workspaceId?: string;
     allowedTools?: string;
     prompt?: string;
-  }): Promise<Session> {
+  }): Promise<{ session: Session; worktree?: WorkTree }> {
+    // 先创建 session 获取 ID
     const session = await this.sessionRepo.create({
       title: options.title,
       status: "idle",
       cwd: options.cwd,
       allowedTools: options.allowedTools,
       lastPrompt: options.prompt,
+      githubRepoId: options.workspaceId,
     });
 
-    return session;
+    let worktree: WorkTree | undefined;
+
+    // 如果指定了 workspaceId 且 worktreeService 可用，创建 WorkTree
+    if (options.workspaceId && this.worktreeService) {
+      try {
+        worktree = await this.worktreeService.createForSession({
+          workspaceId: options.workspaceId,
+          sessionId: session.id,
+          taskName: options.title,
+        });
+
+        // 更新 session 的 worktreeId 和 cwd
+        await this.sessionRepo.update(session.id, {
+          worktreeId: worktree.id,
+          cwd: worktree.localPath,
+        });
+
+        // 更新返回的 session 对象
+        session.worktreeId = worktree.id;
+        session.cwd = worktree.localPath;
+
+        // 广播 worktree 创建事件
+        this.wsService.broadcast({
+          type: "worktree.created",
+          payload: { worktree: this.toWorktreeInfo(worktree) },
+        });
+      } catch (error) {
+        console.error("Failed to create worktree:", error);
+        // WorkTree 创建失败不影响 session 创建
+      }
+    }
+
+    return { session, worktree };
   }
 
   async getSession(id: string): Promise<Session | null> {
@@ -77,9 +122,9 @@ export class SessionService {
       type: "session.status",
       payload: {
         sessionId: id,
-        status: session.status,
+        status: session.status as SessionStatus,
         title,
-        cwd: session.cwd,
+        cwd: session.cwd ?? undefined,
       },
     });
   }
@@ -87,6 +132,18 @@ export class SessionService {
   async deleteSession(id: string): Promise<boolean> {
     // Stop the session if it's running
     this.claudeService.abort(id);
+
+    // Get session to check for worktree
+    const session = await this.sessionRepo.findById(id);
+
+    // Clean up worktree if exists
+    if (session?.worktreeId && this.worktreeService) {
+      try {
+        await this.worktreeService.abandon(session.worktreeId);
+      } catch (error) {
+        console.error("Failed to cleanup worktree:", error);
+      }
+    }
 
     // Delete messages first (should be handled by ON DELETE CASCADE, but being explicit)
     await this.messageRepo.deleteBySessionId(id);
@@ -123,7 +180,7 @@ export class SessionService {
         sessionId: id,
         status: "running",
         title: title || session.title,
-        cwd: cwd || session.cwd,
+        cwd: cwd ?? session.cwd ?? undefined,
       },
     });
 
@@ -144,8 +201,8 @@ export class SessionService {
       await this.claudeService.run({
         sessionId: id,
         prompt,
-        cwd: session.cwd,
-        claudeSessionId: session.claudeSessionId,
+        cwd: session.cwd ?? undefined,
+        claudeSessionId: session.claudeSessionId ?? undefined,
         onEvent: (event) => {
           // Handle events from Claude
           if (event.type === "stream.message") {
@@ -170,7 +227,7 @@ export class SessionService {
           sessionId: id,
           status: "error",
           title: session.title,
-          cwd: session.cwd,
+          cwd: session.cwd ?? undefined,
           error: String(error),
         },
       });
@@ -194,7 +251,7 @@ export class SessionService {
         sessionId: id,
         status: "idle",
         title: session.title,
-        cwd: session.cwd,
+        cwd: session.cwd ?? undefined,
       },
     });
   }
@@ -225,5 +282,25 @@ export class SessionService {
       .catch((error) => {
         console.error("Failed to record message:", error);
       });
+  }
+
+  /**
+   * 转换 WorkTree 数据库对象为 API 类型
+   */
+  private toWorktreeInfo(worktree: WorkTree): WorkTreeInfo {
+    return {
+      id: worktree.id,
+      workspaceId: worktree.workspaceId,
+      name: worktree.name,
+      branchName: worktree.branchName,
+      localPath: worktree.localPath,
+      baseBranch: worktree.baseBranch,
+      status: worktree.status as WorkTreeInfo["status"],
+      changesStats: worktree.changesStats
+        ? JSON.parse(worktree.changesStats)
+        : undefined,
+      createdAt: worktree.createdAt.getTime(),
+      updatedAt: worktree.updatedAt.getTime(),
+    };
   }
 }

@@ -8,10 +8,13 @@ import { db } from "../database";
 import { MessageRepository } from "../repositories/message.repository";
 import { SessionRepository } from "../repositories/session.repository";
 import { SettingsRepository } from "../repositories/settings.repository";
+import { GithubRepoRepository } from "../repositories/github-repo.repository";
+import { WorkTreeRepository } from "../repositories/worktree.repository";
 import { ClaudeService } from "../services/claude.service";
 import { SessionService } from "../services/session.service";
 import { SettingsService } from "../services/settings.service";
 import { WebSocketService } from "../services/websocket.service";
+import { WorkTreeService } from "../services/worktree.service";
 import { githubRoutes } from "./github.routes";
 import { registerSessionRoutes } from "./session.routes";
 import { registerSettingsRoutes } from "./settings.routes";
@@ -21,6 +24,8 @@ export function setupRoutes(app: Hono) {
   const sessionRepo = new SessionRepository(db);
   const messageRepo = new MessageRepository(db);
   const settingsRepo = new SettingsRepository(db);
+  const githubRepoRepo = new GithubRepoRepository(db);
+  const worktreeRepo = new WorkTreeRepository(db);
 
   // Load Claude settings from database on startup
   // This mimics the behavior in the original index.tsx
@@ -40,6 +45,7 @@ export function setupRoutes(app: Hono) {
   // Initialize services
   const wsService = new WebSocketService();
   const claudeService = new ClaudeService();
+  const worktreeService = new WorkTreeService(worktreeRepo, githubRepoRepo);
   const sessionService = new SessionService(
     sessionRepo,
     messageRepo,
@@ -48,10 +54,16 @@ export function setupRoutes(app: Hono) {
   );
   const settingsService = new SettingsService(settingsRepo);
 
+  // Set up cross-service dependencies
+  sessionService.setWorktreeService(worktreeService);
+
   // Initialize controllers
   const sessionController = new SessionController(sessionService);
   const settingsController = new SettingsController(settingsService);
   const wsController = new WebSocketController(sessionService, wsService);
+
+  // Set up worktree service in controllers
+  wsController.setWorktreeService(worktreeService);
 
   // Register routes
   registerSessionRoutes(app, sessionController);

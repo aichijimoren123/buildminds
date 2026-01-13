@@ -1,5 +1,365 @@
 # Changelog
 
+## [2026-01-13] 前端状态管理架构重构 - Store 细分
+
+### 概述
+
+将单一的 `useAppStore` 拆分为多个专门化的 Zustand store，实现更细粒度的状态管理，支持多会话场景下的精细化处理。
+
+### 重构动机
+
+**之前的问题：**
+
+- 所有状态集中在 `useAppStore`，耦合度高
+- 会话级别和消息级别状态混杂
+- 多会话场景下难以进行精细化更新
+- 组件订阅整个 store，可能导致不必要的重渲染
+
+**重构后的优势：**
+
+- ✅ 关注点分离，每个 store 职责明确
+- ✅ 支持多会话并行，消息按 sessionId 索引
+- ✅ 更细粒度的订阅，减少不必要的重渲染
+- ✅ 事件路由清晰，便于维护和扩展
+- ✅ 便于添加新的 WorkTree 等功能
+
+### 新的 Store 架构
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     WebSocket Events                         │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────┐
+                    │   Layout.tsx    │ (事件路由器)
+                    └─────────────────┘
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        │                     │                     │
+        ▼                     ▼                     ▼
+┌───────────────┐   ┌─────────────────┐   ┌─────────────────┐
+│  useAppStore  │   │useSessionsStore │   │useWorktreeStore │
+│   (全局状态)   │   │  (会话元数据)    │   │  (WorkTree)     │
+└───────────────┘   └─────────────────┘   └─────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────┐
+                    │useMessageStore  │
+                    │ (消息/权限请求)  │
+                    └─────────────────┘
+```
+
+### Store 职责划分
+
+#### 1. useAppStore - 全局应用状态
+
+**文件：** `src/store/useAppStore.ts`
+
+**状态：**
+
+```typescript
+interface AppState {
+  prompt: string;                    // 当前输入的 prompt
+  cwd: string;                       // 工作目录
+  selectedGitHubRepoId: string | null; // 选中的 GitHub 仓库
+  pendingStart: boolean;             // 会话启动中标志
+  globalError: string | null;        // 全局错误信息
+}
+```
+
+**处理事件：**
+
+- `runner.error` - 全局错误
+
+#### 2. useSessionsStore - 会话元数据管理
+
+**文件：** `src/store/useSessionsStore.ts`
+
+**状态：**
+
+```typescript
+interface SessionsState {
+  sessions: Record<string, SessionMeta>;  // 所有会话元数据
+  activeSessionId: string | null;         // 当前活跃会话 ID
+  sessionsLoaded: boolean;                // 会话列表是否已加载
+  historyRequested: Set<string>;          // 已请求历史的会话 ID 集合
+}
+
+type SessionMeta = {
+  id: string;
+  title: string;
+  status: SessionStatus;
+  cwd?: string;
+  worktreeId?: string;
+  githubRepoId?: string;
+  lastPrompt?: string;
+  createdAt?: number;
+  updatedAt?: number;
+};
+```
+
+**处理事件：**
+
+- `session.list` - 会话列表
+- `session.history` - 仅更新状态，不处理消息
+- `session.status` - 会话状态变更
+- `session.deleted` - 会话删除
+
+#### 3. useMessageStore - 消息级别状态
+
+**文件：** `src/store/useMessageStore.ts` (新增)
+
+**状态：**
+
+```typescript
+interface MessageState {
+  messagesBySession: Record<string, SessionMessages>;  // 按会话 ID 索引的消息
+}
+
+type SessionMessages = {
+  messages: StreamMessage[];           // 消息列表
+  permissionRequests: PermissionRequest[];  // 权限请求队列
+  hydrated: boolean;                   // 历史是否已加载
+};
+
+type PermissionRequest = {
+  toolUseId: string;
+  toolName: string;
+  input: unknown;
+};
+```
+
+**处理事件：**
+
+- `session.history` - 加载历史消息
+- `stream.message` - 新消息
+- `stream.user_prompt` - 用户输入
+- `permission.request` - 权限请求
+- `session.deleted` - 清理会话消息
+
+**便捷 Hooks：**
+
+```typescript
+// 获取指定会话的消息
+export const useSessionMessages = (sessionId: string | undefined) => {
+  return useMessageStore((state) =>
+    sessionId ? state.messagesBySession[sessionId] : undefined,
+  );
+};
+
+// 检查会话历史是否已加载
+export const useSessionHydrated = (sessionId: string | undefined) => {
+  return useMessageStore((state) =>
+    sessionId ? state.messagesBySession[sessionId]?.hydrated ?? false : false,
+  );
+};
+```
+
+#### 4. useWorktreeStore - WorkTree 状态
+
+**文件：** `src/store/useWorktreeStore.ts` (新增)
+
+**状态：**
+
+```typescript
+interface WorktreeState {
+  worktrees: Record<string, WorkTreeInfo>;  // WorkTree 信息
+  activeWorktreeChanges: FileChange[];      // 当前 WorkTree 的文件变更
+  activeWorktreeDiff: { filePath: string; diff: string } | null;  // 文件 diff
+}
+```
+
+**处理事件：**
+
+- `worktree.created` - WorkTree 创建
+- `worktree.list` - WorkTree 列表
+- `worktree.changes` - 文件变更列表
+- `worktree.diff` - 文件 diff 内容
+- `worktree.merged` - WorkTree 合并
+- `worktree.abandoned` - WorkTree 废弃
+
+### 事件路由实现
+
+**文件：** `src/components/Layout.tsx`
+
+```typescript
+// 消息相关事件类型
+const MESSAGE_EVENTS = new Set([
+  "session.history",
+  "stream.message",
+  "stream.user_prompt",
+  "permission.request",
+  "session.deleted",
+]);
+
+const onEvent = useCallback(
+  (event: ServerEvent) => {
+    // 根据事件类型路由到对应 store
+    if (event.type.startsWith("worktree.")) {
+      handleWorktreeEvent(event);
+    } else if (event.type === "runner.error") {
+      handleAppEvent(event);
+    } else {
+      // 会话事件发送到 sessions store
+      handleSessionEvent(event);
+      // 消息相关事件同时发送到 message store
+      if (MESSAGE_EVENTS.has(event.type)) {
+        handleMessageEvent(event);
+      }
+    }
+
+    // 调用部分消息处理器（用于流式显示）
+    if (partialMessageHandlerRef.current) {
+      partialMessageHandlerRef.current(event);
+    }
+  },
+  [handleAppEvent, handleSessionEvent, handleMessageEvent, handleWorktreeStore],
+);
+```
+
+### 组件使用示例
+
+#### Chat.tsx 中使用多个 store
+
+```typescript
+import { useAppStore } from "../store/useAppStore";
+import {
+  useMessageStore,
+  useSessionMessages,
+  type PermissionRequest,
+} from "../store/useMessageStore";
+import { useSessionsStore } from "../store/useSessionsStore";
+
+export function Chat() {
+  // App store - 全局状态
+  const globalError = useAppStore((state) => state.globalError);
+
+  // Sessions store - 会话元数据
+  const sessions = useSessionsStore((state) => state.sessions);
+  const historyRequested = useSessionsStore((state) => state.historyRequested);
+
+  // Message store - 使用便捷 hook
+  const sessionMessages = useSessionMessages(sessionId);
+  const resolvePermissionRequest = useMessageStore(
+    (state) => state.resolvePermissionRequest,
+  );
+
+  // 从不同 store 获取数据
+  const activeSessionMeta = sessionId ? sessions[sessionId] : undefined;
+  const messages = sessionMessages?.messages ?? [];
+  const permissionRequests = sessionMessages?.permissionRequests ?? [];
+  const hydrated = sessionMessages?.hydrated ?? false;
+
+  // ...
+}
+```
+
+### 文件清单
+
+#### 新增文件
+
+| 文件 | 说明 |
+|------|------|
+| `src/store/useMessageStore.ts` | 消息级别状态管理 |
+| `src/store/useWorktreeStore.ts` | WorkTree 状态管理 |
+
+#### 修改文件
+
+| 文件 | 改动说明 |
+|------|---------|
+| `src/store/useAppStore.ts` | 简化为仅全局状态 |
+| `src/store/useSessionsStore.ts` | 移除消息，仅保留会话元数据 |
+| `src/components/Layout.tsx` | 添加事件路由逻辑 |
+| `src/pages/Chat.tsx` | 使用新的 store 结构 |
+| `src/pages/Home.tsx` | 适配新的 store |
+| `src/components/EventCard.tsx` | 更新 PermissionRequest 导入路径 |
+| `src/components/DecisionPanel.tsx` | 更新 PermissionRequest 导入路径 |
+| `src/components/PromptInput.tsx` | 适配新的 store |
+| `src/components/Sidebar.tsx` | 适配新的 store |
+
+### 类型变更
+
+#### SessionMeta (原 SessionView)
+
+```typescript
+// 之前：包含消息
+type SessionView = {
+  id: string;
+  title: string;
+  status: SessionStatus;
+  messages: StreamMessage[];
+  permissionRequests: PermissionRequest[];
+  hydrated: boolean;
+  // ...
+};
+
+// 之后：仅元数据
+type SessionMeta = {
+  id: string;
+  title: string;
+  status: SessionStatus;
+  cwd?: string;
+  worktreeId?: string;
+  githubRepoId?: string;
+  lastPrompt?: string;
+  createdAt?: number;
+  updatedAt?: number;
+};
+```
+
+#### PermissionRequest 导出位置变更
+
+```typescript
+// 之前
+import type { PermissionRequest } from "../store/useSessionsStore";
+
+// 之后
+import type { PermissionRequest } from "../store/useMessageStore";
+```
+
+### 迁移指南
+
+#### 从旧 API 迁移
+
+```typescript
+// 之前：从 useAppStore 获取会话
+const sessions = useAppStore((state) => state.sessions);
+const activeSessionId = useAppStore((state) => state.activeSessionId);
+
+// 之后：从 useSessionsStore 获取
+const sessions = useSessionsStore((state) => state.sessions);
+const activeSessionId = useSessionsStore((state) => state.activeSessionId);
+```
+
+```typescript
+// 之前：从会话获取消息
+const activeSession = sessions[activeSessionId];
+const messages = activeSession?.messages ?? [];
+
+// 之后：使用 useSessionMessages hook
+const sessionMessages = useSessionMessages(sessionId);
+const messages = sessionMessages?.messages ?? [];
+```
+
+### 测试建议
+
+1. ✅ 创建新会话，验证会话列表更新
+2. ✅ 发送消息，验证消息流正常显示
+3. ✅ 切换会话，验证消息正确加载
+4. ✅ 权限请求显示和响应正常
+5. ✅ 删除会话，验证消息数据清理
+6. ✅ 页面刷新，验证状态恢复
+7. ✅ 多会话并行，验证消息隔离
+
+### 性能影响
+
+- **包体积：** 无变化（仅代码重组）
+- **运行时：** 理论上更优（细粒度订阅减少重渲染）
+- **内存占用：** 无变化
+
+---
+
 ## [2026-01-13] PromptInput 组件重构 - Base UI Menu & 主题系统适配
 
 ### 概述

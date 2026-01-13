@@ -2,34 +2,73 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Outlet, useNavigate } from "react-router";
 import { useWebSocket } from "../hooks/useWebSocket";
 import { useAppStore } from "../store/useAppStore";
+import { useMessageStore } from "../store/useMessageStore";
+import { useSessionsStore } from "../store/useSessionsStore";
+import { useWorktreeStore } from "../store/useWorktreeStore";
 import type { ServerEvent } from "../types";
 import { SettingsModal } from "./SettingsModal";
 import { Sidebar } from "./Sidebar";
+
+// Message-related event types
+const MESSAGE_EVENTS = new Set([
+  "session.history",
+  "stream.message",
+  "stream.user_prompt",
+  "permission.request",
+  "session.deleted",
+]);
 
 export function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const navigate = useNavigate();
 
-  // Store state
-  const handleServerEvent = useAppStore((state) => state.handleServerEvent);
-  const sessionsLoaded = useAppStore((state) => state.sessionsLoaded);
+  // Store event handlers
+  const handleAppEvent = useAppStore((state) => state.handleAppEvent);
+  const handleSessionEvent = useSessionsStore(
+    (state) => state.handleSessionEvent,
+  );
+  const handleMessageEvent = useMessageStore(
+    (state) => state.handleMessageEvent,
+  );
+  const handleWorktreeEvent = useWorktreeStore(
+    (state) => state.handleWorktreeEvent,
+  );
+  const sessionsLoaded = useSessionsStore((state) => state.sessionsLoaded);
 
   // Create a ref to store the partial message handler callback
   const partialMessageHandlerRef = useRef<
     ((event: ServerEvent) => void) | null
   >(null);
 
-  // WebSocket setup
+  // WebSocket setup - dispatch events to appropriate stores
   const onEvent = useCallback(
     (event: ServerEvent) => {
-      handleServerEvent(event);
+      // Route event to appropriate store based on type
+      if (event.type.startsWith("worktree.")) {
+        handleWorktreeEvent(event);
+      } else if (event.type === "runner.error") {
+        handleAppEvent(event);
+      } else {
+        // Session events go to sessions store
+        handleSessionEvent(event);
+        // Message-related events also go to message store
+        if (MESSAGE_EVENTS.has(event.type)) {
+          handleMessageEvent(event);
+        }
+      }
+
       // Also call partial message handler if registered
       if (partialMessageHandlerRef.current) {
         partialMessageHandlerRef.current(event);
       }
     },
-    [handleServerEvent],
+    [
+      handleAppEvent,
+      handleSessionEvent,
+      handleMessageEvent,
+      handleWorktreeEvent,
+    ],
   );
 
   const { connected, sendEvent } = useWebSocket(onEvent);

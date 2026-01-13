@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bun run db:generate:*)",
+      "Bash(bun run:*)",
+      "Bash(sqlite3:*)",
+      "Bash(npx tsc:*)",
+      "Bash(timeout 10 bun run dev:*)",
+      "Bash(agent-browser open:*)",
+      "Bash(agent-browser snapshot:*)",
+      "Bash(agent-browser screenshot:*)",
+      "Bash(agent-browser click:*)",
+      "Bash(agent-browser wait:*)",
+      "Bash(agent-browser fill:*)",
+      "Bash(agent-browser get:*)",
+      "Bash(agent-browser dblclick:*)",
+      "Bash(agent-browser find text \"PC-markdown规范\" click)",
+      "Bash(agent-browser find text \"表格\" click)",
+      "Bash(agent-browser find:*)",
+      "Bash(agent-browser press:*)",
+      "Bash(agent-browser scroll:*)",
+      "Bash(agent-browser state save:*)",
+      "Bash(ls:*)"
+    ]
+  }
+}

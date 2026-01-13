@@ -1,41 +1,35 @@
 import { create } from "zustand";
-import type {
-  ServerEvent,
-  SessionStatus,
-  SessionInfo,
-  StreamMessage,
-} from "../types";
+import { persist } from "zustand/middleware";
+import type { ServerEvent } from "../types";
 
-export type PermissionRequest = {
-  toolUseId: string;
-  toolName: string;
-  input: unknown;
-};
+export type QualityLevel = "standard" | "high" | "max";
 
-export type SessionView = {
-  id: string;
-  title: string;
-  status: SessionStatus;
-  cwd?: string;
-  messages: StreamMessage[];
-  permissionRequests: PermissionRequest[];
-  lastPrompt?: string;
-  createdAt?: number;
-  updatedAt?: number;
-  hydrated: boolean;
-};
+export const AVAILABLE_MODELS = [
+  { id: "claude-sonnet-4-20250514", label: "Claude Sonnet 4" },
+  { id: "claude-opus-4-5-20251101", label: "Claude Opus 4.5" },
+  { id: "claude-3-5-haiku-20241022", label: "Claude 3.5 Haiku" },
+] as const;
+
+export const QUALITY_LEVELS: { id: QualityLevel; label: string; description: string }[] = [
+  { id: "standard", label: "Standard", description: "Fast responses" },
+  { id: "high", label: "High", description: "Balanced" },
+  { id: "max", label: "Max", description: "Best quality" },
+];
 
 interface AppState {
-  // State
-  sessions: Record<string, SessionView>;
-  activeSessionId: string | null;
+  // Global app state
   prompt: string;
   cwd: string;
   selectedGitHubRepoId: string | null;
   pendingStart: boolean;
   globalError: string | null;
-  sessionsLoaded: boolean;
-  historyRequested: Set<string>;
+
+  // Model and quality settings
+  selectedModel: string;
+  qualityLevel: QualityLevel;
+
+  // Workspace context
+  activeWorkspaceId: string | null;
 
   // Actions
   setPrompt: (prompt: string) => void;
@@ -43,259 +37,56 @@ interface AppState {
   setSelectedGitHubRepoId: (repoId: string | null) => void;
   setPendingStart: (pending: boolean) => void;
   setGlobalError: (error: string | null) => void;
-  setActiveSessionId: (id: string | null) => void;
-  markHistoryRequested: (sessionId: string) => void;
-  resolvePermissionRequest: (sessionId: string, toolUseId: string) => void;
+  setSelectedModel: (model: string) => void;
+  setQualityLevel: (level: QualityLevel) => void;
+  setActiveWorkspaceId: (id: string | null) => void;
 
-  // Event Handling
-  handleServerEvent: (event: ServerEvent) => void;
+  // Event Handling (for global errors)
+  handleAppEvent: (event: ServerEvent) => void;
 }
 
-const LAST_SESSION_KEY = "cc-webui:last-session-id";
+export const useAppStore = create<AppState>()(
+  persist(
+    (set) => ({
+      prompt: "",
+      cwd: "",
+      selectedGitHubRepoId: null,
+      pendingStart: false,
+      globalError: null,
 
-function createSession(id: string): SessionView {
-  return {
-    id,
-    title: "",
-    status: "idle",
-    messages: [],
-    permissionRequests: [],
-    hydrated: false,
-  };
-}
+      // Model and quality defaults
+      selectedModel: AVAILABLE_MODELS[0].id,
+      qualityLevel: "high" as QualityLevel,
 
-export const useAppStore = create<AppState>((set, get) => ({
-  sessions: {},
-  activeSessionId: null,
-  prompt: "",
-  cwd: "",
-  selectedGitHubRepoId: null,
-  pendingStart: false,
-  globalError: null,
-  sessionsLoaded: false,
-  historyRequested: new Set(),
+      // Workspace context
+      activeWorkspaceId: null,
 
-  setPrompt: (prompt) => set({ prompt }),
-  setCwd: (cwd) => set({ cwd }),
-  setSelectedGitHubRepoId: (selectedGitHubRepoId) =>
-    set({ selectedGitHubRepoId }),
-  setPendingStart: (pendingStart) => set({ pendingStart }),
-  setGlobalError: (globalError) => set({ globalError }),
+      setPrompt: (prompt) => set({ prompt }),
+      setCwd: (cwd) => set({ cwd }),
+      setSelectedGitHubRepoId: (selectedGitHubRepoId) =>
+        set({ selectedGitHubRepoId }),
+      setPendingStart: (pendingStart) => set({ pendingStart }),
+      setGlobalError: (globalError) => set({ globalError }),
+      setSelectedModel: (selectedModel) => set({ selectedModel }),
+      setQualityLevel: (qualityLevel) => set({ qualityLevel }),
+      setActiveWorkspaceId: (activeWorkspaceId) => set({ activeWorkspaceId }),
 
-  setActiveSessionId: (id) => {
-    set({ activeSessionId: id });
-    if (id) {
-      localStorage.setItem(LAST_SESSION_KEY, id);
-    } else {
-      localStorage.removeItem(LAST_SESSION_KEY);
-    }
-  },
-
-  markHistoryRequested: (sessionId) => {
-    set((state) => {
-      const next = new Set(state.historyRequested);
-      next.add(sessionId);
-      return { historyRequested: next };
-    });
-  },
-
-  resolvePermissionRequest: (sessionId, toolUseId) => {
-    set((state) => {
-      const existing = state.sessions[sessionId];
-      if (!existing) return {};
-      return {
-        sessions: {
-          ...state.sessions,
-          [sessionId]: {
-            ...existing,
-            permissionRequests: existing.permissionRequests.filter(
-              (req) => req.toolUseId !== toolUseId,
-            ),
-          },
-        },
-      };
-    });
-  },
-
-  handleServerEvent: (event) => {
-    const state = get();
-
-    switch (event.type) {
-      case "session.list": {
-        const nextSessions: Record<string, SessionView> = {};
-        for (const session of event.payload.sessions) {
-          const existing =
-            state.sessions[session.id] ?? createSession(session.id);
-          nextSessions[session.id] = {
-            ...existing,
-            status: session.status,
-            title: session.title,
-            cwd: session.cwd,
-            createdAt: session.createdAt,
-            updatedAt: session.updatedAt,
-          };
-        }
-
-        set({
-          sessions: nextSessions,
-          sessionsLoaded: true,
-        });
-
-        if (!event.payload.sessions.length) {
-          get().setActiveSessionId(null);
-        }
-
-        // Logic to select initial session
-        if (!state.activeSessionId && event.payload.sessions.length > 0) {
-          const sorted = [...event.payload.sessions].sort((a, b) => {
-            const aTime = a.updatedAt ?? a.createdAt ?? 0;
-            const bTime = b.updatedAt ?? b.createdAt ?? 0;
-            return aTime - bTime;
-          });
-          const latestSession = sorted[sorted.length - 1];
-          if (latestSession) {
-            get().setActiveSessionId(latestSession.id);
-          }
-        } else if (state.activeSessionId) {
-          const stillExists = event.payload.sessions.some(
-            (session) => session.id === state.activeSessionId,
-          );
-          if (!stillExists) {
-            get().setActiveSessionId(null);
+      handleAppEvent: (event) => {
+        switch (event.type) {
+          case "runner.error": {
+            set({ globalError: event.payload.message });
+            break;
           }
         }
-        break;
-      }
-
-      case "session.history": {
-        const { sessionId, messages, status } = event.payload;
-        set((state) => {
-          const existing =
-            state.sessions[sessionId] ?? createSession(sessionId);
-
-          return {
-            sessions: {
-              ...state.sessions,
-              [sessionId]: {
-                ...existing,
-                status,
-                messages,
-                hydrated: true,
-              },
-            },
-          };
-        });
-        break;
-      }
-
-      case "session.status": {
-        const { sessionId, status, title, cwd } = event.payload;
-        set((state) => {
-          const existing =
-            state.sessions[sessionId] ?? createSession(sessionId);
-          return {
-            sessions: {
-              ...state.sessions,
-              [sessionId]: {
-                ...existing,
-                status,
-                title: title ?? existing.title,
-                cwd: cwd ?? existing.cwd,
-                updatedAt: Date.now(),
-              },
-            },
-          };
-        });
-
-        if (state.pendingStart) {
-          get().setActiveSessionId(sessionId);
-          set({ pendingStart: false });
-        }
-        break;
-      }
-
-      case "session.deleted": {
-        const { sessionId } = event.payload;
-        const state = get();
-        if (!state.sessions[sessionId]) break;
-        const nextSessions = { ...state.sessions };
-        delete nextSessions[sessionId];
-        set({
-          sessions: nextSessions,
-        });
-        if (state.activeSessionId === sessionId) {
-          const remaining = Object.values(nextSessions).sort(
-            (a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0),
-          );
-          get().setActiveSessionId(remaining[0]?.id ?? null);
-        }
-        break;
-      }
-
-      case "stream.message": {
-        const { sessionId, message } = event.payload;
-        set((state) => {
-          const existing =
-            state.sessions[sessionId] ?? createSession(sessionId);
-          return {
-            sessions: {
-              ...state.sessions,
-              [sessionId]: {
-                ...existing,
-                messages: [...existing.messages, message],
-              },
-            },
-          };
-        });
-        break;
-      }
-
-      case "stream.user_prompt": {
-        const { sessionId, prompt } = event.payload;
-        set((state) => {
-          const existing =
-            state.sessions[sessionId] ?? createSession(sessionId);
-          return {
-            sessions: {
-              ...state.sessions,
-              [sessionId]: {
-                ...existing,
-                messages: [
-                  ...existing.messages,
-                  { type: "user_prompt", prompt },
-                ],
-              },
-            },
-          };
-        });
-        break;
-      }
-
-      case "permission.request": {
-        const { sessionId, toolUseId, toolName, input } = event.payload;
-        set((state) => {
-          const existing =
-            state.sessions[sessionId] ?? createSession(sessionId);
-          return {
-            sessions: {
-              ...state.sessions,
-              [sessionId]: {
-                ...existing,
-                permissionRequests: [
-                  ...existing.permissionRequests,
-                  { toolUseId, toolName, input },
-                ],
-              },
-            },
-          };
-        });
-        break;
-      }
-
-      case "runner.error": {
-        set({ globalError: event.payload.message });
-        break;
-      }
+      },
+    }),
+    {
+      name: "cc-webui:app-settings",
+      partialize: (state) => ({
+        selectedModel: state.selectedModel,
+        qualityLevel: state.qualityLevel,
+        activeWorkspaceId: state.activeWorkspaceId,
+      }),
     }
-  },
-}));
+  )
+);

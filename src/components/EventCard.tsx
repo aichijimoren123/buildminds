@@ -8,7 +8,7 @@ import type {
   SDKUserMessage,
 } from "@anthropic-ai/claude-agent-sdk";
 import type { StreamMessage } from "../types";
-import type { PermissionRequest } from "../store/useAppStore";
+import type { PermissionRequest } from "../store/useMessageStore";
 import MDContent from "../render/markdown";
 import { DecisionPanel } from "./DecisionPanel";
 type MessageContent = SDKAssistantMessage["message"]["content"];

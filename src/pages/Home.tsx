@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router";
 import { PromptInput } from "../components/PromptInput";
 import { useAppStore } from "../store/useAppStore";
+import { useSessionsStore } from "../store/useSessionsStore";
 import type { ClientEvent, ServerEvent } from "../types";
 
 interface LayoutContext {
@@ -22,15 +23,18 @@ export function Home() {
     (state) => state.selectedGitHubRepoId,
   );
   const globalError = useAppStore((state) => state.globalError);
+  const pendingStart = useAppStore((state) => state.pendingStart);
 
   const setCwd = useAppStore((state) => state.setCwd);
   const setSelectedGitHubRepoId = useAppStore(
     (state) => state.setSelectedGitHubRepoId,
   );
 
+  const sessions = useSessionsStore((state) => state.sessions);
+  const activeSessionId = useSessionsStore((state) => state.activeSessionId);
+
   const [recentCwds, setRecentCwds] = useState<string[]>([]);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const pendingStart = useAppStore((state) => state.pendingStart);
   // Track if we were in pending state to detect the transition
   const wasPendingRef = useRef(false);
 
@@ -63,10 +67,6 @@ export function Home() {
 
     return () => controller.abort();
   }, [cwd, setCwd]);
-
-  // Navigate to chat ONLY when user starts a new session
-  const sessions = useAppStore((state) => state.sessions);
-  const activeSessionId = useAppStore((state) => state.activeSessionId);
 
   // Track pending state transitions
   useEffect(() => {
