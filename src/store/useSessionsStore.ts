@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { create } from "zustand";
 import type { ServerEvent, SessionStatus } from "../types";
 
@@ -135,6 +136,8 @@ export const useSessionsStore = create<SessionsState>((set, get) => ({
 
       case "session.status": {
         const { sessionId, status, title, cwd } = event.payload;
+        const isNewSession = !state.sessions[sessionId];
+
         set((state) => {
           const existing =
             state.sessions[sessionId] ?? createSessionMeta(sessionId);
@@ -151,6 +154,11 @@ export const useSessionsStore = create<SessionsState>((set, get) => ({
             },
           };
         });
+
+        // Auto-select new session when it starts running
+        if (isNewSession && status === "running") {
+          get().setActiveSessionId(sessionId);
+        }
         break;
       }
 
@@ -176,20 +184,23 @@ export const useSessionsStore = create<SessionsState>((set, get) => ({
 }));
 
 // Selector hooks for workspace filtering
+// Note: These hooks use useMemo to prevent creating new array references on every render
 export const useSessionsByWorkspace = (workspaceId: string | null) => {
-  return useSessionsStore((state) => {
-    const allSessions = Object.values(state.sessions);
+  const sessions = useSessionsStore((state) => state.sessions);
+  return useMemo(() => {
+    const allSessions = Object.values(sessions);
     if (!workspaceId) return allSessions;
     return allSessions.filter((s) => s.githubRepoId === workspaceId);
-  });
+  }, [sessions, workspaceId]);
 };
 
 export const useSessionsSortedByDate = (workspaceId: string | null) => {
-  return useSessionsStore((state) => {
-    const allSessions = Object.values(state.sessions);
+  const sessions = useSessionsStore((state) => state.sessions);
+  return useMemo(() => {
+    const allSessions = Object.values(sessions);
     const filtered = workspaceId
       ? allSessions.filter((s) => s.githubRepoId === workspaceId)
       : allSessions;
-    return [...filtered].sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
-  });
+    return filtered.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
+  }, [sessions, workspaceId]);
 };

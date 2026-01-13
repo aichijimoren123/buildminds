@@ -169,8 +169,8 @@ export function Home() {
         </div>
       </div>
 
-      {/* 使用统一的 PromptInput 组件 */}
-      <PromptInput sendEvent={sendEvent} variant="home" />
+      {/* 使用统一的 PromptInput 组件，forceNewSession 确保始终创建新会话 */}
+      <PromptInput sendEvent={sendEvent} variant="home" forceNewSession />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 import type { ServerEvent } from "../types";
 
 export type QualityLevel = "standard" | "high" | "max";
+export type SessionMode = "normal" | "workspace";
 
 export const AVAILABLE_MODELS = [
   { id: "claude-sonnet-4-20250514", label: "Claude Sonnet 4" },
@@ -30,6 +31,7 @@ interface AppState {
 
   // Workspace context
   activeWorkspaceId: string | null;
+  sessionMode: SessionMode;
 
   // Actions
   setPrompt: (prompt: string) => void;
@@ -40,6 +42,7 @@ interface AppState {
   setSelectedModel: (model: string) => void;
   setQualityLevel: (level: QualityLevel) => void;
   setActiveWorkspaceId: (id: string | null) => void;
+  setSessionMode: (mode: SessionMode) => void;
 
   // Event Handling (for global errors)
   handleAppEvent: (event: ServerEvent) => void;
@@ -60,6 +63,7 @@ export const useAppStore = create<AppState>()(
 
       // Workspace context
       activeWorkspaceId: null,
+      sessionMode: "normal" as SessionMode,
 
       setPrompt: (prompt) => set({ prompt }),
       setCwd: (cwd) => set({ cwd }),
@@ -70,11 +74,19 @@ export const useAppStore = create<AppState>()(
       setSelectedModel: (selectedModel) => set({ selectedModel }),
       setQualityLevel: (qualityLevel) => set({ qualityLevel }),
       setActiveWorkspaceId: (activeWorkspaceId) => set({ activeWorkspaceId }),
+      setSessionMode: (sessionMode) => set({ sessionMode }),
 
       handleAppEvent: (event) => {
         switch (event.type) {
           case "runner.error": {
-            set({ globalError: event.payload.message });
+            set({ globalError: event.payload.message, pendingStart: false });
+            break;
+          }
+          case "session.status": {
+            // Reset pendingStart when session starts running
+            if (event.payload.status === "running") {
+              set({ pendingStart: false });
+            }
             break;
           }
         }
@@ -86,6 +98,7 @@ export const useAppStore = create<AppState>()(
         selectedModel: state.selectedModel,
         qualityLevel: state.qualityLevel,
         activeWorkspaceId: state.activeWorkspaceId,
+        sessionMode: state.sessionMode,
       }),
     }
   )

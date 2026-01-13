@@ -26,13 +26,14 @@ export function WorkspaceSelector({ onSelectWorkspace }: WorkspaceSelectorProps)
   const [repos, setRepos] = useState<GithubRepo[]>([]);
   const [loadingRepos, setLoadingRepos] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [hasLoadedRepos, setHasLoadedRepos] = useState(false);
 
   // Load repos when authenticated
   useEffect(() => {
-    if (authenticated && repos.length === 0) {
+    if (authenticated && !hasLoadedRepos && !loadingRepos) {
       loadRepos();
     }
-  }, [authenticated]);
+  }, [authenticated, hasLoadedRepos, loadingRepos]);
 
   const loadRepos = async () => {
     setLoadingRepos(true);
@@ -46,6 +47,7 @@ export function WorkspaceSelector({ onSelectWorkspace }: WorkspaceSelectorProps)
       console.error("Failed to load repos:", error);
     } finally {
       setLoadingRepos(false);
+      setHasLoadedRepos(true);
     }
   };
 

@@ -1,7 +1,7 @@
 import { Dialog } from "@base-ui/react/dialog";
 import { Menu } from "@base-ui/react/menu";
 import { GitBranch, MoreHorizontal, Settings, Trash2, Terminal } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useAppStore } from "../store/useAppStore";
 import { useSessionsSortedByDate } from "../store/useSessionsStore";
@@ -231,22 +231,24 @@ export function Sidebar({
                       <MoreHorizontal className="w-4 h-4" />
                     </Menu.Trigger>
                     <Menu.Portal>
-                      <Menu.Popup className="z-50 min-w-[200px] rounded-xl border border-ink-900/10 bg-white p-1 shadow-lg">
-                        <Menu.Item
-                          className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-700 outline-none hover:bg-ink-900/5"
-                          onSelect={() => setResumeSessionId(session.id)}
-                        >
-                          <Terminal className="w-4 h-4 text-ink-500" />
-                          Resume in Claude Code
-                        </Menu.Item>
-                        <Menu.Item
-                          className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-error/80 outline-none hover:bg-ink-900/5"
-                          onSelect={() => onDeleteSession(session.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          Delete session
-                        </Menu.Item>
-                      </Menu.Popup>
+                      <Menu.Positioner className="z-50">
+                        <Menu.Popup className="min-w-[200px] rounded-xl border border-ink-900/10 bg-white p-1 shadow-lg">
+                          <Menu.Item
+                            className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-700 outline-none hover:bg-ink-900/5"
+                            onSelect={() => setResumeSessionId(session.id)}
+                          >
+                            <Terminal className="w-4 h-4 text-ink-500" />
+                            Resume in Claude Code
+                          </Menu.Item>
+                          <Menu.Item
+                            className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-error/80 outline-none hover:bg-ink-900/5"
+                            onSelect={() => onDeleteSession(session.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Delete session
+                          </Menu.Item>
+                        </Menu.Popup>
+                      </Menu.Positioner>
                     </Menu.Portal>
                   </Menu.Root>
                 </div>

@@ -56,6 +56,10 @@ export function Layout() {
         if (MESSAGE_EVENTS.has(event.type)) {
           handleMessageEvent(event);
         }
+        // session.status also updates app state (pendingStart)
+        if (event.type === "session.status") {
+          handleAppEvent(event);
+        }
       }
 
       // Also call partial message handler if registered

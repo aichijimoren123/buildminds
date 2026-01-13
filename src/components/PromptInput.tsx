@@ -3,7 +3,9 @@ import {
   ArrowUp,
   Cable,
   Calendar,
+  FolderGit2,
   Github,
+  MessageSquare,
   Mic,
   Plus,
   Settings,
@@ -11,17 +13,19 @@ import {
   Square,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useAppStore } from "../store/useAppStore";
+import { useAppStore, type SessionMode } from "../store/useAppStore";
 import { useSessionsStore } from "../store/useSessionsStore";
 import type { ClientEvent } from "../types";
 import { ModelSelector } from "./ModelSelector";
 import { QualitySelector } from "./QualitySelector";
+import { WorkspaceSessionModal } from "./WorkspaceSessionModal";
 
 const DEFAULT_ALLOWED_TOOLS = "Read,Edit,Bash";
 
 interface PromptInputProps {
   sendEvent: (event: ClientEvent) => void;
   variant?: "home" | "chat";
+  forceNewSession?: boolean; // When true, always create a new session instead of continuing
 }
 
 const CONNECTORS = [
@@ -42,12 +46,16 @@ const CONNECTORS = [
   { id: "slack", name: "Slack", icon: Slack, type: "action", action: "连接" },
 ];
 
-export function usePromptActions(sendEvent: (event: ClientEvent) => void) {
+export function usePromptActions(
+  sendEvent: (event: ClientEvent) => void,
+  options?: { forceNewSession?: boolean },
+) {
   const prompt = useAppStore((state) => state.prompt);
   const cwd = useAppStore((state) => state.cwd);
   const selectedGitHubRepoId = useAppStore(
     (state) => state.selectedGitHubRepoId,
   );
+  const sessionMode = useAppStore((state) => state.sessionMode);
   const setPrompt = useAppStore((state) => state.setPrompt);
   const setPendingStart = useAppStore((state) => state.setPendingStart);
   const setGlobalError = useAppStore((state) => state.setGlobalError);
@@ -58,20 +66,55 @@ export function usePromptActions(sendEvent: (event: ClientEvent) => void) {
   const activeSession = activeSessionId ? sessions[activeSessionId] : undefined;
   const isRunning = activeSession?.status === "running";
 
-  const handleSend = useCallback(async () => {
-    if (!prompt.trim()) return;
+  const forceNewSession = options?.forceNewSession ?? false;
 
-    if (!activeSessionId) {
+  // Start a normal session (no worktree)
+  const startNormalSession = useCallback(
+    (promptText: string) => {
       setPendingStart(true);
       sendEvent({
         type: "session.start",
         payload: {
-          prompt,
+          prompt: promptText,
           cwd: cwd.trim() || undefined,
-          workspaceId: selectedGitHubRepoId || undefined,
+          // Don't pass workspaceId for normal mode
           allowedTools: DEFAULT_ALLOWED_TOOLS,
         },
       });
+    },
+    [cwd, sendEvent, setPendingStart],
+  );
+
+  // Start a workspace session (with worktree)
+  const startWorkspaceSession = useCallback(
+    (promptText: string, worktreeName: string) => {
+      if (!selectedGitHubRepoId) {
+        setGlobalError("Please select a GitHub repository first.");
+        return;
+      }
+      setPendingStart(true);
+      sendEvent({
+        type: "session.start",
+        payload: {
+          prompt: promptText,
+          cwd: cwd.trim() || undefined,
+          workspaceId: selectedGitHubRepoId,
+          title: worktreeName, // Use worktree name as title
+          allowedTools: DEFAULT_ALLOWED_TOOLS,
+        },
+      });
+    },
+    [cwd, selectedGitHubRepoId, sendEvent, setGlobalError, setPendingStart],
+  );
+
+  const handleSend = useCallback(async () => {
+    if (!prompt.trim()) return;
+
+    // Create new session if no active session OR forceNewSession is true
+    if (!activeSessionId || forceNewSession) {
+      // For workspace mode, the modal will handle calling startWorkspaceSession
+      // This path is for normal mode or when called from modal
+      startNormalSession(prompt);
     } else {
       if (activeSession?.status === "running") {
         setGlobalError(
@@ -92,13 +135,12 @@ export function usePromptActions(sendEvent: (event: ClientEvent) => void) {
   }, [
     activeSession,
     activeSessionId,
-    cwd,
+    forceNewSession,
     prompt,
-    selectedGitHubRepoId,
     sendEvent,
     setGlobalError,
-    setPendingStart,
     setPrompt,
+    startNormalSession,
   ]);
 
   const handleStop = useCallback(() => {
@@ -121,18 +163,60 @@ export function usePromptActions(sendEvent: (event: ClientEvent) => void) {
     prompt,
     setPrompt,
     isRunning,
+    sessionMode,
     handleSend,
     handleStop,
     handleStartFromModal,
+    startNormalSession,
+    startWorkspaceSession,
   };
 }
 
-export function PromptInput({ sendEvent, variant = "chat" }: PromptInputProps) {
-  const { prompt, setPrompt, isRunning, handleSend, handleStop } =
-    usePromptActions(sendEvent);
+export function PromptInput({
+  sendEvent,
+  variant = "chat",
+  forceNewSession = false,
+}: PromptInputProps) {
+  const {
+    prompt,
+    setPrompt,
+    isRunning,
+    sessionMode,
+    handleSend,
+    handleStop,
+    startWorkspaceSession,
+  } = usePromptActions(sendEvent, { forceNewSession });
   const promptRef = useRef<HTMLTextAreaElement | null>(null);
 
+  const setSessionMode = useAppStore((state) => state.setSessionMode);
+
   const [connectorsOpen, setConnectorsOpen] = useState(false);
+  const [showWorkspaceModal, setShowWorkspaceModal] = useState(false);
+  const [pendingPrompt, setPendingPrompt] = useState("");
+
+  // Determine if we should create a new session (for mode toggle visibility)
+  const activeSessionId = useSessionsStore((state) => state.activeSessionId);
+  const isNewSession = !activeSessionId || forceNewSession;
+
+  const handleSubmit = () => {
+    if (!prompt.trim()) return;
+
+    if (isNewSession && sessionMode === "workspace") {
+      // Workspace mode: show modal to get worktree name
+      setPendingPrompt(prompt);
+      setShowWorkspaceModal(true);
+    } else {
+      // Normal mode or continuing session
+      handleSend();
+    }
+  };
+
+  const handleWorkspaceConfirm = (worktreeName: string) => {
+    startWorkspaceSession(pendingPrompt, worktreeName);
+    setPrompt("");
+    setPendingPrompt("");
+    setShowWorkspaceModal(false);
+  };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key !== "Enter" || event.shiftKey) return;
@@ -141,7 +225,7 @@ export function PromptInput({ sendEvent, variant = "chat" }: PromptInputProps) {
       handleStop();
       return;
     }
-    handleSend();
+    handleSubmit();
   };
 
   const handleInput = (event: React.FormEvent<HTMLTextAreaElement>) => {
@@ -272,8 +356,38 @@ export function PromptInput({ sendEvent, variant = "chat" }: PromptInputProps) {
                 </Menu.Root>
               </div>
 
-              {/* 右侧：模型选择、质量选择、语音和发送 */}
+              {/* 右侧：模式切换、模型选择、质量选择、语音和发送 */}
               <div className="flex items-center gap-2">
+                {/* Session Mode Toggle - only show for new sessions */}
+                {isNewSession && (
+                  <div className="flex items-center rounded-full border border-border-100/20 p-0.5">
+                    <button
+                      onClick={() => setSessionMode("normal")}
+                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                        sessionMode === "normal"
+                          ? "bg-text-100 text-bg-000"
+                          : "text-text-400 hover:text-text-200"
+                      }`}
+                      title="Normal session - direct conversation"
+                    >
+                      <MessageSquare size={14} />
+                      <span className="hidden sm:inline">Normal</span>
+                    </button>
+                    <button
+                      onClick={() => setSessionMode("workspace")}
+                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                        sessionMode === "workspace"
+                          ? "bg-accent text-white"
+                          : "text-text-400 hover:text-text-200"
+                      }`}
+                      title="Workspace mode - creates a git branch for this task"
+                    >
+                      <FolderGit2 size={14} />
+                      <span className="hidden sm:inline">Workspace</span>
+                    </button>
+                  </div>
+                )}
+
                 {/* Model selector */}
                 <ModelSelector />
 
@@ -295,10 +409,12 @@ export function PromptInput({ sendEvent, variant = "chat" }: PromptInputProps) {
                     isRunning
                       ? "bg-danger-100 text-oncolor-100 hover:bg-danger-000"
                       : prompt.trim()
-                        ? "bg-text-100 text-bg-000 hover:bg-text-200"
+                        ? sessionMode === "workspace" && isNewSession
+                          ? "bg-accent text-white hover:bg-accent/90"
+                          : "bg-text-100 text-bg-000 hover:bg-text-200"
                         : "bg-bg-200 text-text-500"
                   }`}
-                  onClick={isRunning ? handleStop : handleSend}
+                  onClick={isRunning ? handleStop : handleSubmit}
                   disabled={!isRunning && !prompt.trim()}
                 >
                   {isRunning ? (
@@ -312,6 +428,17 @@ export function PromptInput({ sendEvent, variant = "chat" }: PromptInputProps) {
           </div>
         </div>
       </div>
+
+      {/* Workspace Session Modal */}
+      <WorkspaceSessionModal
+        open={showWorkspaceModal}
+        onClose={() => {
+          setShowWorkspaceModal(false);
+          setPendingPrompt("");
+        }}
+        onConfirm={handleWorkspaceConfirm}
+        prompt={pendingPrompt}
+      />
     </section>
   );
 }

@@ -20,7 +20,9 @@
       "Bash(agent-browser press:*)",
       "Bash(agent-browser scroll:*)",
       "Bash(agent-browser state save:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(bun drizzle-kit push --force)",
+      "Bash(npx drizzle-kit push --force)"
     ]
   }
 }
