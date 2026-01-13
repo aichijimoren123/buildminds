@@ -10,6 +10,8 @@ export const auth = betterAuth({
     github: {
       clientId: process.env.GITHUB_CLIENT_ID || "",
       clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
+      // Request repo scope to access user's repositories
+      scope: ["read:user", "user:email", "repo"],
     },
   },
   baseURL: process.env.PUBLIC_URL || "http://localhost:10086",

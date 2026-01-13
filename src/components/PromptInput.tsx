@@ -13,7 +13,7 @@ import {
   Square,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useAppStore, type SessionMode } from "../store/useAppStore";
+import { useAppStore } from "../store/useAppStore";
 import { useSessionsStore } from "../store/useSessionsStore";
 import type { ClientEvent } from "../types";
 import { ModelSelector } from "./ModelSelector";
@@ -243,7 +243,7 @@ export function PromptInput({
   const containerClasses =
     variant === "chat"
       ? "w-full bottom-0 left-0 right-0 pb-6 px-4 lg:pb-10 pt-4 z-50"
-      : "relative w-full z-50";
+      : "relative w-full";
 
   return (
     <section className={containerClasses}>
