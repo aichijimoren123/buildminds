@@ -81,7 +81,9 @@ export class RepositoryService {
   }
 
   async listAvailableRepos(userId: string): Promise<GitHubRepoInfo[]> {
+    console.log("[listAvailableRepos] Looking up user:", userId);
     const user = await this.userRepo.findById(userId);
+    console.log("[listAvailableRepos] User found:", user ? "yes" : "no", user?.accessToken ? "has token" : "no token");
     if (!user) throw new Error("User not found");
 
     return await this.githubService.listUserRepos(user.accessToken);

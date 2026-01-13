@@ -40,10 +40,12 @@ githubRoutes.get("/repos", async (c) => {
 githubRoutes.get("/browse", async (c) => {
   try {
     const userId = c.get("userId");
+    console.log("[GitHub Browse] userId:", userId);
     const repos = await repositoryService.listAvailableRepos(userId);
+    console.log("[GitHub Browse] repos count:", repos.length);
     return c.json({ repos });
   } catch (error) {
-    console.error("Failed to browse repos:", error);
+    console.error("[GitHub Browse] Failed to browse repos:", error);
     return c.json({ error: String(error) }, 500);
   }
 });

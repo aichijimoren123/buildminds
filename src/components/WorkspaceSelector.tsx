@@ -68,15 +68,22 @@ export function WorkspaceSelector({ onSelectWorkspace }: WorkspaceSelectorProps)
   };
 
   const loadAvailableRepos = async () => {
+    console.log("[WorkspaceSelector] loadAvailableRepos called");
     setLoadingAvailable(true);
     try {
+      console.log("[WorkspaceSelector] Fetching /api/github/browse...");
       const response = await fetch("/api/github/browse");
+      console.log("[WorkspaceSelector] Response status:", response.status);
       if (response.ok) {
         const data = await response.json();
+        console.log("[WorkspaceSelector] Got repos:", data.repos?.length);
         setAvailableRepos(data.repos);
+      } else {
+        const error = await response.text();
+        console.error("[WorkspaceSelector] Error response:", error);
       }
     } catch (error) {
-      console.error("Failed to load available repos:", error);
+      console.error("[WorkspaceSelector] Failed to load available repos:", error);
     } finally {
       setLoadingAvailable(false);
     }
@@ -130,6 +137,7 @@ export function WorkspaceSelector({ onSelectWorkspace }: WorkspaceSelectorProps)
   };
 
   const handleOpenBrowse = () => {
+    console.log("[WorkspaceSelector] handleOpenBrowse called");
     setIsOpen(false);
     setShowBrowseModal(true);
     loadAvailableRepos();
@@ -246,7 +254,10 @@ export function WorkspaceSelector({ onSelectWorkspace }: WorkspaceSelectorProps)
                   {/* Add repository */}
                   <Menu.Item
                     className="flex items-center gap-2 px-3 py-2 text-sm text-accent hover:bg-surface-tertiary cursor-pointer outline-none"
-                    onSelect={handleOpenBrowse}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleOpenBrowse();
+                    }}
                   >
                     <Plus className="w-4 h-4" />
                     <span>Add Repository</span>
