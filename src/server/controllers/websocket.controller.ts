@@ -1,6 +1,7 @@
 import type { ClientEvent } from "../../types";
 import { SessionService } from "../services/session.service";
 import { WebSocketService } from "../services/websocket.service";
+import { generateSessionTitle } from "../../libs/util";
 
 export class WebSocketController {
   constructor(
@@ -61,19 +62,37 @@ export class WebSocketController {
     }
 
     if (event.type === "session.start") {
+      // Use provided title or generate a temporary one from prompt
+      const tempTitle =
+        event.payload.title ||
+        event.payload.prompt.slice(0, 50) + (event.payload.prompt.length > 50 ? "..." : "");
+
       const session = await this.sessionService.createSession({
         cwd: event.payload.cwd,
-        title: event.payload.title,
+        title: tempTitle,
         allowedTools: event.payload.allowedTools,
         prompt: event.payload.prompt,
       });
 
-      await this.sessionService.startSession(
+      // Start session immediately without waiting for title generation
+      this.sessionService.startSession(
         session.id,
         event.payload.prompt,
-        session.title,
+        tempTitle,
         session.cwd,
       );
+
+      // Generate proper title asynchronously and update
+      if (!event.payload.title) {
+        generateSessionTitle(event.payload.prompt)
+          .then((title) => {
+            this.sessionService.updateSessionTitle(session.id, title);
+          })
+          .catch((error) => {
+            console.error("Failed to generate session title:", error);
+          });
+      }
+
       return;
     }
 

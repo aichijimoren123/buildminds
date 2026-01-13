@@ -1,4 +1,4 @@
-import * as Collapsible from "@radix-ui/react-collapsible";
+import { Collapsible } from "@base-ui/react/collapsible";
 import { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { authClient } from "../lib/auth-client";
@@ -169,8 +169,8 @@ export function IntegrationsPanel({ onSelectRepo }: IntegrationsPanelProps) {
         open={expanded && authenticated}
         onOpenChange={setExpanded}
       >
-        <Collapsible.Content className="border-t border-ink-900/10">
-          <div className="p-4 space-y-3">
+        <Collapsible.Panel className="border-t border-ink-900/10">
+          <div className="p-4 space-y-3 max-h-100 overflow-y-auto">
             {/* Connected User Info */}
             {user && (
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-secondary">
@@ -190,11 +190,7 @@ export function IntegrationsPanel({ onSelectRepo }: IntegrationsPanelProps) {
             {/* Repositories Section */}
             <div>
               <button
-                onClick={
-                  handleShowRepos
-                    ? () => setShowRepos(!showRepos)
-                    : handleShowRepos
-                }
+                onClick={() => setShowRepos(!showRepos)}
                 className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-ink-800 hover:bg-surface-secondary rounded-lg transition-colors"
               >
                 <span>代码库</span>
@@ -391,7 +387,7 @@ export function IntegrationsPanel({ onSelectRepo }: IntegrationsPanelProps) {
               配置 GitHub
             </a>
           </div>
-        </Collapsible.Content>
+        </Collapsible.Panel>
       </Collapsible.Root>
     </div>
   );

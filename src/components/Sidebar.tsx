@@ -1,5 +1,5 @@
-import * as Dialog from "@radix-ui/react-dialog";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { Dialog } from "@base-ui/react/dialog";
+import { Menu } from "@base-ui/react/menu";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useAppStore } from "../store/useAppStore";
@@ -202,33 +202,27 @@ export function Sidebar({
                   </div>
                 </div>
 
-                <DropdownMenu.Root>
-                  <DropdownMenu.Trigger asChild>
-                    <button
-                      className="flex-shrink-0 rounded-full p-1.5 text-ink-500 hover:bg-ink-900/10"
-                      aria-label="Open session menu"
-                      onClick={(event) => event.stopPropagation()}
-                      onPointerDown={(event) => event.stopPropagation()}
+                <Menu.Root>
+                  <Menu.Trigger
+                    className="flex-shrink-0 rounded-full p-1.5 text-ink-500 hover:bg-ink-900/10"
+                    aria-label="Open session menu"
+                    onClick={(event) => event.stopPropagation()}
+                    onPointerDown={(event) => event.stopPropagation()}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-4 w-4"
+                      fill="currentColor"
+                      aria-hidden="true"
                     >
-                      <svg
-                        viewBox="0 0 24 24"
-                        className="h-4 w-4"
-                        fill="currentColor"
-                        aria-hidden="true"
-                      >
-                        <circle cx="5" cy="12" r="1.7" />
-                        <circle cx="12" cy="12" r="1.7" />
-                        <circle cx="19" cy="12" r="1.7" />
-                      </svg>
-                    </button>
-                  </DropdownMenu.Trigger>
-                  <DropdownMenu.Portal>
-                    <DropdownMenu.Content
-                      className="z-50 min-w-[220px] rounded-xl border border-ink-900/10 bg-white p-1 shadow-lg"
-                      align="center"
-                      sideOffset={8}
-                    >
-                      <DropdownMenu.Item
+                      <circle cx="5" cy="12" r="1.7" />
+                      <circle cx="12" cy="12" r="1.7" />
+                      <circle cx="19" cy="12" r="1.7" />
+                    </svg>
+                  </Menu.Trigger>
+                  <Menu.Portal>
+                    <Menu.Popup className="z-50 min-w-[220px] rounded-xl border border-ink-900/10 bg-white p-1 shadow-lg">
+                      <Menu.Item
                         className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-700 outline-none hover:bg-ink-900/5"
                         onSelect={() => onDeleteSession(session.id)}
                       >
@@ -244,8 +238,8 @@ export function Sidebar({
                           <path d="M7 7l1 12a1 1 0 0 0 1 .9h6a1 1 0 0 0 1-.9l1-12" />
                         </svg>
                         Delete this session
-                      </DropdownMenu.Item>
-                      <DropdownMenu.Item
+                      </Menu.Item>
+                      <Menu.Item
                         className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-700 outline-none hover:bg-ink-900/5"
                         onSelect={() => setResumeSessionId(session.id)}
                       >
@@ -261,10 +255,10 @@ export function Sidebar({
                           <path d="M13 15l3 2-3 2" />
                         </svg>
                         Resume in Claude Code
-                      </DropdownMenu.Item>
-                    </DropdownMenu.Content>
-                  </DropdownMenu.Portal>
-                </DropdownMenu.Root>
+                      </Menu.Item>
+                    </Menu.Popup>
+                  </Menu.Portal>
+                </Menu.Root>
               </div>
             </div>
           ))}
@@ -294,13 +288,13 @@ export function Sidebar({
           onOpenChange={(open) => !open && setResumeSessionId(null)}
         >
           <Dialog.Portal>
-            <Dialog.Overlay className="fixed inset-0 bg-ink-900/40 backdrop-blur-sm" />
-            <Dialog.Content className="fixed left-1/2 top-1/2 w-[92vw] max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl">
+            <Dialog.Backdrop className="fixed inset-0 bg-ink-900/40 backdrop-blur-sm" />
+            <Dialog.Popup className="fixed left-1/2 top-1/2 w-[92vw] max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl">
               <div className="flex items-start justify-between gap-4">
                 <Dialog.Title className="text-lg font-semibold text-ink-800">
                   Resume
                 </Dialog.Title>
-                <Dialog.Close asChild>
+                <Dialog.Trigger>
                   <button
                     className="rounded-full p-1 text-ink-500 hover:bg-ink-900/10"
                     aria-label="Close dialog"
@@ -315,7 +309,7 @@ export function Sidebar({
                       <path d="M6 6l12 12M18 6l-12 12" />
                     </svg>
                   </button>
-                </Dialog.Close>
+                </Dialog.Trigger>
               </div>
               <div className="mt-4 flex items-center gap-2 rounded-xl border border-ink-900/10 bg-surface px-3 py-2 font-mono text-xs text-ink-700">
                 <span className="flex-1 break-all">
@@ -350,7 +344,7 @@ export function Sidebar({
                   )}
                 </button>
               </div>
-            </Dialog.Content>
+            </Dialog.Popup>
           </Dialog.Portal>
         </Dialog.Root>
       </aside>

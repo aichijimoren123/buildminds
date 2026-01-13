@@ -4,6 +4,12 @@ import type { ServerEvent, ClientEvent } from "../types";
 export function useWebSocket(onEvent: (event: ServerEvent) => void) {
   const [connected, setConnected] = useState(false);
   const socketRef = useRef<WebSocket | null>(null);
+  const onEventRef = useRef(onEvent);
+
+  // Keep the ref up to date without triggering reconnection
+  useEffect(() => {
+    onEventRef.current = onEvent;
+  }, [onEvent]);
 
   useEffect(() => {
     const socket = new WebSocket("ws://" + window.location.host + "/ws");
@@ -14,7 +20,7 @@ export function useWebSocket(onEvent: (event: ServerEvent) => void) {
     socket.addEventListener("message", (event) => {
       try {
         const data = JSON.parse(event.data as string) as ServerEvent;
-        onEvent(data);
+        onEventRef.current(data);
       } catch {
         return;
       }
@@ -23,7 +29,7 @@ export function useWebSocket(onEvent: (event: ServerEvent) => void) {
     return () => {
       socket.close();
     };
-  }, [onEvent]);
+  }, []);
 
   const sendEvent = useCallback((event: ClientEvent) => {
     const socket = socketRef.current;

@@ -35,33 +35,6 @@ export type SessionInfo = {
   updatedAt: number;
 };
 
-import type {
-  SDKMessage,
-  PermissionResult,
-  SDKPartialAssistantMessage,
-} from "@anthropic-ai/claude-agent-sdk";
-
-export type UserPromptMessage = {
-  type: "user_prompt";
-  prompt: string;
-};
-
-export type StreamMessage = SDKMessage | UserPromptMessage;
-
-// Session status
-export type SessionStatus = "idle" | "running" | "completed" | "error";
-
-// Session info
-export type SessionInfo = {
-  id: string;
-  title: string;
-  status: SessionStatus;
-  claudeSessionId?: string;
-  cwd?: string;
-  createdAt: number;
-  updatedAt: number;
-};
-
 // Server -> Client events
 export type ServerEvent =
   | {
@@ -108,7 +81,7 @@ export type ClientEvent =
   | {
       type: "session.start";
       payload: {
-        title: string;
+        title?: string;
         prompt: string;
         cwd?: string;
         allowedTools?: string;

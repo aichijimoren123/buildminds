@@ -30,7 +30,9 @@ export function Home() {
 
   const [recentCwds, setRecentCwds] = useState<string[]>([]);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const isStartingSession = useRef(false);
+  const pendingStart = useAppStore((state) => state.pendingStart);
+  // Track if we were in pending state to detect the transition
+  const wasPendingRef = useRef(false);
 
   // Fetch default cwd and recent cwds
   useEffect(() => {
@@ -66,17 +68,25 @@ export function Home() {
   const sessions = useAppStore((state) => state.sessions);
   const activeSessionId = useAppStore((state) => state.activeSessionId);
 
+  // Track pending state transitions
   useEffect(() => {
-    // Only navigate if we're actively starting a session
+    if (pendingStart) {
+      wasPendingRef.current = true;
+    }
+  }, [pendingStart]);
+
+  useEffect(() => {
+    // Navigate when pendingStart transitions from true to false and we have an active session
     if (
-      isStartingSession.current &&
+      wasPendingRef.current &&
+      !pendingStart &&
       activeSessionId &&
       sessions[activeSessionId]
     ) {
       navigate(`/chat/${activeSessionId}`);
-      isStartingSession.current = false;
+      wasPendingRef.current = false;
     }
-  }, [activeSessionId, sessions, navigate]);
+  }, [activeSessionId, sessions, navigate, pendingStart]);
 
   return (
     <div className="flex flex-col min-h-full items-center justify-center bg-surface-cream px-6 py-12">

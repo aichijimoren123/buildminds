@@ -1,6 +1,6 @@
+import { Dialog } from "@base-ui/react/dialog";
+import { Check, CreditCard, Database, HelpCircle, LayoutTemplate, Mail, Monitor, Settings, User, X } from "lucide-react";
 import { useState } from "react";
-import * as Dialog from "@radix-ui/react-dialog";
-import { User, Settings, CreditCard, Mail, Database, LayoutTemplate, Bell, HelpCircle, X, Check, Globe, Moon, Sun, Monitor } from "lucide-react";
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -39,18 +39,18 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   return (
     <Dialog.Root open={true} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex h-[85vh] w-[90vw] max-w-5xl -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl bg-white shadow-2xl focus:outline-none">
+        <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" />
+        <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 flex h-[85vh] max-h-200 w-[90vw] max-w-5xl -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl bg-white shadow-2xl focus:outline-none">
           {/* Sidebar */}
-          <div className="w-64 flex-shrink-0 border-r border-gray-100 bg-gray-50/50 p-4">
+          <div className="w-64 flex-shrink-0 border-r border-gray-100 bg-gray-50/50 p-4 flex flex-col">
             <div className="flex items-center gap-2 px-3 py-4 mb-2">
               <div className="h-6 w-6 rounded-full bg-black flex items-center justify-center text-white font-bold text-xs">
                 M
               </div>
               <span className="font-semibold text-gray-900">manus</span>
             </div>
-            
-            <nav className="space-y-0.5">
+
+            <nav className="space-y-0.5 flex-1 overflow-y-auto min-h-0 pr-2 -mr-2">
               {SIDEBAR_ITEMS.map((item) => (
                 <button
                   key={item.id}
@@ -67,7 +67,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
               ))}
             </nav>
 
-            <div className="absolute bottom-4 left-4 right-4">
+            <div className="pt-4 border-t border-gray-100 mt-4">
               <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100/50 hover:text-gray-900 transition-colors">
                 <HelpCircle className="h-4 w-4" />
                 获取帮助
@@ -241,7 +241,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
               </div>
             </div>
           </div>
-        </Dialog.Content>
+        </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>
   );

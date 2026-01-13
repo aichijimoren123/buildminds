@@ -66,6 +66,24 @@ export class SessionService {
     return await this.sessionRepo.update(id, data);
   }
 
+  async updateSessionTitle(id: string, title: string): Promise<void> {
+    const session = await this.sessionRepo.findById(id);
+    if (!session) return;
+
+    await this.sessionRepo.update(id, { title });
+
+    // Broadcast title update to frontend
+    this.wsService.broadcast({
+      type: "session.status",
+      payload: {
+        sessionId: id,
+        status: session.status,
+        title,
+        cwd: session.cwd,
+      },
+    });
+  }
+
   async deleteSession(id: string): Promise<boolean> {
     // Stop the session if it's running
     this.claudeService.abort(id);
