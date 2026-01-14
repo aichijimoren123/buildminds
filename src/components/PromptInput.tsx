@@ -242,7 +242,7 @@ export function PromptInput({
 
   const containerClasses =
     variant === "chat"
-      ? "w-full bottom-0 left-0 right-0 pb-6 px-4 lg:pb-10 pt-4 z-50"
+      ? "w-full bottom-0 left-0 right-0 pb-6 px-4 lg:pb-10 pt-4"
       : "relative w-full";
 
   return (

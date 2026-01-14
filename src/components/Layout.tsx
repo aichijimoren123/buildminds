@@ -23,8 +23,9 @@ export function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 检查是否在设置页面 - 设置页面在移动端有自己的导航
+  // 检查是否在设置页面或聊天页面
   const isSettingsPage = location.pathname === "/settings";
+  const isChatPage = location.pathname.startsWith("/chat/");
 
   // Store event handlers
   const handleAppEvent = useAppStore((state) => state.handleAppEvent);
@@ -98,8 +99,8 @@ export function Layout() {
   return (
     <div className="h-full bg-surface">
       <div className="relative flex h-full flex-col lg:block">
-        {/* 设置页面在移动端不显示侧边栏 */}
-        {!isSettingsPage && (
+        {/* 移动端：设置页面和聊天页面不显示侧边栏 */}
+        {!isSettingsPage && !isChatPage && (
           <Sidebar
             connected={connected}
             onNewSession={handleNewSessionClick}
@@ -109,8 +110,8 @@ export function Layout() {
             onMobileClose={() => setIsSidebarOpen(false)}
           />
         )}
-        {/* 桌面端始终显示侧边栏 */}
-        {isSettingsPage && (
+        {/* 桌面端：始终显示侧边栏 */}
+        {(isSettingsPage || isChatPage) && (
           <div className="hidden lg:block">
             <Sidebar
               connected={connected}
@@ -124,10 +125,10 @@ export function Layout() {
         )}
 
         <main
-          className={`relative flex h-full flex-col ${isSettingsPage ? "lg:ml-[280px]" : "lg:ml-[280px]"}`}
+          className={`relative flex h-full flex-col ${isSettingsPage || isChatPage ? "lg:ml-[280px]" : "lg:ml-[280px]"}`}
         >
-          {/* 设置页面在移动端不显示汉堡菜单按钮 */}
-          {!isSettingsPage && (
+          {/* 移动端：设置页面和聊天页面不显示汉堡菜单按钮 */}
+          {!isSettingsPage && !isChatPage && (
             <button
               className="fixed left-4 top-4 z-20 rounded-lg p-2 text-ink-700 hover:bg-surface-tertiary lg:hidden"
               onClick={() => setIsSidebarOpen(true)}

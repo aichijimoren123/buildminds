@@ -1,6 +1,12 @@
 import { Dialog } from "@base-ui/react/dialog";
 import { Menu } from "@base-ui/react/menu";
-import { GitBranch, MoreHorizontal, Settings, Trash2, Terminal } from "lucide-react";
+import {
+  GitBranch,
+  MoreHorizontal,
+  Settings,
+  Trash2,
+  Terminal,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useAppStore } from "../store/useAppStore";

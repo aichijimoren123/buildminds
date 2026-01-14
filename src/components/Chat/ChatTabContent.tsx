@@ -1,17 +1,17 @@
 import type { PermissionResult } from "@anthropic-ai/claude-agent-sdk";
 import { useEffect, useRef, useState } from "react";
-import { DecisionPanel } from "./DecisionPanel";
-import { MessageCard } from "./EventCard";
-import MDContent from "../render/markdown";
-import { useAppStore } from "../store/useAppStore";
+import { DecisionPanel } from "../DecisionPanel";
+import { MessageCard } from "../EventCard";
+import MDContent from "../../render/markdown";
+import { useAppStore } from "../../store/useAppStore";
 import {
   useMessageStore,
   useSessionMessages,
   type PermissionRequest,
-} from "../store/useMessageStore";
-import { useSessionsStore } from "../store/useSessionsStore";
-import type { Tab } from "../store/useTabsStore";
-import type { ClientEvent, ServerEvent } from "../types";
+} from "../../store/useMessageStore";
+import { useSessionsStore } from "../../store/useSessionsStore";
+import type { Tab } from "../../store/useTabsStore";
+import type { ClientEvent, ServerEvent } from "../../types";
 
 interface ChatTabContentProps {
   tab: Tab | null;
@@ -30,13 +30,13 @@ export function ChatTabContent({
   const sessions = useSessionsStore((state) => state.sessions);
   const historyRequested = useSessionsStore((state) => state.historyRequested);
   const markHistoryRequested = useSessionsStore(
-    (state) => state.markHistoryRequested
+    (state) => state.markHistoryRequested,
   );
 
   const sessionId = tab?.sessionId;
   const sessionMessages = useSessionMessages(sessionId);
   const resolvePermissionRequest = useMessageStore(
-    (state) => state.resolvePermissionRequest
+    (state) => state.resolvePermissionRequest,
   );
 
   const streamEndRef = useRef<HTMLDivElement | null>(null);
@@ -108,7 +108,14 @@ export function ChatTabContent({
       type: "session.history",
       payload: { sessionId },
     });
-  }, [sessionId, sessions, hydrated, historyRequested, markHistoryRequested, sendEvent]);
+  }, [
+    sessionId,
+    sessions,
+    hydrated,
+    historyRequested,
+    markHistoryRequested,
+    sendEvent,
+  ]);
 
   // Auto-scroll when new messages are added
   const messagesLength = messages.length;
@@ -119,7 +126,7 @@ export function ChatTabContent({
 
   const handlePermissionResponse = (
     request: PermissionRequest,
-    result: PermissionResult
+    result: PermissionResult,
   ) => {
     if (!sessionId) return;
     sendEvent({
@@ -176,7 +183,7 @@ export function ChatTabContent({
             onSubmit={(result) =>
               handlePermissionResponse(
                 permissionRequests[permissionRequests.length - 1],
-                result
+                result,
               )
             }
           />

@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { useNavigate, useOutletContext, useParams } from "react-router";
-import { ChatTabs } from "../components/ChatTabs";
-import { ChatTabContent } from "../components/ChatTabContent";
+import { ChatTabs } from "../components/Chat/ChatTabs";
+import { ChatTabContent } from "../components/Chat/ChatTabContent";
+import { ChatTitleBar } from "../components/Chat/ChatTitleBar";
 import { PromptInput } from "../components/PromptInput";
 import { useSessionsStore } from "../store/useSessionsStore";
 import { useTabsStore, useActiveTab, useTabs } from "../store/useTabsStore";
@@ -98,16 +99,22 @@ export function Chat() {
     navigate("/");
   };
 
+  // Get current session
+  const currentSession = sessionId ? sessions[sessionId] : undefined;
+
   return (
     <div className="flex h-full flex-col bg-surface-cream">
-      {/* Tab bar */}
-      <ChatTabs
+      {/* Title bar */}
+      <ChatTitleBar session={currentSession} />
+
+      {/* Tab bar - temporarily hidden */}
+      {/* <ChatTabs
         tabs={tabs}
         activeTabId={activeTab?.id ?? null}
         onTabClick={handleTabClick}
         onTabClose={handleTabClose}
         onAddTab={handleAddTab}
-      />
+      /> */}
 
       {/* Tab content */}
       <ChatTabContent

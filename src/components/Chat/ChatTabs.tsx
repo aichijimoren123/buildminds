@@ -1,5 +1,5 @@
 import { X, Plus, MessageSquare, GitCompare } from "lucide-react";
-import type { Tab } from "../store/useTabsStore";
+import type { Tab } from "../../store/useTabsStore";
 
 interface ChatTabsProps {
   tabs: Tab[];
