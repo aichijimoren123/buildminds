@@ -1,0 +1,670 @@
+import {
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  Monitor,
+  HelpCircle,
+  User,
+  Settings as SettingsIcon,
+  CreditCard,
+  Mail,
+  Database,
+  LayoutTemplate,
+  LogOut,
+} from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router";
+
+// Helper icons
+function CalendarIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      {...props}
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+      <line x1="16" x2="16" y1="2" y2="6" />
+      <line x1="8" x2="8" y1="2" y2="6" />
+      <line x1="3" x2="21" y1="10" y2="10" />
+    </svg>
+  );
+}
+
+function CableIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      {...props}
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M17 21v-2a1 1 0 0 1-1-4H5a1 1 0 0 0-1 4v2" />
+      <circle cx="17" cy="3" r="1" />
+      <circle cx="5" cy="3" r="1" />
+      <path d="M17 4v3a1 1 0 0 1-1 4h-2" />
+      <path d="M5 4v3a1 1 0 0 0 1 4h2" />
+    </svg>
+  );
+}
+
+const MENU_ITEMS = [
+  { id: "account", label: "账户", icon: User, description: "管理您的账户信息" },
+  {
+    id: "settings",
+    label: "设置",
+    icon: SettingsIcon,
+    description: "通用设置和偏好",
+  },
+  {
+    id: "usage",
+    label: "使用情况",
+    icon: CreditCard,
+    description: "查看使用量和配额",
+  },
+  {
+    id: "schedule",
+    label: "定时任务",
+    icon: CalendarIcon,
+    description: "管理定时任务",
+  },
+  { id: "mail", label: "Mail Manus", icon: Mail, description: "邮件通知设置" },
+  {
+    id: "data",
+    label: "数据控制",
+    icon: Database,
+    description: "数据隐私和存储",
+  },
+  {
+    id: "browser",
+    label: "云浏览器",
+    icon: LayoutTemplate,
+    description: "浏览器配置",
+  },
+  {
+    id: "personalization",
+    label: "个性化",
+    icon: SettingsIcon,
+    description: "自定义您的体验",
+  },
+  {
+    id: "connectors",
+    label: "连接器",
+    icon: CableIcon,
+    description: "第三方服务连接",
+  },
+  {
+    id: "integrations",
+    label: "集成",
+    icon: CableIcon,
+    description: "应用集成管理",
+  },
+];
+
+// Toggle Switch Component - 更大的触摸目标
+function Toggle({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  label?: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 active:scale-95 ${
+        checked ? "bg-accent" : "bg-ink-900/20"
+      }`}
+    >
+      <span
+        className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+          checked ? "translate-x-5" : "translate-x-0"
+        }`}
+      />
+    </button>
+  );
+}
+
+// Settings Content Component - 移动端优化
+function SettingsContent() {
+  const [theme, setTheme] = useState("light");
+  const [language, setLanguage] = useState("zh-CN");
+  const [notifications, setNotifications] = useState({
+    exclusive: true,
+    email: true,
+  });
+
+  return (
+    <div className="space-y-6 pb-safe">
+      {/* General Section */}
+      <section className="space-y-3">
+        <h3 className="text-xs font-semibold text-muted uppercase tracking-wider px-1">
+          通用
+        </h3>
+        <div className="bg-white rounded-2xl border border-ink-900/5 overflow-hidden">
+          <div className="p-4">
+            <label className="block text-[15px] font-medium text-ink-800 mb-2">
+              语言
+            </label>
+            <div className="relative">
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                className="w-full appearance-none rounded-xl border border-ink-900/10 bg-surface-secondary px-4 py-3.5 text-[15px] text-ink-800 outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all"
+              >
+                <option value="zh-CN">简体中文</option>
+                <option value="en-US">English</option>
+                <option value="ja-JP">日本語</option>
+              </select>
+              <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted">
+                <ChevronRight className="h-5 w-5 rotate-90" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Appearance Section */}
+      <section className="space-y-3">
+        <h3 className="text-xs font-semibold text-muted uppercase tracking-wider px-1">
+          外观
+        </h3>
+        <div className="bg-white rounded-2xl border border-ink-900/5 p-4">
+          <div className="grid grid-cols-3 gap-3">
+            <button
+              onClick={() => setTheme("light")}
+              className={`group relative rounded-xl border-2 p-2 text-left transition-all active:scale-[0.98] ${
+                theme === "light"
+                  ? "border-accent bg-accent/5"
+                  : "border-transparent bg-surface-secondary"
+              }`}
+            >
+              <div className="mb-2 aspect-[4/3] rounded-lg bg-white border border-ink-900/10 p-1.5 overflow-hidden shadow-sm">
+                <div className="h-1.5 w-1/2 rounded-full bg-surface-tertiary mb-1" />
+                <div className="h-1.5 w-3/4 rounded-full bg-ink-900/10" />
+              </div>
+              <div className="flex items-center justify-center gap-1">
+                {theme === "light" && (
+                  <Check className="h-3.5 w-3.5 text-accent" />
+                )}
+                <span
+                  className={`text-xs font-medium ${theme === "light" ? "text-accent" : "text-ink-600"}`}
+                >
+                  浅色
+                </span>
+              </div>
+            </button>
+
+            <button
+              onClick={() => setTheme("dark")}
+              className={`group relative rounded-xl border-2 p-2 text-left transition-all active:scale-[0.98] ${
+                theme === "dark"
+                  ? "border-accent bg-accent/5"
+                  : "border-transparent bg-surface-secondary"
+              }`}
+            >
+              <div className="mb-2 aspect-[4/3] rounded-lg bg-ink-900 border border-ink-800 p-1.5 overflow-hidden">
+                <div className="h-1.5 w-1/2 rounded-full bg-ink-700 mb-1" />
+                <div className="h-1.5 w-3/4 rounded-full bg-ink-800" />
+              </div>
+              <div className="flex items-center justify-center gap-1">
+                {theme === "dark" && (
+                  <Check className="h-3.5 w-3.5 text-accent" />
+                )}
+                <span
+                  className={`text-xs font-medium ${theme === "dark" ? "text-accent" : "text-ink-600"}`}
+                >
+                  深色
+                </span>
+              </div>
+            </button>
+
+            <button
+              onClick={() => setTheme("system")}
+              className={`group relative rounded-xl border-2 p-2 text-left transition-all active:scale-[0.98] ${
+                theme === "system"
+                  ? "border-accent bg-accent/5"
+                  : "border-transparent bg-surface-secondary"
+              }`}
+            >
+              <div className="mb-2 aspect-[4/3] rounded-lg bg-gradient-to-br from-white to-ink-900 border border-ink-900/10 flex items-center justify-center overflow-hidden">
+                <Monitor className="h-4 w-4 text-ink-500" />
+              </div>
+              <div className="flex items-center justify-center gap-1">
+                {theme === "system" && (
+                  <Check className="h-3.5 w-3.5 text-accent" />
+                )}
+                <span
+                  className={`text-xs font-medium ${theme === "system" ? "text-accent" : "text-ink-600"}`}
+                >
+                  自动
+                </span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Notifications Section */}
+      <section className="space-y-3">
+        <h3 className="text-xs font-semibold text-muted uppercase tracking-wider px-1">
+          通知
+        </h3>
+        <div className="bg-white rounded-2xl border border-ink-900/5 divide-y divide-ink-900/5 overflow-hidden">
+          <label className="flex items-center justify-between p-4 cursor-pointer active:bg-surface-secondary transition-colors">
+            <div className="flex-1 pr-4">
+              <div className="text-[15px] font-medium text-ink-800">
+                接收独家内容
+              </div>
+              <div className="text-[13px] text-muted mt-0.5 leading-relaxed">
+                获取独家优惠、活动更新和新功能指南
+              </div>
+            </div>
+            <Toggle
+              checked={notifications.exclusive}
+              onChange={(checked) =>
+                setNotifications((prev) => ({ ...prev, exclusive: checked }))
+              }
+              label="接收独家内容"
+            />
+          </label>
+
+          <label className="flex items-center justify-between p-4 cursor-pointer active:bg-surface-secondary transition-colors">
+            <div className="flex-1 pr-4">
+              <div className="text-[15px] font-medium text-ink-800">
+                任务开始通知
+              </div>
+              <div className="text-[13px] text-muted mt-0.5 leading-relaxed">
+                任务开始处理时发送邮件通知
+              </div>
+            </div>
+            <Toggle
+              checked={notifications.email}
+              onChange={(checked) =>
+                setNotifications((prev) => ({ ...prev, email: checked }))
+              }
+              label="任务开始通知"
+            />
+          </label>
+        </div>
+      </section>
+
+      {/* Privacy Section */}
+      <section className="space-y-3">
+        <h3 className="text-xs font-semibold text-muted uppercase tracking-wider px-1">
+          隐私
+        </h3>
+        <div className="bg-white rounded-2xl border border-ink-900/5 overflow-hidden">
+          <button className="flex w-full items-center justify-between p-4 text-left active:bg-surface-secondary transition-colors">
+            <span className="text-[15px] font-medium text-ink-800">
+              管理 Cookies
+            </span>
+            <ChevronRight className="h-5 w-5 text-muted" />
+          </button>
+        </div>
+      </section>
+
+      {/* Help & Logout Section */}
+      <section className="space-y-3 pt-2">
+        <div className="bg-white rounded-2xl border border-ink-900/5 overflow-hidden">
+          <button className="flex w-full items-center gap-3 p-4 text-left active:bg-surface-secondary transition-colors">
+            <HelpCircle className="h-5 w-5 text-muted" />
+            <span className="flex-1 text-[15px] font-medium text-ink-800">
+              获取帮助
+            </span>
+            <ChevronRight className="h-5 w-5 text-muted" />
+          </button>
+        </div>
+
+        <button className="flex w-full items-center justify-center gap-2 rounded-2xl border border-error/20 bg-error/5 p-4 text-error active:bg-error/10 transition-colors">
+          <LogOut className="h-5 w-5" />
+          <span className="text-[15px] font-medium">退出登录</span>
+        </button>
+      </section>
+    </div>
+  );
+}
+
+// Account Content Component
+function AccountContent() {
+  return (
+    <div className="space-y-6 pb-safe">
+      {/* Profile Section */}
+      <section className="space-y-3">
+        <h3 className="text-xs font-semibold text-muted uppercase tracking-wider px-1">
+          个人资料
+        </h3>
+        <div className="bg-white rounded-2xl border border-ink-900/5 overflow-hidden">
+          {/* Avatar */}
+          <div className="flex items-center gap-4 p-4 border-b border-ink-900/5">
+            <div className="h-16 w-16 rounded-full bg-accent/10 flex items-center justify-center text-accent text-2xl font-semibold">
+              A
+            </div>
+            <div className="flex-1">
+              <div className="text-[15px] font-medium text-ink-800">
+                albertm
+              </div>
+              <div className="text-[13px] text-muted">Free plan</div>
+            </div>
+            <button className="px-4 py-2 rounded-xl bg-surface-secondary text-[13px] font-medium text-ink-700 active:bg-surface-tertiary transition-colors">
+              编辑
+            </button>
+          </div>
+
+          {/* Email */}
+          <button className="flex w-full items-center justify-between p-4 text-left active:bg-surface-secondary transition-colors">
+            <div>
+              <div className="text-[13px] text-muted">邮箱</div>
+              <div className="text-[15px] text-ink-800">albert@example.com</div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted" />
+          </button>
+        </div>
+      </section>
+
+      {/* Plan Section */}
+      <section className="space-y-3">
+        <h3 className="text-xs font-semibold text-muted uppercase tracking-wider px-1">
+          订阅
+        </h3>
+        <div className="bg-white rounded-2xl border border-ink-900/5 overflow-hidden">
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[15px] font-medium text-ink-800">
+                Free plan
+              </span>
+              <span className="px-2 py-1 rounded-lg bg-surface-secondary text-[11px] font-medium text-muted">
+                当前方案
+              </span>
+            </div>
+            <button className="w-full py-3 rounded-xl bg-accent text-white text-[15px] font-medium active:bg-accent-hover transition-colors">
+              升级到 Pro
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+// Placeholder Content for other sections
+function PlaceholderContent({ title }: { title: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-center">
+      <div className="text-6xl mb-4">🚧</div>
+      <h3 className="text-lg font-medium text-ink-800 mb-2">{title}</h3>
+      <p className="text-[15px] text-muted">此功能正在开发中</p>
+    </div>
+  );
+}
+
+export function Settings() {
+  const navigate = useNavigate();
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [slideDirection, setSlideDirection] = useState<"in" | "out">("in");
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // 处理返回
+  const handleBack = () => {
+    if (activeSection) {
+      setSlideDirection("out");
+      setIsAnimating(true);
+      setTimeout(() => {
+        setActiveSection(null);
+        setIsAnimating(false);
+      }, 200);
+    } else {
+      navigate(-1);
+    }
+  };
+
+  // 处理菜单点击
+  const handleMenuClick = (id: string) => {
+    setSlideDirection("in");
+    setIsAnimating(true);
+    setActiveSection(id);
+    setTimeout(() => {
+      setIsAnimating(false);
+    }, 200);
+  };
+
+  const getActiveLabel = () => {
+    const item = MENU_ITEMS.find((item) => item.id === activeSection);
+    return item?.label || "设置";
+  };
+
+  // 渲染内容
+  const renderContent = () => {
+    switch (activeSection) {
+      case "settings":
+        return <SettingsContent />;
+      case "account":
+        return <AccountContent />;
+      default:
+        return <PlaceholderContent title={getActiveLabel()} />;
+    }
+  };
+
+  // 滑动手势支持
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    const diff = touchEndX.current - touchStartX.current;
+    // 从左边缘向右滑动超过 80px 触发返回
+    if (diff > 80 && touchStartX.current < 50 && activeSection) {
+      handleBack();
+    }
+  };
+
+  return (
+    <div
+      className="min-h-full bg-surface-cream"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Mobile Header - 固定在顶部 */}
+      <header className="sticky top-0 z-10 bg-surface-cream/95 backdrop-blur-sm border-b border-ink-900/5 lg:hidden safe-top">
+        <div className="flex items-center gap-2 px-4 py-3">
+          <button
+            onClick={handleBack}
+            className="rounded-full p-2.5 -ml-2 text-ink-700 hover:bg-ink-900/5 active:bg-ink-900/10 transition-colors"
+            aria-label="返回"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+          <h1 className="text-[17px] font-semibold text-ink-800 flex-1">
+            {activeSection ? getActiveLabel() : "设置"}
+          </h1>
+        </div>
+      </header>
+
+      {/* Desktop Layout - 隐藏在移动端 */}
+      <div className="hidden lg:flex h-full">
+        {/* Desktop Sidebar */}
+        <aside className="w-72 flex-shrink-0 border-r border-ink-900/5 bg-surface-cream p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <button
+              onClick={() => navigate(-1)}
+              className="rounded-full p-2 -ml-2 text-ink-700 hover:bg-ink-900/5 transition-colors"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <h1 className="text-xl font-semibold text-ink-800">设置</h1>
+          </div>
+
+          <nav className="space-y-1">
+            {MENU_ITEMS.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setActiveSection(item.id)}
+                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+                  activeSection === item.id
+                    ? "bg-white text-ink-800 shadow-soft"
+                    : "text-muted hover:bg-white/50 hover:text-ink-700"
+                }`}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </button>
+            ))}
+          </nav>
+
+          <div className="mt-6 pt-6 border-t border-ink-900/5">
+            <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted hover:bg-white/50 hover:text-ink-700 transition-colors">
+              <HelpCircle className="h-4 w-4" />
+              获取帮助
+            </button>
+          </div>
+        </aside>
+
+        {/* Desktop Content */}
+        <main className="flex-1 overflow-y-auto p-8">
+          <div className="max-w-2xl">
+            <h2 className="text-2xl font-semibold text-ink-800 mb-8">
+              {activeSection ? getActiveLabel() : "设置"}
+            </h2>
+            {activeSection ? (
+              renderContent()
+            ) : (
+              <div className="text-center py-16 text-muted">
+                <p>请从左侧菜单选择一个设置项</p>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+
+      {/* Mobile Layout */}
+      <div className="lg:hidden relative overflow-hidden" ref={containerRef}>
+        {/* Menu List */}
+        <div
+          className={`transition-all duration-200 ease-out ${
+            activeSection
+              ? "opacity-0 -translate-x-8 pointer-events-none absolute inset-0"
+              : "opacity-100 translate-x-0"
+          }`}
+        >
+          <div className="p-4 space-y-2 pb-safe">
+            {/* User Profile Card */}
+            <button
+              onClick={() => handleMenuClick("account")}
+              className="flex w-full items-center gap-4 rounded-2xl bg-white border border-ink-900/5 p-4 text-left transition-all active:scale-[0.98] active:bg-surface-secondary"
+            >
+              <div className="h-12 w-12 rounded-full bg-accent/10 flex items-center justify-center text-accent text-lg font-semibold">
+                A
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[15px] font-semibold text-ink-800">
+                  albertm
+                </div>
+                <div className="text-[13px] text-muted">
+                  Free plan · 查看账户
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted flex-shrink-0" />
+            </button>
+
+            {/* Menu Items */}
+            <div className="pt-2">
+              {MENU_ITEMS.filter((item) => item.id !== "account").map(
+                (item, index) => (
+                  <button
+                    key={item.id}
+                    onClick={() => handleMenuClick(item.id)}
+                    className={`flex w-full items-center gap-4 bg-white p-4 text-left transition-all active:scale-[0.99] active:bg-surface-secondary ${
+                      index === 0
+                        ? "rounded-t-2xl border-t border-x border-ink-900/5"
+                        : index ===
+                            MENU_ITEMS.filter((i) => i.id !== "account")
+                              .length -
+                              1
+                          ? "rounded-b-2xl border-b border-x border-ink-900/5"
+                          : "border-x border-ink-900/5"
+                    } border-b border-ink-900/5`}
+                  >
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-secondary text-ink-600">
+                      <item.icon className="h-[18px] w-[18px]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[15px] font-medium text-ink-800">
+                        {item.label}
+                      </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted flex-shrink-0" />
+                  </button>
+                ),
+              )}
+            </div>
+
+            {/* Help & Support */}
+            <div className="pt-4">
+              <button className="flex w-full items-center gap-4 rounded-2xl bg-white border border-ink-900/5 p-4 text-left transition-all active:scale-[0.99] active:bg-surface-secondary">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-secondary text-ink-600">
+                  <HelpCircle className="h-[18px] w-[18px]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[15px] font-medium text-ink-800">
+                    帮助与支持
+                  </div>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted flex-shrink-0" />
+              </button>
+            </div>
+
+            {/* Logout */}
+            <div className="pt-4">
+              <button className="flex w-full items-center justify-center gap-2 rounded-2xl border border-ink-900/10 bg-white p-4 text-ink-600 active:bg-surface-secondary transition-all active:scale-[0.99]">
+                <LogOut className="h-5 w-5" />
+                <span className="text-[15px] font-medium">退出登录</span>
+              </button>
+            </div>
+
+            {/* Version Info */}
+            <div className="pt-6 text-center">
+              <p className="text-[13px] text-muted">版本 1.0.0</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Detail View */}
+        <div
+          className={`transition-all duration-200 ease-out ${
+            activeSection
+              ? "opacity-100 translate-x-0"
+              : "opacity-0 translate-x-8 pointer-events-none absolute inset-0"
+          }`}
+        >
+          <div className="p-4">{activeSection && renderContent()}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
