@@ -241,14 +241,20 @@ export function Sidebar({
                         <Menu.Popup className="min-w-[200px] rounded-xl border border-ink-900/10 bg-white p-1 shadow-lg">
                           <Menu.Item
                             className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-700 outline-none hover:bg-ink-900/5"
-                            onSelect={() => setResumeSessionId(session.id)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setResumeSessionId(session.id);
+                            }}
                           >
                             <Terminal className="w-4 h-4 text-ink-500" />
                             Resume in Claude Code
                           </Menu.Item>
                           <Menu.Item
                             className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-error/80 outline-none hover:bg-ink-900/5"
-                            onSelect={() => onDeleteSession(session.id)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              onDeleteSession(session.id);
+                            }}
                           >
                             <Trash2 className="w-4 h-4" />
                             Delete session

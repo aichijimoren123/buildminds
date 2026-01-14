@@ -28,7 +28,10 @@ export function QualitySelector() {
                     ? "bg-accent/10"
                     : "hover:bg-bg-200"
                 }`}
-                onSelect={() => setQualityLevel(level.id)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setQualityLevel(level.id);
+                }}
               >
                 <div className="flex items-center justify-between">
                   <span

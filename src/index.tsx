@@ -4,7 +4,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { networkInterfaces } from "os";
-import { dirname, extname, join, resolve, sep } from "path";
+import { dirname, extname, resolve, sep } from "path";
 import { fileURLToPath } from "url";
 import { setupRoutes } from "./server/routes";
 
@@ -17,11 +17,23 @@ const useDist =
   process.env.CLAUDE_CODE_WEBUI_USE_DIST !== "0" && existsSync(distIndex);
 const distPrefix = distDir + sep;
 const devIndex = useDist ? null : (await import("./index.html")).default;
-const indexFile = useDist ? Bun.file(distIndex) : devIndex;
-const indexRoutes = {
-  "/": indexFile,
-  "/index.html": indexFile,
-};
+const prodIndex = useDist ? Bun.file(distIndex) : null;
+
+// SPA routes - all these paths serve index.html for client-side routing
+// Use separate variables to avoid null type issues
+const indexRoutes = devIndex
+  ? {
+      "/": devIndex,
+      "/index.html": devIndex,
+      "/settings": devIndex,
+      "/chat/:sessionId": devIndex,
+    }
+  : {
+      "/": prodIndex!,
+      "/index.html": prodIndex!,
+      "/settings": prodIndex!,
+      "/chat/:sessionId": prodIndex!,
+    };
 
 const staticContentTypes: Record<string, string> = {
   ".css": "text/css; charset=utf-8",

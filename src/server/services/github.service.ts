@@ -21,16 +21,16 @@ export interface RepoStatus {
 }
 
 export class GitHubService {
-  private baseRepoPath: string;
-
-  constructor() {
-    this.baseRepoPath =
+  // Get base repo path dynamically from settings/env
+  private getBaseRepoPath(): string {
+    return (
       process.env.GITHUB_REPOS_PATH ||
-      path.join(process.cwd(), ".claude-repos");
+      path.join(process.cwd(), "..", "claude-projects")
+    );
   }
 
   async ensureRepoDirectory(): Promise<void> {
-    await fs.mkdir(this.baseRepoPath, { recursive: true });
+    await fs.mkdir(this.getBaseRepoPath(), { recursive: true });
   }
 
   async listUserRepos(accessToken: string): Promise<GitHubRepoInfo[]> {
@@ -64,7 +64,7 @@ export class GitHubService {
     await this.ensureRepoDirectory();
 
     const localPath = path.join(
-      this.baseRepoPath,
+      this.getBaseRepoPath(),
       repoFullName.replace("/", "-"),
     );
 

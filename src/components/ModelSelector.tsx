@@ -28,7 +28,10 @@ export function ModelSelector() {
                     ? "bg-accent/10 text-accent"
                     : "text-text-200 hover:bg-bg-200"
                 }`}
-                onSelect={() => setSelectedModel(model.id)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setSelectedModel(model.id);
+                }}
               >
                 <span className="font-medium">{model.label}</span>
                 {selectedModel === model.id && (

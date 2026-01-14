@@ -16,8 +16,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useAppStore } from "../store/useAppStore";
 import { useSessionsStore } from "../store/useSessionsStore";
 import type { ClientEvent } from "../types";
-import { ModelSelector } from "./ModelSelector";
-import { QualitySelector } from "./QualitySelector";
 import { WorkspaceSessionModal } from "./WorkspaceSessionModal";
 
 const DEFAULT_ALLOWED_TOOLS = "Read,Edit,Bash";
@@ -388,14 +386,6 @@ export function PromptInput({
                   </div>
                 )}
 
-                {/* Model selector */}
-                <ModelSelector />
-
-                {/* Quality selector */}
-                <QualitySelector />
-
-                {/* Divider */}
-                <div className="h-5 w-px bg-border-100/20 mx-1" />
 
                 <button
                   className="text-text-500 cursor-pointer transition-colors hover:text-text-300"

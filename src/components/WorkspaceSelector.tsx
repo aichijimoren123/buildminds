@@ -131,6 +131,7 @@ export function WorkspaceSelector({ onSelectWorkspace }: WorkspaceSelectorProps)
       onSelectWorkspace?.(repo.id, repo.localPath);
     } else {
       setActiveWorkspaceId(null);
+      setCwd("");
       onSelectWorkspace?.(null, "");
     }
     setIsOpen(false);
@@ -178,7 +179,10 @@ export function WorkspaceSelector({ onSelectWorkspace }: WorkspaceSelectorProps)
               {/* All Workspaces option */}
               <Menu.Item
                 className="flex items-center gap-2 px-3 py-2 text-sm text-ink-700 hover:bg-surface-tertiary cursor-pointer outline-none"
-                onSelect={() => handleSelectWorkspace(null)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleSelectWorkspace(null);
+                }}
               >
                 <FolderGit2 className="w-4 h-4 text-ink-500" />
                 <span>All Workspaces</span>
@@ -233,7 +237,10 @@ export function WorkspaceSelector({ onSelectWorkspace }: WorkspaceSelectorProps)
                       <Menu.Item
                         key={repo.id}
                         className="flex items-center gap-2 px-3 py-2 text-sm text-ink-700 hover:bg-surface-tertiary cursor-pointer outline-none"
-                        onSelect={() => handleSelectWorkspace(repo)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleSelectWorkspace(repo);
+                        }}
                       >
                         <Github className="w-4 h-4 text-ink-500 shrink-0" />
                         <div className="flex-1 min-w-0">

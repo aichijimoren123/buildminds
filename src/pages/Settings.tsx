@@ -1,18 +1,20 @@
 import {
+  Check,
   ChevronLeft,
   ChevronRight,
-  Check,
-  Monitor,
-  HelpCircle,
-  User,
-  Settings as SettingsIcon,
+  Code,
   CreditCard,
-  Mail,
   Database,
+  FolderGit2,
+  HelpCircle,
   LayoutTemplate,
+  Loader2,
   LogOut,
+  Monitor,
+  Settings as SettingsIcon,
+  User,
 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 
 // Helper icons
@@ -62,8 +64,14 @@ function CableIcon(props: React.SVGProps<SVGSVGElement>) {
 const MENU_ITEMS = [
   { id: "account", label: "账户", icon: User, description: "管理您的账户信息" },
   {
+    id: "developer",
+    label: "开发设置",
+    icon: Code,
+    description: "GitHub仓库和工作目录配置",
+  },
+  {
     id: "settings",
-    label: "设置",
+    label: "通用设置",
     icon: SettingsIcon,
     description: "通用设置和偏好",
   },
@@ -79,7 +87,6 @@ const MENU_ITEMS = [
     icon: CalendarIcon,
     description: "管理定时任务",
   },
-  { id: "mail", label: "Mail Manus", icon: Mail, description: "邮件通知设置" },
   {
     id: "data",
     label: "数据控制",
@@ -404,6 +411,173 @@ function AccountContent() {
   );
 }
 
+// Developer Settings Content
+function DeveloperContent() {
+  const [githubReposPath, setGithubReposPath] = useState("");
+  const [defaultCwd, setDefaultCwd] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  // Load settings on mount
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const response = await fetch("/api/settings");
+        if (response.ok) {
+          const data = await response.json();
+          setGithubReposPath(data.settings?.GITHUB_REPOS_PATH || "");
+          setDefaultCwd(data.settings?.DEFAULT_CWD || "");
+        }
+      } catch (error) {
+        console.error("Failed to load settings:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadSettings();
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setMessage(null);
+    try {
+      const response = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          settings: {
+            GITHUB_REPOS_PATH: githubReposPath,
+            DEFAULT_CWD: defaultCwd,
+          },
+        }),
+      });
+      if (response.ok) {
+        setMessage({ type: "success", text: "设置已保存" });
+      } else {
+        throw new Error("Failed to save");
+      }
+    } catch (error) {
+      setMessage({ type: "error", text: "保存失败，请重试" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-accent" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 pb-safe">
+      {/* GitHub Repos Path */}
+      <section className="space-y-3">
+        <h3 className="text-xs font-semibold text-muted uppercase tracking-wider px-1">
+          GitHub 仓库设置
+        </h3>
+        <div className="bg-white rounded-2xl border border-ink-900/5 overflow-hidden">
+          <div className="p-4">
+            <label className="block text-[15px] font-medium text-ink-800 mb-2">
+              <div className="flex items-center gap-2">
+                <FolderGit2 className="w-4 h-4 text-ink-500" />
+                仓库存放目录
+              </div>
+            </label>
+            <input
+              type="text"
+              value={githubReposPath}
+              onChange={(e) => setGithubReposPath(e.target.value)}
+              placeholder="/path/to/claude-projects"
+              className="w-full rounded-xl border border-ink-900/10 bg-surface-secondary px-4 py-3.5 text-[15px] text-ink-800 outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-muted"
+            />
+            <p className="mt-2 text-[13px] text-muted">
+              从 GitHub 克隆的仓库将存放在此目录下。留空使用默认目录。
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Default Working Directory */}
+      <section className="space-y-3">
+        <h3 className="text-xs font-semibold text-muted uppercase tracking-wider px-1">
+          工作目录设置
+        </h3>
+        <div className="bg-white rounded-2xl border border-ink-900/5 overflow-hidden">
+          <div className="p-4">
+            <label className="block text-[15px] font-medium text-ink-800 mb-2">
+              <div className="flex items-center gap-2">
+                <Code className="w-4 h-4 text-ink-500" />
+                默认工作目录 (CWD)
+              </div>
+            </label>
+            <input
+              type="text"
+              value={defaultCwd}
+              onChange={(e) => setDefaultCwd(e.target.value)}
+              placeholder="/path/to/your/projects"
+              className="w-full rounded-xl border border-ink-900/10 bg-surface-secondary px-4 py-3.5 text-[15px] text-ink-800 outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-muted"
+            />
+            <p className="mt-2 text-[13px] text-muted">
+              新建会话时的默认工作目录。可以在手机上设置为服务器上的项目路径。
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Save Button */}
+      <section className="space-y-3 pt-2">
+        {message && (
+          <div
+            className={`rounded-xl p-3 text-[14px] ${
+              message.type === "success"
+                ? "bg-green-50 text-green-700"
+                : "bg-red-50 text-red-700"
+            }`}
+          >
+            {message.text}
+          </div>
+        )}
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="w-full py-3.5 rounded-xl bg-accent text-white text-[15px] font-medium active:bg-accent-hover transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          {saving ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              保存中...
+            </>
+          ) : (
+            "保存设置"
+          )}
+        </button>
+      </section>
+
+      {/* Tips */}
+      <section className="space-y-3">
+        <div className="bg-accent/5 rounded-2xl border border-accent/10 p-4">
+          <h4 className="text-[14px] font-medium text-accent mb-2">
+            移动端 Vibe Coding 提示
+          </h4>
+          <ul className="text-[13px] text-ink-600 space-y-1.5 list-disc list-inside">
+            <li>在服务器上运行 Claude Code WebUI</li>
+            <li>设置仓库存放目录为服务器上的路径</li>
+            <li>添加 GitHub 仓库后即可在手机上编程</li>
+            <li>所有代码修改都在服务器上执行</li>
+          </ul>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 // Placeholder Content for other sections
 function PlaceholderContent({ title }: { title: string }) {
   return (
@@ -458,6 +632,8 @@ export function Settings() {
         return <SettingsContent />;
       case "account":
         return <AccountContent />;
+      case "developer":
+        return <DeveloperContent />;
       default:
         return <PlaceholderContent title={getActiveLabel()} />;
     }
