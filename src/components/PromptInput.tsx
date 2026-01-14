@@ -170,6 +170,13 @@ export function usePromptActions(
   };
 }
 
+interface WorkspaceInfo {
+  id: string;
+  repoFullName: string;
+  localPath: string;
+  branch: string;
+}
+
 export function PromptInput({
   sendEvent,
   variant = "chat",
@@ -187,10 +194,33 @@ export function PromptInput({
   const promptRef = useRef<HTMLTextAreaElement | null>(null);
 
   const setSessionMode = useAppStore((state) => state.setSessionMode);
+  const activeWorkspaceId = useAppStore((state) => state.activeWorkspaceId);
 
   const [connectorsOpen, setConnectorsOpen] = useState(false);
   const [showWorkspaceModal, setShowWorkspaceModal] = useState(false);
   const [pendingPrompt, setPendingPrompt] = useState("");
+  const [workspace, setWorkspace] = useState<WorkspaceInfo | null>(null);
+
+  // Load workspace info when activeWorkspaceId changes
+  useEffect(() => {
+    if (activeWorkspaceId) {
+      fetch(`/api/github/repos/${activeWorkspaceId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.repo) {
+            setWorkspace({
+              id: data.repo.id,
+              repoFullName: data.repo.repoFullName,
+              localPath: data.repo.localPath,
+              branch: data.repo.branch || "main",
+            });
+          }
+        })
+        .catch(console.error);
+    } else {
+      setWorkspace(null);
+    }
+  }, [activeWorkspaceId]);
 
   // Determine if we should create a new session (for mode toggle visibility)
   const activeSessionId = useSessionsStore((state) => state.activeSessionId);
@@ -201,6 +231,11 @@ export function PromptInput({
 
     if (isNewSession && sessionMode === "workspace") {
       // Workspace mode: show modal to get worktree name
+      if (!activeWorkspaceId || !workspace) {
+        // No workspace selected, prompt user to select one
+        alert("请先在左侧选择一个 GitHub 仓库");
+        return;
+      }
       setPendingPrompt(prompt);
       setShowWorkspaceModal(true);
     } else {
@@ -209,7 +244,7 @@ export function PromptInput({
     }
   };
 
-  const handleWorkspaceConfirm = (worktreeName: string) => {
+  const handleWorkspaceConfirm = (worktreeName: string, baseBranch: string) => {
     startWorkspaceSession(pendingPrompt, worktreeName);
     setPrompt("");
     setPendingPrompt("");
@@ -428,6 +463,7 @@ export function PromptInput({
         }}
         onConfirm={handleWorkspaceConfirm}
         prompt={pendingPrompt}
+        workspace={workspace}
       />
     </section>
   );

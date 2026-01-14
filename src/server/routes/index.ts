@@ -5,10 +5,10 @@ import { SessionController } from "../controllers/session.controller";
 import { SettingsController } from "../controllers/settings.controller";
 import { WebSocketController } from "../controllers/websocket.controller";
 import { db } from "../database";
+import { GithubRepoRepository } from "../repositories/github-repo.repository";
 import { MessageRepository } from "../repositories/message.repository";
 import { SessionRepository } from "../repositories/session.repository";
 import { SettingsRepository } from "../repositories/settings.repository";
-import { GithubRepoRepository } from "../repositories/github-repo.repository";
 import { WorkTreeRepository } from "../repositories/worktree.repository";
 import { ClaudeService } from "../services/claude.service";
 import { SessionService } from "../services/session.service";
@@ -18,6 +18,7 @@ import { WorkTreeService } from "../services/worktree.service";
 import { githubRoutes } from "./github.routes";
 import { registerSessionRoutes } from "./session.routes";
 import { registerSettingsRoutes } from "./settings.routes";
+import { worktreeRoutes } from "./worktree.routes";
 
 export function setupRoutes(app: Hono) {
   // Initialize repositories
@@ -70,11 +71,12 @@ export function setupRoutes(app: Hono) {
   registerSettingsRoutes(app, settingsController);
 
   // Better Auth routes - handles all /api/auth/* endpoints automatically
-  app.on(["GET", "POST"], "/api/auth/**", (c) => {
+  app.on(["GET", "POST"], "/api/auth/*", (c) => {
     return auth.handler(c.req.raw);
   });
 
   app.route("/api/github", githubRoutes);
+  app.route("/api/worktrees", worktreeRoutes);
 
   // Health check endpoint
   app.get("/api/health", (c) => c.text("ok"));

@@ -1,12 +1,9 @@
 import { exec } from "child_process";
 import { promisify } from "util";
-import { nanoid } from "nanoid";
 import type {
   WorkTree,
-  InsertWorkTree,
   WorkTreeStatus,
   ChangesStats,
-  GithubRepo,
 } from "../database/schema";
 import { WorkTreeRepository } from "../repositories/worktree.repository";
 import { GithubRepoRepository } from "../repositories/github-repo.repository";
@@ -308,6 +305,134 @@ export class WorkTreeService {
     } catch (error) {
       console.error("Failed to cleanup worktree:", error);
     }
+  }
+
+  /**
+   * 创建新的 Worktree（简化版本，用于创建新任务）
+   */
+  async create(options: {
+    workspaceId: string;
+    name: string;
+    baseBranch?: string;
+  }): Promise<WorkTree> {
+    const { workspaceId, name, baseBranch } = options;
+
+    const workspace = await this.workspaceRepo.findById(workspaceId);
+    if (!workspace) {
+      throw new Error("Workspace not found");
+    }
+
+    const branch = baseBranch || workspace.branch || "main";
+    const sanitizedName = this.sanitizeName(name);
+    const branchName = `task/${sanitizedName}`;
+    const worktreePath = `${workspace.localPath}/.worktrees/${sanitizedName}`;
+
+    // 检查是否已存在同名 worktree
+    const existing = await this.worktreeRepo.findByWorkspace(workspaceId);
+    if (existing.some((w) => w.name === name)) {
+      throw new Error(`Worktree "${name}" already exists`);
+    }
+
+    // 创建 git worktree
+    try {
+      // 先 fetch 最新代码
+      await execAsync(`git fetch origin`, { cwd: workspace.localPath }).catch(
+        () => {},
+      );
+
+      await execAsync(
+        `git worktree add -b "${branchName}" "${worktreePath}" "${branch}"`,
+        { cwd: workspace.localPath },
+      );
+    } catch (error) {
+      throw new Error(`Failed to create git worktree: ${error}`);
+    }
+
+    // 保存到数据库
+    const worktree = await this.worktreeRepo.create({
+      workspaceId,
+      name,
+      branchName,
+      localPath: worktreePath,
+      baseBranch: branch,
+      status: "active",
+    });
+
+    return worktree;
+  }
+
+  /**
+   * 删除 Worktree
+   */
+  async delete(worktreeId: string): Promise<void> {
+    const worktree = await this.worktreeRepo.findById(worktreeId);
+    if (!worktree) {
+      throw new Error("WorkTree not found");
+    }
+
+    const workspace = await this.workspaceRepo.findById(worktree.workspaceId);
+    if (!workspace) {
+      throw new Error("Workspace not found");
+    }
+
+    try {
+      // 删除 worktree
+      await execAsync(`git worktree remove "${worktree.localPath}" --force`, {
+        cwd: workspace.localPath,
+      }).catch(() => {});
+
+      // 删除分支
+      await execAsync(`git branch -D "${worktree.branchName}"`, {
+        cwd: workspace.localPath,
+      }).catch(() => {});
+    } catch (error) {
+      console.error("Failed to delete worktree:", error);
+    }
+
+    // 从数据库删除
+    await this.worktreeRepo.delete(worktreeId);
+  }
+
+  /**
+   * 获取仓库可用的分支列表
+   */
+  async getBranches(workspaceId: string): Promise<string[]> {
+    const workspace = await this.workspaceRepo.findById(workspaceId);
+    if (!workspace) {
+      throw new Error("Workspace not found");
+    }
+
+    try {
+      // 先 fetch
+      await execAsync(`git fetch origin`, { cwd: workspace.localPath }).catch(
+        () => {},
+      );
+
+      const { stdout } = await execAsync(`git branch -r`, {
+        cwd: workspace.localPath,
+      });
+
+      return stdout
+        .split("\n")
+        .map((b) => b.trim())
+        .filter((b) => b && !b.includes("HEAD"))
+        .map((b) => b.replace("origin/", ""));
+    } catch (error) {
+      console.error("Failed to get branches:", error);
+      return ["main"];
+    }
+  }
+
+  /**
+   * 规范化名称用于分支
+   */
+  private sanitizeName(name: string): string {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9-_]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+      .substring(0, 50);
   }
 
   /**
