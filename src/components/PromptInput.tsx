@@ -280,9 +280,9 @@ export function PromptInput({
 
   return (
     <section className={containerClasses}>
-      <div className="mx-auto w-full max-w-3xl">
+      <div className="mx-auto w-full max-w-2xl">
         {/* 主容器：使用主题变量 */}
-        <div className="relative flex flex-col rounded-4xl bg-bg-000 ring-1 ring-border-100/10">
+        <div className="relative flex flex-col rounded-2xl bg-bg-000 ring-1 ring-border-100/10">
           {/* 上半部分：输入框 + 操作按钮 */}
           <div className="p-5 pb-3">
             {/* 1. 文本输入区域 */}
@@ -420,7 +420,6 @@ export function PromptInput({
                     </button>
                   </div>
                 )}
-
 
                 <button
                   className="text-text-500 cursor-pointer transition-colors hover:text-text-300"

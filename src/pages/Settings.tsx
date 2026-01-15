@@ -685,7 +685,7 @@ export function Settings() {
       {/* Desktop Layout - 隐藏在移动端 */}
       <div className="hidden lg:flex h-full">
         {/* Desktop Sidebar */}
-        <aside className="w-72 flex-shrink-0 border-r border-ink-900/5 bg-surface-cream p-6">
+        <aside className="w-72 shrink-0 border-r border-ink-900/5 bg-surface-cream p-6">
           <div className="flex items-center gap-3 mb-6">
             <button
               onClick={() => navigate(-1)}
@@ -701,10 +701,10 @@ export function Settings() {
               <button
                 key={item.id}
                 onClick={() => setActiveSection(item.id)}
-                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium cursor-pointer ${
                   activeSection === item.id
-                    ? "bg-white text-ink-800 shadow-soft"
-                    : "text-muted hover:bg-white/50 hover:text-ink-700"
+                    ? "bg-white text-ink-800 border-ink-900/5 border"
+                    : "text-muted hover:bg-white/50 hover:text-ink-600"
                 }`}
               >
                 <item.icon className="h-4 w-4" />
@@ -765,7 +765,7 @@ export function Settings() {
                   Free plan · 查看账户
                 </div>
               </div>
-              <ChevronRight className="h-5 w-5 text-muted flex-shrink-0" />
+              <ChevronRight className="h-5 w-5 text-muted shrink-0" />
             </button>
 
             {/* Menu Items */}
@@ -794,7 +794,7 @@ export function Settings() {
                         {item.label}
                       </div>
                     </div>
-                    <ChevronRight className="h-5 w-5 text-muted flex-shrink-0" />
+                    <ChevronRight className="h-5 w-5 text-muted shrink-0" />
                   </button>
                 ),
               )}
@@ -811,7 +811,7 @@ export function Settings() {
                     帮助与支持
                   </div>
                 </div>
-                <ChevronRight className="h-5 w-5 text-muted flex-shrink-0" />
+                <ChevronRight className="h-5 w-5 text-muted shrink-0" />
               </button>
             </div>
 
