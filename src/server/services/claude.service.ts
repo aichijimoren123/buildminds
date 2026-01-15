@@ -3,6 +3,8 @@ import {
   type SDKMessage,
   type PermissionResult,
 } from "@anthropic-ai/claude-agent-sdk";
+import { existsSync } from "fs";
+import { resolve } from "path";
 import type { ServerEvent, StreamMessage } from "../../types";
 import type { PendingPermission } from "../../libs/session-store";
 
@@ -70,10 +72,20 @@ export class ClaudeService {
     // Start the query in the background
     (async () => {
       try {
+        // Resolve and validate cwd
+        let effectiveCwd = cwd ?? DEFAULT_CWD;
+        const resolvedCwd = resolve(effectiveCwd);
+
+        if (!existsSync(resolvedCwd)) {
+          console.warn(`[ClaudeService] cwd does not exist: ${resolvedCwd}, falling back to ${DEFAULT_CWD}`);
+          effectiveCwd = DEFAULT_CWD;
+        }
+
+        console.log(`[ClaudeService] Starting query for session ${sessionId}, cwd: ${effectiveCwd}, resume: ${claudeSessionId || 'new'}`);
         const q = query({
           prompt,
           options: {
-            cwd: cwd ?? DEFAULT_CWD,
+            cwd: effectiveCwd,
             resume: claudeSessionId,
             abortController,
             env: { ...process.env },
@@ -114,8 +126,10 @@ export class ClaudeService {
           },
         });
 
+        console.log(`[ClaudeService] Query created, waiting for messages...`);
         // Capture session_id from init message
         for await (const message of q) {
+          console.log(`[ClaudeService] Received message type: ${message.type}`);
           // Extract session_id from system init message
           if (
             message.type === "system" &&
@@ -148,6 +162,7 @@ export class ClaudeService {
           payload: { sessionId, status: "completed" },
         });
       } catch (error) {
+        console.error(`[ClaudeService] Error in session ${sessionId}:`, error);
         if ((error as Error).name === "AbortError") {
           // Session was aborted, don't treat as error
           return;

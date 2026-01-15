@@ -38,3 +38,6 @@ CLAUDE.md
 webui.db-shm
 webui.db-wal
 webui.db
+
+.claude/settings.local.json
+

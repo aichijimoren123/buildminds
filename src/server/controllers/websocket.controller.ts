@@ -82,6 +82,7 @@ export class WebSocketController {
       const { session } = await this.sessionService.createSession({
         cwd: event.payload.cwd,
         workspaceId: event.payload.workspaceId,
+        createWorktree: event.payload.createWorktree,
         title: tempTitle,
         allowedTools: event.payload.allowedTools,
         prompt: event.payload.prompt,
@@ -122,17 +123,8 @@ export class WebSocketController {
         return;
       }
 
-      if (!session.claudeSessionId) {
-        this.wsService.broadcast({
-          type: "runner.error",
-          payload: {
-            sessionId: session.id,
-            message: "Session has no resume id yet.",
-          },
-        });
-        return;
-      }
-
+      // If session has no claudeSessionId yet, it means it was created but never started
+      // or the previous run didn't return an init message. Start it as a new session.
       await this.sessionService.startSession(
         session.id,
         event.payload.prompt,

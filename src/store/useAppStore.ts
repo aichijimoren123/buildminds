@@ -11,7 +11,11 @@ export const AVAILABLE_MODELS = [
   { id: "claude-3-5-haiku-20241022", label: "Claude 3.5 Haiku" },
 ] as const;
 
-export const QUALITY_LEVELS: { id: QualityLevel; label: string; description: string }[] = [
+export const QUALITY_LEVELS: {
+  id: QualityLevel;
+  label: string;
+  description: string;
+}[] = [
   { id: "standard", label: "Standard", description: "Fast responses" },
   { id: "high", label: "High", description: "Balanced" },
   { id: "max", label: "Max", description: "Best quality" },
@@ -22,7 +26,6 @@ interface AppState {
   prompt: string;
   cwd: string;
   defaultCwd: string; // Default CWD from server settings
-  selectedGitHubRepoId: string | null;
   pendingStart: boolean;
   globalError: string | null;
   serverSettingsLoaded: boolean;
@@ -31,7 +34,7 @@ interface AppState {
   selectedModel: string;
   qualityLevel: QualityLevel;
 
-  // Workspace context
+  // Workspace context (workspace = GitHub repo)
   activeWorkspaceId: string | null;
   sessionMode: SessionMode;
 
@@ -39,7 +42,6 @@ interface AppState {
   setPrompt: (prompt: string) => void;
   setCwd: (cwd: string) => void;
   setDefaultCwd: (cwd: string) => void;
-  setSelectedGitHubRepoId: (repoId: string | null) => void;
   setPendingStart: (pending: boolean) => void;
   setGlobalError: (error: string | null) => void;
   setSelectedModel: (model: string) => void;
@@ -58,7 +60,6 @@ export const useAppStore = create<AppState>()(
       prompt: "",
       cwd: "",
       defaultCwd: "",
-      selectedGitHubRepoId: null,
       pendingStart: false,
       globalError: null,
       serverSettingsLoaded: false,
@@ -74,8 +75,6 @@ export const useAppStore = create<AppState>()(
       setPrompt: (prompt) => set({ prompt }),
       setCwd: (cwd) => set({ cwd }),
       setDefaultCwd: (defaultCwd) => set({ defaultCwd }),
-      setSelectedGitHubRepoId: (selectedGitHubRepoId) =>
-        set({ selectedGitHubRepoId }),
       setPendingStart: (pendingStart) => set({ pendingStart }),
       setGlobalError: (globalError) => set({ globalError }),
       setSelectedModel: (selectedModel) => set({ selectedModel }),
@@ -125,6 +124,6 @@ export const useAppStore = create<AppState>()(
         activeWorkspaceId: state.activeWorkspaceId,
         sessionMode: state.sessionMode,
       }),
-    }
-  )
+    },
+  ),
 );

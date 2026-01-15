@@ -143,7 +143,8 @@ export type ClientEvent =
         title?: string;
         prompt: string;
         cwd?: string;
-        workspaceId?: string; // 可选：指定 Workspace 来创建 WorkTree
+        workspaceId?: string; // 可选：关联到指定的 Workspace
+        createWorktree?: boolean; // 是否创建 WorkTree（默认 false）
         allowedTools?: string;
       };
     }

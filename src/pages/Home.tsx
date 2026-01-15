@@ -19,15 +19,13 @@ export function Home() {
   const navigate = useNavigate();
 
   const cwd = useAppStore((state) => state.cwd);
-  const selectedGitHubRepoId = useAppStore(
-    (state) => state.selectedGitHubRepoId,
-  );
+  const activeWorkspaceId = useAppStore((state) => state.activeWorkspaceId);
   const globalError = useAppStore((state) => state.globalError);
   const pendingStart = useAppStore((state) => state.pendingStart);
 
   const setCwd = useAppStore((state) => state.setCwd);
-  const setSelectedGitHubRepoId = useAppStore(
-    (state) => state.setSelectedGitHubRepoId,
+  const setActiveWorkspaceId = useAppStore(
+    (state) => state.setActiveWorkspaceId,
   );
 
   const sessions = useSessionsStore((state) => state.sessions);
@@ -116,13 +114,13 @@ export function Home() {
                       value={cwd}
                       onChange={(e) => {
                         setCwd(e.target.value);
-                        // Clear GitHub repo selection when manually editing
-                        if (selectedGitHubRepoId) {
-                          setSelectedGitHubRepoId(null);
+                        // Clear workspace selection when manually editing
+                        if (activeWorkspaceId) {
+                          setActiveWorkspaceId(null);
                         }
                       }}
                     />
-                    {selectedGitHubRepoId && (
+                    {activeWorkspaceId && (
                       <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-2 py-1 bg-accent/10 rounded text-xs text-accent font-medium">
                         <svg
                           viewBox="0 0 16 16"

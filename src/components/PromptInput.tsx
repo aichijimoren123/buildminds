@@ -50,9 +50,6 @@ export function usePromptActions(
 ) {
   const prompt = useAppStore((state) => state.prompt);
   const cwd = useAppStore((state) => state.cwd);
-  const selectedGitHubRepoId = useAppStore(
-    (state) => state.selectedGitHubRepoId,
-  );
   const sessionMode = useAppStore((state) => state.sessionMode);
   const setPrompt = useAppStore((state) => state.setPrompt);
   const setPendingStart = useAppStore((state) => state.setPendingStart);
@@ -60,13 +57,14 @@ export function usePromptActions(
 
   const activeSessionId = useSessionsStore((state) => state.activeSessionId);
   const sessions = useSessionsStore((state) => state.sessions);
+  const activeWorkspaceId = useAppStore((state) => state.activeWorkspaceId);
 
   const activeSession = activeSessionId ? sessions[activeSessionId] : undefined;
   const isRunning = activeSession?.status === "running";
 
   const forceNewSession = options?.forceNewSession ?? false;
 
-  // Start a normal session (no worktree)
+  // Start a normal session (no worktree, but still associated with workspace if active)
   const startNormalSession = useCallback(
     (promptText: string) => {
       setPendingStart(true);
@@ -75,18 +73,20 @@ export function usePromptActions(
         payload: {
           prompt: promptText,
           cwd: cwd.trim() || undefined,
-          // Don't pass workspaceId for normal mode
+          // Pass workspaceId if in a workspace context (for filtering), but don't create worktree
+          workspaceId: activeWorkspaceId ?? undefined,
+          createWorktree: false,
           allowedTools: DEFAULT_ALLOWED_TOOLS,
         },
       });
     },
-    [cwd, sendEvent, setPendingStart],
+    [activeWorkspaceId, cwd, sendEvent, setPendingStart],
   );
 
   // Start a workspace session (with worktree)
   const startWorkspaceSession = useCallback(
     (promptText: string, worktreeName: string) => {
-      if (!selectedGitHubRepoId) {
+      if (!activeWorkspaceId) {
         setGlobalError("Please select a GitHub repository first.");
         return;
       }
@@ -96,13 +96,14 @@ export function usePromptActions(
         payload: {
           prompt: promptText,
           cwd: cwd.trim() || undefined,
-          workspaceId: selectedGitHubRepoId,
+          workspaceId: activeWorkspaceId,
+          createWorktree: true, // Create worktree for workspace mode
           title: worktreeName, // Use worktree name as title
           allowedTools: DEFAULT_ALLOWED_TOOLS,
         },
       });
     },
-    [cwd, selectedGitHubRepoId, sendEvent, setGlobalError, setPendingStart],
+    [activeWorkspaceId, cwd, sendEvent, setGlobalError, setPendingStart],
   );
 
   const handleSend = useCallback(async () => {

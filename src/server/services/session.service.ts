@@ -33,6 +33,7 @@ export class SessionService {
     title: string;
     cwd?: string;
     workspaceId?: string;
+    createWorktree?: boolean;
     allowedTools?: string;
     prompt?: string;
   }): Promise<{ session: Session; worktree?: WorkTree }> {
@@ -48,8 +49,8 @@ export class SessionService {
 
     let worktree: WorkTree | undefined;
 
-    // 如果指定了 workspaceId 且 worktreeService 可用，创建 WorkTree
-    if (options.workspaceId && this.worktreeService) {
+    // 如果指定了 workspaceId 且 createWorktree 为 true 且 worktreeService 可用，创建 WorkTree
+    if (options.workspaceId && options.createWorktree && this.worktreeService) {
       try {
         worktree = await this.worktreeService.createForSession({
           workspaceId: options.workspaceId,
