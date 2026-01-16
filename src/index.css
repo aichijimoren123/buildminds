@@ -372,3 +372,14 @@ input.mono {
   transform: translateX(-20px);
   transition: opacity 200ms ease-out, transform 200ms ease-out;
 }
+
+/* @pierre/diffs styles */
+.pierre-diffs-container {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.pierre-diffs-container [data-pierre-diffs] {
+  border-radius: 0 !important;
+  border: none !important;
+}

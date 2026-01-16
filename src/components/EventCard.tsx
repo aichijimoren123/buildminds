@@ -11,6 +11,7 @@ import type { StreamMessage } from "../types";
 import type { PermissionRequest } from "../store/useMessageStore";
 import MDContent from "../render/markdown";
 import { DecisionPanel } from "./DecisionPanel";
+import { CodeViewer } from "./CodeViewer";
 type MessageContent = SDKAssistantMessage["message"]["content"];
 let toolUseMap = new Map();
 type ToolStatus = "pending" | "success" | "error";
@@ -298,6 +299,19 @@ const AssistantBlockCard = ({
   );
 };
 
+// Type for Write tool input
+type WriteToolInput = {
+  file_path?: string;
+  content?: string;
+};
+
+// Type for Edit tool input
+type EditToolInput = {
+  file_path?: string;
+  old_string?: string;
+  new_string?: string;
+};
+
 const ToolUseCard = ({
   messageContent,
   showIndicator = false,
@@ -305,6 +319,7 @@ const ToolUseCard = ({
   messageContent: MessageContent;
   showIndicator?: boolean;
 }) => {
+  const [isCodeExpanded, setIsCodeExpanded] = useState(false);
   const toolStatus = useToolStatus(messageContent.id);
   const statusVariant = toolStatus === "error" ? "error" : "success";
   const isPending = !toolStatus || toolStatus === "pending";
@@ -316,6 +331,7 @@ const ToolUseCard = ({
       setToolStatus(messageContent.id, "pending");
     }
   }, [messageContent?.id]);
+
   const getToolInfo = (): string | null => {
     switch (messageContent.name) {
       case "Bash":
@@ -338,21 +354,80 @@ const ToolUseCard = ({
     }
   };
 
+  // Check if this is a Write or Edit operation that has code content
+  const isWriteOp = messageContent.name === "Write";
+  const isEditOp = messageContent.name === "Edit";
+  const hasCodeContent = isWriteOp || isEditOp;
+
+  // Get code content for display
+  const getCodeContent = () => {
+    if (isWriteOp) {
+      const input = messageContent.input as WriteToolInput;
+      return {
+        filePath: input.file_path || "",
+        content: input.content || "",
+        mode: "code" as const,
+      };
+    }
+    if (isEditOp) {
+      const input = messageContent.input as EditToolInput;
+      return {
+        filePath: input.file_path || "",
+        oldContent: input.old_string || "",
+        newContent: input.new_string || "",
+        mode: "diff" as const,
+      };
+    }
+    return null;
+  };
+
+  const codeContent = hasCodeContent ? getCodeContent() : null;
+
   return (
     <div className="flex flex-col gap-2 rounded-[1rem] bg-bg-300 px-3 py-2 mt-4">
-      <div className="flex flex-row items-center gap-2">
+      <div
+        className={`flex flex-row items-center gap-2 ${hasCodeContent ? "cursor-pointer" : ""}`}
+        onClick={() => hasCodeContent && setIsCodeExpanded(!isCodeExpanded)}
+      >
         <StatusDot
           variant={statusVariant}
           isActive={isPending && showIndicator}
           isVisible={shouldShowDot}
         />
-        <div className="flex flex-row items-center gap-2 tool-use-item">
-          <span className="inline-flex items-center rounded-md text-accent py-0.5 text-sm font-medium">
+        <div className="flex flex-row items-center gap-2 tool-use-item flex-1 min-w-0">
+          <span className="inline-flex items-center rounded-md text-accent py-0.5 text-sm font-medium shrink-0">
             {messageContent.name}
           </span>
-          <span className="text-sm text-muted max-w-full">{getToolInfo()}</span>
+          <span className="text-sm text-muted truncate">{getToolInfo()}</span>
         </div>
+        {hasCodeContent && (
+          <span className="text-xs text-ink-400 shrink-0">
+            {isCodeExpanded ? "▲ Hide code" : "▼ Show code"}
+          </span>
+        )}
       </div>
+
+      {/* Code viewer for Write/Edit operations */}
+      {hasCodeContent && isCodeExpanded && codeContent && (
+        <div className="mt-1 -mx-1">
+          {codeContent.mode === "code" ? (
+            <CodeViewer
+              filePath={codeContent.filePath}
+              content={codeContent.content}
+              mode="code"
+              defaultExpanded={true}
+            />
+          ) : (
+            <CodeViewer
+              filePath={codeContent.filePath}
+              oldContent={codeContent.oldContent}
+              newContent={codeContent.newContent}
+              mode="diff"
+              defaultExpanded={true}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 };

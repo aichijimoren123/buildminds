@@ -19,6 +19,13 @@ const distPrefix = distDir + sep;
 const devIndex = useDist ? null : (await import("./index.html")).default;
 const prodIndex = useDist ? Bun.file(distIndex) : null;
 
+// Worker file for @pierre/diffs
+const pierreDiffsWorkerPath = resolve(
+  rootDir,
+  "node_modules/@pierre/diffs/dist/worker/worker-portable.js",
+);
+const pierreDiffsWorkerFile = Bun.file(pierreDiffsWorkerPath);
+
 // SPA routes - all these paths serve index.html for client-side routing
 // Use separate variables to avoid null type issues
 const indexRoutes = devIndex
@@ -116,6 +123,15 @@ const server = serve({
     // WebSocket upgrade
     if (url.pathname === "/ws" && server.upgrade(req)) {
       return;
+    }
+
+    // Serve @pierre/diffs worker file
+    if (url.pathname === "/pierre-diffs-worker.js") {
+      return new Response(pierreDiffsWorkerFile, {
+        headers: {
+          "Content-Type": "application/javascript; charset=utf-8",
+        },
+      });
     }
 
     // API routes
