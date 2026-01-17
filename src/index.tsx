@@ -27,19 +27,21 @@ const pierreDiffsWorkerPath = resolve(
 const pierreDiffsWorkerFile = Bun.file(pierreDiffsWorkerPath);
 
 // SPA routes - all these paths serve index.html for client-side routing
-// Use separate variables to avoid null type issues
+// Bun's routes support :param syntax for dynamic segments
 const indexRoutes = devIndex
   ? {
       "/": devIndex,
       "/index.html": devIndex,
       "/settings": devIndex,
       "/chat/:sessionId": devIndex,
+      "/chat/:sessionId/review/:fileIndex": devIndex,
     }
   : {
       "/": prodIndex!,
       "/index.html": prodIndex!,
       "/settings": prodIndex!,
       "/chat/:sessionId": prodIndex!,
+      "/chat/:sessionId/review/:fileIndex": prodIndex!,
     };
 
 const staticContentTypes: Record<string, string> = {
@@ -134,6 +136,11 @@ const server = serve({
       });
     }
 
+    // Ignore source map requests for worker files (these are optional debug files)
+    if (url.pathname === "/worker-portable.js.map") {
+      return new Response(null, { status: 204 });
+    }
+
     // API routes
     if (url.pathname.startsWith("/api")) {
       return app.fetch(req);
@@ -158,6 +165,7 @@ const server = serve({
           }
         }
       }
+
     }
 
     return app.fetch(req);

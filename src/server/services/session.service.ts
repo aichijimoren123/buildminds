@@ -1,4 +1,9 @@
-import type { StreamMessage, WorkTreeInfo, SessionStatus } from "../../types";
+import type {
+  FileChange,
+  StreamMessage,
+  WorkTreeInfo,
+  SessionStatus,
+} from "../../types";
 import type { InsertSession, Session, WorkTree } from "../database/schema";
 import { MessageRepository } from "../repositories/message.repository";
 import { SessionRepository } from "../repositories/session.repository";
@@ -219,6 +224,10 @@ export class SessionService {
           // Update session with claude session id
           this.sessionRepo.update(id, updates);
         },
+        onFileChange: (change) => {
+          // Record file change to session
+          this.addFileChange(id, change);
+        },
       });
     } catch (error) {
       await this.sessionRepo.update(id, { status: "error" });
@@ -283,6 +292,44 @@ export class SessionService {
       .catch((error) => {
         console.error("Failed to record message:", error);
       });
+  }
+
+  private async addFileChange(
+    sessionId: string,
+    change: FileChange,
+  ): Promise<void> {
+    try {
+      const session = await this.sessionRepo.findById(sessionId);
+      if (!session) return;
+
+      // Parse existing file changes or initialize empty array
+      const fileChanges: FileChange[] = session.fileChanges
+        ? JSON.parse(session.fileChanges)
+        : [];
+
+      // Check if file already exists in changes, update it
+      const existingIndex = fileChanges.findIndex(
+        (fc) => fc.path === change.path,
+      );
+      if (existingIndex >= 0) {
+        // Update existing: accumulate additions/deletions, keep latest status
+        const existing = fileChanges[existingIndex];
+        fileChanges[existingIndex] = {
+          ...change,
+          additions: existing.additions + change.additions,
+          deletions: existing.deletions + change.deletions,
+        };
+      } else {
+        fileChanges.push(change);
+      }
+
+      // Persist to database
+      await this.sessionRepo.update(sessionId, {
+        fileChanges: JSON.stringify(fileChanges),
+      });
+    } catch (error) {
+      console.error("Failed to add file change:", error);
+    }
   }
 
   /**

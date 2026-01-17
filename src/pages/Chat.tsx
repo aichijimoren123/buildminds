@@ -1,11 +1,12 @@
 import { useEffect } from "react";
 import { useNavigate, useOutletContext, useParams } from "react-router";
-import { ChatTabs } from "../components/Chat/ChatTabs";
 import { ChatTabContent } from "../components/Chat/ChatTabContent";
 import { ChatTitleBar } from "../components/Chat/ChatTitleBar";
+import { InfoPanel } from "../components/InfoPanel";
 import { PromptInput } from "../components/PromptInput";
+import { useSessionMessages } from "../store/useMessageStore";
 import { useSessionsStore } from "../store/useSessionsStore";
-import { useTabsStore, useActiveTab, useTabs } from "../store/useTabsStore";
+import { useActiveTab, useTabs, useTabsStore } from "../store/useTabsStore";
 import type { ClientEvent, ServerEvent } from "../types";
 
 interface LayoutContext {
@@ -25,7 +26,7 @@ export function Chat() {
 
   const sessions = useSessionsStore((state) => state.sessions);
   const setActiveSessionId = useSessionsStore(
-    (state) => state.setActiveSessionId
+    (state) => state.setActiveSessionId,
   );
 
   // Tab store
@@ -34,7 +35,7 @@ export function Chat() {
   const removeTab = useTabsStore((state) => state.removeTab);
   const setActiveTab = useTabsStore((state) => state.setActiveTab);
   const getOrCreateTabForSession = useTabsStore(
-    (state) => state.getOrCreateTabForSession
+    (state) => state.getOrCreateTabForSession,
   );
   const updateTabLabel = useTabsStore((state) => state.updateTabLabel);
 
@@ -102,29 +103,59 @@ export function Chat() {
   // Get current session
   const currentSession = sessionId ? sessions[sessionId] : undefined;
 
+  // Get message count for InfoPanel
+  const sessionMessages = useSessionMessages(sessionId);
+  const messageCount = sessionMessages?.messages?.length ?? 0;
+
+  // Handle file click in InfoPanel - navigate to review
+  const handleFileClick = (filePath: string, index: number) => {
+    if (sessionId) {
+      navigate(`/chat/${sessionId}/review/${index}`);
+    }
+  };
+
   return (
-    <div className="flex h-full flex-col bg-surface-cream">
-      {/* Title bar */}
-      <ChatTitleBar session={currentSession} />
+    <div className="flex h-full w-full bg-surface-cream overflow-hidden">
+      {/* Main content area with optional InfoPanel */}
+      <div className="flex flex-1 min-h-0 min-w-0">
+        {/* Chat content - flexible width */}
+        <div className="flex flex-col flex-1 min-w-0">
+          {/* Title bar - only in content area */}
+          <ChatTitleBar session={currentSession} />
 
-      {/* Tab bar - temporarily hidden */}
-      {/* <ChatTabs
-        tabs={tabs}
-        activeTabId={activeTab?.id ?? null}
-        onTabClick={handleTabClick}
-        onTabClose={handleTabClose}
-        onAddTab={handleAddTab}
-      /> */}
+          {/* Tab bar - temporarily hidden */}
+          {/* <ChatTabs
+            tabs={tabs}
+            activeTabId={activeTab?.id ?? null}
+            onTabClick={handleTabClick}
+            onTabClose={handleTabClose}
+            onAddTab={handleAddTab}
+          /> */}
 
-      {/* Tab content */}
-      <ChatTabContent
-        tab={activeTab}
-        sendEvent={sendEvent}
-        partialMessageHandlerRef={partialMessageHandlerRef}
-      />
+          {/* Tab content */}
+          <ChatTabContent
+            tab={activeTab}
+            sendEvent={sendEvent}
+            partialMessageHandlerRef={partialMessageHandlerRef}
+          />
 
-      {/* Prompt input */}
-      <PromptInput sendEvent={sendEvent} />
+          {/* Prompt input */}
+          <PromptInput sendEvent={sendEvent} />
+        </div>
+
+        {/* InfoPanel - desktop only, completely hidden on smaller screens */}
+        <div className="hidden xl:flex xl:w-80 xl:shrink-0">
+          <InfoPanel
+            status={currentSession?.status ?? "idle"}
+            messageCount={messageCount}
+            fileChanges={currentSession?.fileChanges}
+            cwd={currentSession?.cwd}
+            createdAt={currentSession?.createdAt}
+            worktreeId={currentSession?.worktreeId}
+            onFileClick={handleFileClick}
+          />
+        </div>
+      </div>
     </div>
   );
 }

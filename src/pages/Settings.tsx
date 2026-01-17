@@ -661,7 +661,7 @@ export function Settings() {
 
   return (
     <div
-      className="min-h-full bg-surface-cream"
+      className="h-full bg-surface-cream flex flex-col"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -682,163 +682,168 @@ export function Settings() {
         </div>
       </header>
 
-      {/* Desktop Layout - 隐藏在移动端 */}
-      <div className="hidden lg:flex h-full">
-        {/* Desktop Sidebar */}
-        <aside className="w-72 shrink-0 border-r border-ink-900/5 bg-surface-cream p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <button
-              onClick={() => navigate(-1)}
-              className="rounded-full p-2 -ml-2 text-ink-700 hover:bg-ink-900/5 transition-colors"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <h1 className="text-xl font-semibold text-ink-800">设置</h1>
-          </div>
-
-          <nav className="space-y-1">
-            {MENU_ITEMS.map((item) => (
+      <div className="flex-1 overflow-hidden">
+        {/* Desktop Layout - 隐藏在移动端 */}
+        <div className="hidden lg:flex h-full">
+          {/* Desktop Sidebar */}
+          <aside className="w-72 shrink-0 border-r border-ink-900/5 bg-surface-cream p-6">
+            <div className="flex items-center gap-3 mb-6">
               <button
-                key={item.id}
-                onClick={() => setActiveSection(item.id)}
-                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium cursor-pointer ${
-                  activeSection === item.id
-                    ? "bg-white text-ink-800 border-ink-900/5 border"
-                    : "text-muted hover:bg-white/50 hover:text-ink-600"
-                }`}
+                onClick={() => navigate(-1)}
+                className="rounded-full p-2 -ml-2 text-ink-700 hover:bg-ink-900/5 transition-colors"
               >
-                <item.icon className="h-4 w-4" />
-                {item.label}
+                <ChevronLeft className="h-5 w-5" />
               </button>
-            ))}
-          </nav>
-
-          <div className="mt-6 pt-6 border-t border-ink-900/5">
-            <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted hover:bg-white/50 hover:text-ink-700 transition-colors">
-              <HelpCircle className="h-4 w-4" />
-              获取帮助
-            </button>
-          </div>
-        </aside>
-
-        {/* Desktop Content */}
-        <main className="flex-1 overflow-y-auto p-8">
-          <div className="max-w-2xl">
-            <h2 className="text-2xl font-semibold text-ink-800 mb-8">
-              {activeSection ? getActiveLabel() : "设置"}
-            </h2>
-            {activeSection ? (
-              renderContent()
-            ) : (
-              <div className="text-center py-16 text-muted">
-                <p>请从左侧菜单选择一个设置项</p>
-              </div>
-            )}
-          </div>
-        </main>
-      </div>
-
-      {/* Mobile Layout */}
-      <div className="lg:hidden relative overflow-hidden" ref={containerRef}>
-        {/* Menu List */}
-        <div
-          className={`transition-all duration-200 ease-out ${
-            activeSection
-              ? "opacity-0 -translate-x-8 pointer-events-none absolute inset-0"
-              : "opacity-100 translate-x-0"
-          }`}
-        >
-          <div className="p-4 space-y-2 pb-safe">
-            {/* User Profile Card */}
-            <button
-              onClick={() => handleMenuClick("account")}
-              className="flex w-full items-center gap-4 rounded-2xl bg-white border border-ink-900/5 p-4 text-left transition-all active:scale-[0.98] active:bg-surface-secondary"
-            >
-              <div className="h-12 w-12 rounded-full bg-accent/10 flex items-center justify-center text-accent text-lg font-semibold">
-                A
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-[15px] font-semibold text-ink-800">
-                  albertm
-                </div>
-                <div className="text-[13px] text-muted">
-                  Free plan · 查看账户
-                </div>
-              </div>
-              <ChevronRight className="h-5 w-5 text-muted shrink-0" />
-            </button>
-
-            {/* Menu Items */}
-            <div className="pt-2">
-              {MENU_ITEMS.filter((item) => item.id !== "account").map(
-                (item, index) => (
-                  <button
-                    key={item.id}
-                    onClick={() => handleMenuClick(item.id)}
-                    className={`flex w-full items-center gap-4 bg-white p-4 text-left transition-all active:scale-[0.99] active:bg-surface-secondary ${
-                      index === 0
-                        ? "rounded-t-2xl border-t border-x border-ink-900/5"
-                        : index ===
-                            MENU_ITEMS.filter((i) => i.id !== "account")
-                              .length -
-                              1
-                          ? "rounded-b-2xl border-b border-x border-ink-900/5"
-                          : "border-x border-ink-900/5"
-                    } border-b border-ink-900/5`}
-                  >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-secondary text-ink-600">
-                      <item.icon className="h-[18px] w-[18px]" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[15px] font-medium text-ink-800">
-                        {item.label}
-                      </div>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-muted shrink-0" />
-                  </button>
-                ),
-              )}
+              <h1 className="text-xl font-semibold text-ink-800">设置</h1>
             </div>
 
-            {/* Help & Support */}
-            <div className="pt-4">
-              <button className="flex w-full items-center gap-4 rounded-2xl bg-white border border-ink-900/5 p-4 text-left transition-all active:scale-[0.99] active:bg-surface-secondary">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-secondary text-ink-600">
-                  <HelpCircle className="h-[18px] w-[18px]" />
+            <nav className="space-y-1">
+              {MENU_ITEMS.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveSection(item.id)}
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium cursor-pointer ${
+                    activeSection === item.id
+                      ? "bg-white text-ink-800 border-ink-900/5 border"
+                      : "text-muted hover:bg-white/50 hover:text-ink-600"
+                  }`}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </button>
+              ))}
+            </nav>
+
+            <div className="mt-6 pt-6 border-t border-ink-900/5">
+              <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted hover:bg-white/50 hover:text-ink-700 transition-colors">
+                <HelpCircle className="h-4 w-4" />
+                获取帮助
+              </button>
+            </div>
+          </aside>
+
+          {/* Desktop Content */}
+          <main className="flex-1 overflow-y-auto p-8">
+            <div className="max-w-2xl">
+              <h2 className="text-2xl font-semibold text-ink-800 mb-8">
+                {activeSection ? getActiveLabel() : "设置"}
+              </h2>
+              {activeSection ? (
+                renderContent()
+              ) : (
+                <div className="text-center py-16 text-muted">
+                  <p>请从左侧菜单选择一个设置项</p>
+                </div>
+              )}
+            </div>
+          </main>
+        </div>
+
+        {/* Mobile Layout */}
+        <div
+          className="lg:hidden relative h-full overflow-y-auto"
+          ref={containerRef}
+        >
+          {/* Menu List */}
+          <div
+            className={`transition-all duration-200 ease-out ${
+              activeSection
+                ? "opacity-0 -translate-x-8 pointer-events-none absolute inset-0"
+                : "opacity-100 translate-x-0"
+            }`}
+          >
+            <div className="p-4 space-y-2 pb-safe">
+              {/* User Profile Card */}
+              <button
+                onClick={() => handleMenuClick("account")}
+                className="flex w-full items-center gap-4 rounded-2xl bg-white border border-ink-900/5 p-4 text-left transition-all active:scale-[0.98] active:bg-surface-secondary"
+              >
+                <div className="h-12 w-12 rounded-full bg-accent/10 flex items-center justify-center text-accent text-lg font-semibold">
+                  A
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[15px] font-medium text-ink-800">
-                    帮助与支持
+                  <div className="text-[15px] font-semibold text-ink-800">
+                    albertm
+                  </div>
+                  <div className="text-[13px] text-muted">
+                    Free plan · 查看账户
                   </div>
                 </div>
                 <ChevronRight className="h-5 w-5 text-muted shrink-0" />
               </button>
-            </div>
 
-            {/* Logout */}
-            <div className="pt-4">
-              <button className="flex w-full items-center justify-center gap-2 rounded-2xl border border-ink-900/10 bg-white p-4 text-ink-600 active:bg-surface-secondary transition-all active:scale-[0.99]">
-                <LogOut className="h-5 w-5" />
-                <span className="text-[15px] font-medium">退出登录</span>
-              </button>
-            </div>
+              {/* Menu Items */}
+              <div className="pt-2">
+                {MENU_ITEMS.filter((item) => item.id !== "account").map(
+                  (item, index) => (
+                    <button
+                      key={item.id}
+                      onClick={() => handleMenuClick(item.id)}
+                      className={`flex w-full items-center gap-4 bg-white p-4 text-left transition-all active:scale-[0.99] active:bg-surface-secondary ${
+                        index === 0
+                          ? "rounded-t-2xl border-t border-x border-ink-900/5"
+                          : index ===
+                              MENU_ITEMS.filter((i) => i.id !== "account")
+                                .length -
+                                1
+                            ? "rounded-b-2xl border-b border-x border-ink-900/5"
+                            : "border-x border-ink-900/5"
+                      } border-b border-ink-900/5`}
+                    >
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-secondary text-ink-600">
+                        <item.icon className="h-[18px] w-[18px]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[15px] font-medium text-ink-800">
+                          {item.label}
+                        </div>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted shrink-0" />
+                    </button>
+                  ),
+                )}
+              </div>
 
-            {/* Version Info */}
-            <div className="pt-6 text-center">
-              <p className="text-[13px] text-muted">版本 1.0.0</p>
+              {/* Help & Support */}
+              <div className="pt-4">
+                <button className="flex w-full items-center gap-4 rounded-2xl bg-white border border-ink-900/5 p-4 text-left transition-all active:scale-[0.99] active:bg-surface-secondary">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-secondary text-ink-600">
+                    <HelpCircle className="h-[18px] w-[18px]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[15px] font-medium text-ink-800">
+                      帮助与支持
+                    </div>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted shrink-0" />
+                </button>
+              </div>
+
+              {/* Logout */}
+              <div className="pt-4">
+                <button className="flex w-full items-center justify-center gap-2 rounded-2xl border border-ink-900/10 bg-white p-4 text-ink-600 active:bg-surface-secondary transition-all active:scale-[0.99]">
+                  <LogOut className="h-5 w-5" />
+                  <span className="text-[15px] font-medium">退出登录</span>
+                </button>
+              </div>
+
+              {/* Version Info */}
+              <div className="pt-6 text-center">
+                <p className="text-[13px] text-muted">版本 1.0.0</p>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Detail View */}
-        <div
-          className={`transition-all duration-200 ease-out ${
-            activeSection
-              ? "opacity-100 translate-x-0"
-              : "opacity-0 translate-x-8 pointer-events-none absolute inset-0"
-          }`}
-        >
-          <div className="p-4">{activeSection && renderContent()}</div>
+          {/* Detail View */}
+          <div
+            className={`transition-all duration-200 ease-out ${
+              activeSection
+                ? "opacity-100 translate-x-0"
+                : "opacity-0 translate-x-8 pointer-events-none absolute inset-0"
+            }`}
+          >
+            <div className="p-4">{activeSection && renderContent()}</div>
+          </div>
         </div>
       </div>
     </div>

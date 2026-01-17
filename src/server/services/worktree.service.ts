@@ -231,6 +231,36 @@ export class WorkTreeService {
   }
 
   /**
+   * 提交并推送变更（不创建 PR）
+   */
+  async commitAndPush(
+    worktreeId: string,
+    message: string,
+  ): Promise<{ success: boolean; branch: string }> {
+    const worktree = await this.worktreeRepo.findById(worktreeId);
+    if (!worktree) {
+      throw new Error("WorkTree not found");
+    }
+
+    try {
+      // 提交所有变更
+      await execAsync(`git add -A`, { cwd: worktree.localPath });
+      await execAsync(`git commit -m "${message}" --allow-empty`, {
+        cwd: worktree.localPath,
+      });
+
+      // 推送分支
+      await execAsync(`git push -u origin "${worktree.branchName}"`, {
+        cwd: worktree.localPath,
+      });
+
+      return { success: true, branch: worktree.branchName };
+    } catch (error) {
+      throw new Error(`Failed to commit and push: ${error}`);
+    }
+  }
+
+  /**
    * 创建 Pull Request
    */
   async createPullRequest(

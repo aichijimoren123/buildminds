@@ -129,6 +129,24 @@ worktreeRoutes.patch("/:worktreeId/status", async (c) => {
   }
 });
 
+// Commit and push changes (without creating PR)
+worktreeRoutes.post("/:worktreeId/commit", async (c) => {
+  try {
+    const worktreeId = c.req.param("worktreeId");
+    const { message } = await c.req.json();
+
+    if (!message) {
+      return c.json({ error: "message is required" }, 400);
+    }
+
+    const result = await worktreeService.commitAndPush(worktreeId, message);
+    return c.json(result);
+  } catch (error) {
+    console.error("Failed to commit and push:", error);
+    return c.json({ error: String(error) }, 500);
+  }
+});
+
 // Create PR from worktree
 worktreeRoutes.post("/:worktreeId/pr", async (c) => {
   try {

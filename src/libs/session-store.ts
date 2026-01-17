@@ -1,5 +1,5 @@
 import { Database } from "bun:sqlite";
-import type { SessionStatus, StreamMessage } from "../types";
+import type { FileChange, SessionStatus, StreamMessage } from "../types";
 
 export type PendingPermission = {
   toolUseId: string;
@@ -20,6 +20,7 @@ export type Session = {
   cwd?: string;
   allowedTools?: string;
   lastPrompt?: string;
+  fileChanges?: FileChange[];
   pendingPermissions: Map<string, PendingPermission>;
   abortController?: AbortController;
 };
@@ -32,6 +33,7 @@ export type StoredSession = {
   allowedTools?: string;
   lastPrompt?: string;
   claudeSessionId?: string;
+  fileChanges?: FileChange[];
   createdAt: number;
   updatedAt: number;
 };
@@ -66,14 +68,15 @@ export class SessionStore {
       cwd: options.cwd,
       allowedTools: options.allowedTools,
       lastPrompt: options.prompt,
+      fileChanges: [],
       pendingPermissions: new Map(),
     };
     this.sessions.set(id, session);
     this.db
       .prepare(
         `insert into sessions
-          (id, title, claude_session_id, status, cwd, allowed_tools, last_prompt, created_at, updated_at)
-         values (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          (id, title, claude_session_id, status, cwd, allowed_tools, last_prompt, file_changes, created_at, updated_at)
+         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         id,
@@ -83,6 +86,7 @@ export class SessionStore {
         session.cwd ?? null,
         session.allowedTools ?? null,
         session.lastPrompt ?? null,
+        JSON.stringify([]),
         now,
         now,
       );
@@ -96,7 +100,7 @@ export class SessionStore {
   listSessions(): StoredSession[] {
     const rows = this.db
       .query(
-        `select id, title, claude_session_id, status, cwd, allowed_tools, last_prompt, created_at, updated_at
+        `select id, title, claude_session_id, status, cwd, allowed_tools, last_prompt, file_changes, created_at, updated_at
          from sessions
          order by updated_at desc`,
       )
@@ -110,6 +114,9 @@ export class SessionStore {
       lastPrompt: row.last_prompt ? String(row.last_prompt) : undefined,
       claudeSessionId: row.claude_session_id
         ? String(row.claude_session_id)
+        : undefined,
+      fileChanges: row.file_changes
+        ? (JSON.parse(String(row.file_changes)) as FileChange[])
         : undefined,
       createdAt: Number(row.created_at),
       updatedAt: Number(row.updated_at),
@@ -133,7 +140,7 @@ export class SessionStore {
   getSessionHistory(id: string): SessionHistory | null {
     const sessionRow = this.db
       .query(
-        `select id, title, claude_session_id, status, cwd, allowed_tools, last_prompt, created_at, updated_at
+        `select id, title, claude_session_id, status, cwd, allowed_tools, last_prompt, file_changes, created_at, updated_at
          from sessions
          where id = ?`,
       )
@@ -162,6 +169,9 @@ export class SessionStore {
           : undefined,
         claudeSessionId: sessionRow.claude_session_id
           ? String(sessionRow.claude_session_id)
+          : undefined,
+        fileChanges: sessionRow.file_changes
+          ? (JSON.parse(String(sessionRow.file_changes)) as FileChange[])
           : undefined,
         createdAt: Number(sessionRow.created_at),
         updatedAt: Number(sessionRow.updated_at),
@@ -199,6 +209,35 @@ export class SessionStore {
       .run(id, sessionId, JSON.stringify(message), Date.now());
   }
 
+  addFileChange(sessionId: string, change: FileChange): void {
+    const session = this.sessions.get(sessionId);
+    if (!session) return;
+
+    // Initialize fileChanges if not exists
+    if (!session.fileChanges) {
+      session.fileChanges = [];
+    }
+
+    // Check if file already exists in changes, update it
+    const existingIndex = session.fileChanges.findIndex(
+      (fc) => fc.path === change.path,
+    );
+    if (existingIndex >= 0) {
+      // Update existing: accumulate additions/deletions, keep latest status
+      const existing = session.fileChanges[existingIndex];
+      session.fileChanges[existingIndex] = {
+        ...change,
+        additions: existing.additions + change.additions,
+        deletions: existing.deletions + change.deletions,
+      };
+    } else {
+      session.fileChanges.push(change);
+    }
+
+    // Persist to database
+    this.persistSession(sessionId, { fileChanges: session.fileChanges });
+  }
+
   deleteSession(id: string): boolean {
     const existing = this.sessions.get(id);
     if (existing) {
@@ -232,6 +271,12 @@ export class SessionStore {
       fields.push(`${column} = ?`);
       const value = updates[key];
       values.push(value === undefined ? null : (value as string));
+    }
+
+    // Handle fileChanges separately (needs JSON serialization)
+    if (updates.fileChanges !== undefined) {
+      fields.push("file_changes = ?");
+      values.push(JSON.stringify(updates.fileChanges));
     }
 
     if (fields.length === 0) return;
@@ -294,10 +339,17 @@ export class SessionStore {
         cwd text,
         allowed_tools text,
         last_prompt text,
+        file_changes text,
         created_at integer not null,
         updated_at integer not null
       )`,
     );
+    // Migration: add file_changes column if it doesn't exist
+    try {
+      this.db.run(`alter table sessions add column file_changes text`);
+    } catch {
+      // Column already exists, ignore
+    }
     this.db.run(
       `create table if not exists messages (
         id text primary key,
@@ -322,7 +374,7 @@ export class SessionStore {
   private loadSessions(): void {
     const rows = this.db
       .query(
-        `select id, title, claude_session_id, status, cwd, allowed_tools, last_prompt
+        `select id, title, claude_session_id, status, cwd, allowed_tools, last_prompt, file_changes
          from sessions`,
       )
       .all();
@@ -337,6 +389,9 @@ export class SessionStore {
         cwd: row.cwd ? String(row.cwd) : undefined,
         allowedTools: row.allowed_tools ? String(row.allowed_tools) : undefined,
         lastPrompt: row.last_prompt ? String(row.last_prompt) : undefined,
+        fileChanges: row.file_changes
+          ? (JSON.parse(String(row.file_changes)) as FileChange[])
+          : [],
         pendingPermissions: new Map(),
       };
       this.sessions.set(session.id, session);

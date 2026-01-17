@@ -262,12 +262,6 @@ export function PromptInput({
     handleSubmit();
   };
 
-  const handleInput = (event: React.FormEvent<HTMLTextAreaElement>) => {
-    const target = event.currentTarget;
-    target.style.height = "auto";
-    target.style.height = `${target.scrollHeight}px`;
-  };
-
   useEffect(() => {
     if (!promptRef.current) return;
     promptRef.current.style.height = "auto";
@@ -276,7 +270,7 @@ export function PromptInput({
 
   const containerClasses =
     variant === "chat"
-      ? "w-full bottom-0 left-0 right-0 pb-6 px-4 lg:pb-10 pt-4"
+      ? "w-full bottom-0 left-0 right-0 pb-4 px-4 pt-4"
       : "relative w-full";
 
   return (
@@ -285,16 +279,15 @@ export function PromptInput({
         {/* 主容器：使用主题变量 */}
         <div className="relative flex flex-col rounded-2xl bg-bg-000 ring-1 ring-border-100/10">
           {/* 上半部分：输入框 + 操作按钮 */}
-          <div className="p-5 pb-3">
+          <div className="p-3">
             {/* 1. 文本输入区域 */}
             <textarea
               rows={1}
-              className="w-full resize-none bg-transparent text-md text-text-100 placeholder:text-text-500 focus:outline-none min-h-[56px] leading-relaxed"
+              className="w-full resize-none bg-transparent text-md text-text-100 placeholder:text-text-500 focus:outline-none leading-relaxed"
               placeholder="分配一个任务或提问任何问题"
               value={prompt}
               onChange={(event) => setPrompt(event.target.value)}
               onKeyDown={handleKeyDown}
-              onInput={handleInput}
               ref={promptRef}
             />
 
@@ -303,10 +296,10 @@ export function PromptInput({
               {/* 左侧：加号和 Connectors */}
               <div className="flex items-center gap-3">
                 <button
-                  className="group cursor-pointer flex h-10 w-10 items-center justify-center rounded-full border border-border-100/20 bg-bg-000 text-text-400 transition-colors hover:border-border-100/30 hover:bg-bg-100 hover:text-text-200"
+                  className="group cursor-pointer flex h-8 w-8 items-center justify-center rounded-full border border-border-100/20 bg-bg-000 text-text-400 transition-colors hover:border-border-100/30 hover:bg-bg-100 hover:text-text-200"
                   aria-label="添加附件"
                 >
-                  <Plus size={20} />
+                  <Plus size={16} />
                 </button>
 
                 {/* Base UI Menu for Connectors */}
@@ -315,13 +308,13 @@ export function PromptInput({
                   onOpenChange={setConnectorsOpen}
                 >
                   <Menu.Trigger
-                    className={`group cursor-pointer flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${
+                    className={`group cursor-pointer flex h-8 w-8 items-center justify-center rounded-full border transition-colors ${
                       connectorsOpen
                         ? "border-text-100 bg-text-100 text-bg-000"
                         : "border-border-100/20 bg-bg-000 text-text-400 hover:border-border-100/30 hover:bg-bg-100 hover:text-text-200"
                     }`}
                   >
-                    <Cable size={20} />
+                    <Cable size={16} />
                   </Menu.Trigger>
                   <Menu.Portal>
                     <Menu.Positioner
@@ -426,11 +419,11 @@ export function PromptInput({
                   className="text-text-500 cursor-pointer transition-colors hover:text-text-300"
                   aria-label="语音输入"
                 >
-                  <Mic size={22} />
+                  <Mic size={18} />
                 </button>
 
                 <button
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all cursor-pointer ${
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-all cursor-pointer ${
                     isRunning
                       ? "bg-danger-100 text-oncolor-100 hover:bg-danger-000"
                       : prompt.trim()
@@ -443,9 +436,9 @@ export function PromptInput({
                   disabled={!isRunning && !prompt.trim()}
                 >
                   {isRunning ? (
-                    <Square size={12} fill="currentColor" />
+                    <Square size={10} fill="currentColor" />
                   ) : (
-                    <ArrowUp size={20} strokeWidth={2.5} />
+                    <ArrowUp size={16} strokeWidth={2.5} />
                   )}
                 </button>
               </div>

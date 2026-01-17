@@ -1,7 +1,6 @@
 import type { PermissionResult } from "@anthropic-ai/claude-agent-sdk";
 import { useEffect, useRef, useState } from "react";
-import { DecisionPanel } from "../DecisionPanel";
-import { MessageCard } from "../EventCard";
+import { useNavigate } from "react-router";
 import MDContent from "../../render/markdown";
 import { useAppStore } from "../../store/useAppStore";
 import {
@@ -12,6 +11,9 @@ import {
 import { useSessionsStore } from "../../store/useSessionsStore";
 import type { Tab } from "../../store/useTabsStore";
 import type { ClientEvent, ServerEvent } from "../../types";
+import { DecisionPanel } from "../DecisionPanel";
+import { FileChangesSummary } from "../FileChangesSummary";
+import { MessageCard } from "../message";
 
 interface ChatTabContentProps {
   tab: Tab | null;
@@ -26,6 +28,7 @@ export function ChatTabContent({
   sendEvent,
   partialMessageHandlerRef,
 }: ChatTabContentProps) {
+  const navigate = useNavigate();
   const globalError = useAppStore((state) => state.globalError);
   const sessions = useSessionsStore((state) => state.sessions);
   const historyRequested = useSessionsStore((state) => state.historyRequested);
@@ -140,13 +143,31 @@ export function ChatTabContent({
     resolvePermissionRequest(sessionId, request.toolUseId);
   };
 
+  const handleFileClick = (_filePath: string, index: number) => {
+    if (sessionId) {
+      navigate(`/chat/${sessionId}/review/${index}`);
+    }
+  };
+
   // Handle Changes tab
   if (tab?.type === "changes") {
+    const fileChanges = activeSessionMeta?.fileChanges ?? [];
     return (
-      <div className="flex-1 flex items-center justify-center text-muted">
-        <div className="text-center">
-          <p className="text-lg font-medium text-ink-700">Changes View</p>
-          <p className="text-sm mt-2">Coming soon...</p>
+      <div className="flex-1 overflow-y-auto">
+        <div className="px-6 py-8 bg-surface-cream min-h-full">
+          <section className="mx-auto w-full max-w-3xl">
+            {fileChanges.length > 0 ? (
+              <FileChangesSummary
+                changes={fileChanges}
+                cwd={activeSessionMeta?.cwd}
+                onFileClick={handleFileClick}
+              />
+            ) : (
+              <div className="rounded-xl border border-ink-900/10 bg-white px-6 py-8 text-center text-sm text-muted shadow-soft">
+                No file changes in this session yet.
+              </div>
+            )}
+          </section>
         </div>
       </div>
     );
@@ -170,7 +191,7 @@ export function ChatTabContent({
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="flex flex-col gap-6 px-6 py-8 pb-36 bg-surface-cream min-h-full">
+      <div className="flex flex-col gap-6 px-6 py-4 bg-surface-cream min-h-full">
         {globalError && (
           <div className="rounded-xl border border-error/20 bg-error-light p-4 text-sm text-error">
             {globalError}
@@ -189,9 +210,9 @@ export function ChatTabContent({
           />
         )}
 
-        <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col">
+        <section className="mx-auto flex w-full max-w-2xl flex-1 flex-col">
           <div className="text-xs font-medium text-muted mb-4">Stream</div>
-          <div className="flex flex-col gap-4 mb-24 md:mb-16 lg:mb-0">
+          <div className="flex flex-col gap-4">
             {messages.length ? (
               messages.map((message, index) => {
                 const isLast = index === messages.length - 1;
@@ -236,6 +257,24 @@ export function ChatTabContent({
                 </div>
               )}
             </div>
+
+            {/* Show file changes summary when session is completed */}
+            {activeSessionMeta?.status === "completed" &&
+              activeSessionMeta.fileChanges &&
+              activeSessionMeta.fileChanges.length > 0 && (
+                <div className="mt-6">
+                  <FileChangesSummary
+                    changes={activeSessionMeta.fileChanges}
+                    cwd={activeSessionMeta.cwd}
+                    onFileClick={handleFileClick}
+                    onReviewClick={() => {
+                      if (sessionId) {
+                        navigate(`/chat/${sessionId}/review/0`);
+                      }
+                    }}
+                  />
+                </div>
+              )}
           </div>
         </section>
         <div ref={streamEndRef} />

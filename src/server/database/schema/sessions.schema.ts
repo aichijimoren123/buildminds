@@ -22,6 +22,7 @@ export const claudeSessions = sqliteTable("claude_sessions", {
   cwd: text("cwd"), // 保留向后兼容，新会话会从 worktree.localPath 获取
   allowedTools: text("allowed_tools"), // JSON string
   lastPrompt: text("last_prompt"),
+  fileChanges: text("file_changes"), // JSON string of FileChange[]
   // Store user_id as simple string (no FK) - better-auth manages users
   userId: text("user_id"),
   githubRepoId: text("github_repo_id"), // 保留向后兼容

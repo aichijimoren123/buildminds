@@ -1,4 +1,10 @@
-import type { ClientEvent, WorkTreeInfo, SessionInfo, SessionStatus } from "../../types";
+import type {
+  ClientEvent,
+  FileChange,
+  WorkTreeInfo,
+  SessionInfo,
+  SessionStatus,
+} from "../../types";
 import { SessionService } from "../services/session.service";
 import { WebSocketService } from "../services/websocket.service";
 import { WorkTreeService } from "../services/worktree.service";
@@ -384,6 +390,15 @@ export class WebSocketController {
    * 转换 Session 数据库对象为 API 类型
    */
   private toSessionInfo(session: Session): SessionInfo {
+    let fileChanges: FileChange[] | undefined;
+    if (session.fileChanges) {
+      try {
+        fileChanges = JSON.parse(session.fileChanges);
+      } catch {
+        // Invalid JSON, ignore
+        fileChanges = undefined;
+      }
+    }
     return {
       id: session.id,
       title: session.title,
@@ -392,6 +407,7 @@ export class WebSocketController {
       cwd: session.cwd ?? undefined,
       worktreeId: session.worktreeId ?? undefined,
       githubRepoId: session.githubRepoId ?? undefined,
+      fileChanges,
       createdAt: session.createdAt.getTime(),
       updatedAt: session.updatedAt.getTime(),
     };

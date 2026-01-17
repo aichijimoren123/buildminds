@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { create } from "zustand";
-import type { ServerEvent, SessionStatus } from "../types";
+import type { FileChange, ServerEvent, SessionStatus } from "../types";
 
 // Session metadata only (no messages)
 export type SessionMeta = {
@@ -11,6 +11,7 @@ export type SessionMeta = {
   worktreeId?: string;
   githubRepoId?: string;
   lastPrompt?: string;
+  fileChanges?: FileChange[];
   createdAt?: number;
   updatedAt?: number;
 };
@@ -79,6 +80,7 @@ export const useSessionsStore = create<SessionsState>((set, get) => ({
             cwd: session.cwd,
             worktreeId: session.worktreeId,
             githubRepoId: session.githubRepoId,
+            fileChanges: session.fileChanges,
             createdAt: session.createdAt,
             updatedAt: session.updatedAt,
           };

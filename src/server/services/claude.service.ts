@@ -5,7 +5,7 @@ import {
 } from "@anthropic-ai/claude-agent-sdk";
 import { existsSync } from "fs";
 import { resolve } from "path";
-import type { ServerEvent, StreamMessage } from "../../types";
+import type { FileChange, ServerEvent, StreamMessage } from "../../types";
 import type { PendingPermission } from "../../libs/session-store";
 
 export type RunnerHandle = {
@@ -19,7 +19,49 @@ export type RunClaudeOptions = {
   claudeSessionId?: string;
   onEvent: (event: ServerEvent) => void;
   onSessionUpdate?: (updates: { claudeSessionId?: string }) => void;
+  onFileChange?: (change: FileChange) => void;
 };
+
+// Extract file change info from tool_use messages
+function extractFileChange(message: SDKMessage): FileChange | null {
+  if (message.type !== "assistant") return null;
+
+  const content = message.message?.content;
+  if (!Array.isArray(content)) return null;
+
+  for (const block of content) {
+    if (block.type !== "tool_use") continue;
+
+    const toolName = block.name;
+    const input = block.input as Record<string, unknown>;
+
+    if (toolName === "Write" && input.file_path) {
+      const content = String(input.content || "");
+      const lines = content.split("\n").length;
+      return {
+        path: String(input.file_path),
+        status: "added", // Write creates or overwrites
+        additions: lines,
+        deletions: 0,
+      };
+    }
+
+    if (toolName === "Edit" && input.file_path) {
+      const oldStr = String(input.old_string || "");
+      const newStr = String(input.new_string || "");
+      const oldLines = oldStr ? oldStr.split("\n").length : 0;
+      const newLines = newStr ? newStr.split("\n").length : 0;
+      return {
+        path: String(input.file_path),
+        status: "modified",
+        additions: newLines,
+        deletions: oldLines,
+      };
+    }
+  }
+
+  return null;
+}
 
 const DEFAULT_CWD = process.cwd();
 
@@ -38,6 +80,7 @@ export class ClaudeService {
       claudeSessionId,
       onEvent,
       onSessionUpdate,
+      onFileChange,
     } = options;
     const abortController = new AbortController();
 
@@ -144,6 +187,12 @@ export class ClaudeService {
 
           // Send message to frontend
           sendMessage(message);
+
+          // Extract file changes from tool_use messages
+          const fileChange = extractFileChange(message);
+          if (fileChange) {
+            onFileChange?.(fileChange);
+          }
 
           // Check for result to update session status
           if (message.type === "result") {

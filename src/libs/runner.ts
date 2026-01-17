@@ -3,7 +3,7 @@ import {
   type SDKMessage,
   type PermissionResult,
 } from "@anthropic-ai/claude-agent-sdk";
-import type { ServerEvent } from "../types";
+import type { FileChange, ServerEvent } from "../types";
 import type { Session } from "./session-store";
 
 export type RunnerOptions = {
@@ -12,6 +12,7 @@ export type RunnerOptions = {
   resumeSessionId?: string;
   onEvent: (event: ServerEvent) => void;
   onSessionUpdate?: (updates: Partial<Session>) => void;
+  onFileChange?: (change: FileChange) => void;
 };
 
 export type RunnerHandle = {
@@ -20,9 +21,56 @@ export type RunnerHandle = {
 
 const DEFAULT_CWD = process.cwd();
 
+// Extract file change info from tool_use messages
+function extractFileChange(message: SDKMessage): FileChange | null {
+  if (message.type !== "assistant") return null;
+
+  const content = message.message?.content;
+  if (!Array.isArray(content)) return null;
+
+  for (const block of content) {
+    if (block.type !== "tool_use") continue;
+
+    const toolName = block.name;
+    const input = block.input as Record<string, unknown>;
+
+    if (toolName === "Write" && input.file_path) {
+      const content = String(input.content || "");
+      const lines = content.split("\n").length;
+      return {
+        path: String(input.file_path),
+        status: "added", // Write creates or overwrites
+        additions: lines,
+        deletions: 0,
+      };
+    }
+
+    if (toolName === "Edit" && input.file_path) {
+      const oldStr = String(input.old_string || "");
+      const newStr = String(input.new_string || "");
+      const oldLines = oldStr ? oldStr.split("\n").length : 0;
+      const newLines = newStr ? newStr.split("\n").length : 0;
+      return {
+        path: String(input.file_path),
+        status: "modified",
+        additions: newLines,
+        deletions: oldLines,
+      };
+    }
+  }
+
+  return null;
+}
+
 export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
-  const { prompt, session, resumeSessionId, onEvent, onSessionUpdate } =
-    options;
+  const {
+    prompt,
+    session,
+    resumeSessionId,
+    onEvent,
+    onSessionUpdate,
+    onFileChange,
+  } = options;
   const abortController = new AbortController();
 
   const sendMessage = (message: SDKMessage) => {
@@ -107,6 +155,12 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
 
         // Send message to frontend
         sendMessage(message);
+
+        // Extract file changes from tool_use messages
+        const fileChange = extractFileChange(message);
+        if (fileChange) {
+          onFileChange?.(fileChange);
+        }
 
         // Check for result to update session status
         if (message.type === "result") {

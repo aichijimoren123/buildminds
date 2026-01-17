@@ -67,6 +67,7 @@ export type SessionInfo = {
   cwd?: string;
   worktreeId?: string; // WorkTree 关联
   githubRepoId?: string; // Workspace 关联
+  fileChanges?: FileChange[]; // 本轮会话的文件变更
   createdAt: number;
   updatedAt: number;
 };

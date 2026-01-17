@@ -1,28 +1,21 @@
-"use client";
-
-import { useState, useMemo, useEffect } from "react";
-import {
-  ChevronDown,
-  ChevronRight,
-  FileCode,
-  FileDiff as FileDiffIcon,
-  Copy,
-  Check,
-} from "lucide-react";
-
-type CodeViewerMode = "code" | "diff";
+import type {
+  SupportedLanguages,
+  WorkerInitializationRenderOptions,
+  WorkerPoolOptions,
+} from "@pierre/diffs/react";
+import { MultiFileDiff, WorkerPoolContextProvider } from "@pierre/diffs/react";
+import { Check, Copy } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 interface CodeViewerProps {
   filePath: string;
-  content?: string;
   oldContent?: string;
-  newContent?: string;
-  mode?: CodeViewerMode;
+  newContent: string;
   defaultExpanded?: boolean;
 }
 
 // Get language from file extension
-function getLanguageFromPath(filePath: string): string {
+function getLanguageFromPath(filePath: string): SupportedLanguages {
   const ext = filePath.split(".").pop()?.toLowerCase() || "";
   const langMap: Record<string, string> = {
     ts: "typescript",
@@ -58,12 +51,7 @@ function getLanguageFromPath(filePath: string): string {
     dockerfile: "dockerfile",
     toml: "toml",
   };
-  return langMap[ext] || "text";
-}
-
-// Count lines in content
-function countLines(content: string): number {
-  return content.split("\n").length;
+  return (langMap[ext] || "text") as SupportedLanguages;
 }
 
 // Count diff stats
@@ -71,8 +59,8 @@ function countDiffStats(
   oldContent: string,
   newContent: string,
 ): { added: number; removed: number } {
-  const oldLines = oldContent.split("\n");
-  const newLines = newContent.split("\n");
+  const oldLines = oldContent.split("\n").filter((l) => l.trim());
+  const newLines = newContent.split("\n").filter((l) => l.trim());
 
   const oldSet = new Set(oldLines);
   const newSet = new Set(newLines);
@@ -91,20 +79,16 @@ function countDiffStats(
   return { added, removed };
 }
 
-// Lazy load @pierre/diffs components and worker
-function usePierreDiffs() {
+// Init @pierre/diffs worker pool for Bun
+function useDiffsWorkerPool() {
   const [state, setState] = useState<{
-    components: {
-      MultiFileDiff: any;
-      File: any;
-      WorkerPoolContextProvider: any;
-    } | null;
-    workerFactory: (() => Worker) | null;
+    poolOptions: WorkerPoolOptions | null;
+    highlighterOptions: WorkerInitializationRenderOptions | null;
     error: string | null;
     loading: boolean;
   }>({
-    components: null,
-    workerFactory: null,
+    poolOptions: null,
+    highlighterOptions: null,
     error: null,
     loading: true,
   });
@@ -112,42 +96,35 @@ function usePierreDiffs() {
   useEffect(() => {
     let mounted = true;
 
-    async function loadAll() {
-      try {
-        // Load react components
-        const reactModule = await import("@pierre/diffs/react");
+    try {
+      const poolOptions: WorkerPoolOptions = {
+        workerFactory: () => new Worker("/pierre-diffs-worker.js"),
+        poolSize: 2,
+      };
 
-        // Create worker factory using the server-provided worker file
-        const createWorker = () => {
-          return new Worker("/pierre-diffs-worker.js");
-        };
+      const highlighterOptions: WorkerInitializationRenderOptions = {
+        theme: { dark: "pierre-dark", light: "pierre-light" },
+      };
 
-        if (mounted) {
-          setState({
-            components: {
-              MultiFileDiff: reactModule.MultiFileDiff,
-              File: reactModule.File,
-              WorkerPoolContextProvider: reactModule.WorkerPoolContextProvider,
-            },
-            workerFactory: createWorker,
-            error: null,
-            loading: false,
-          });
-        }
-      } catch (err) {
-        console.error("Failed to load @pierre/diffs:", err);
-        if (mounted) {
-          setState((prev) => ({
-            ...prev,
-            error:
-              err instanceof Error ? err.message : "Failed to load diff viewer",
-            loading: false,
-          }));
-        }
+      if (mounted) {
+        setState({
+          poolOptions,
+          highlighterOptions,
+          error: null,
+          loading: false,
+        });
+      }
+    } catch (err) {
+      console.error("Failed to init diff worker:", err);
+      if (mounted) {
+        setState((prev) => ({
+          ...prev,
+          error:
+            err instanceof Error ? err.message : "Failed to init diff worker",
+          loading: false,
+        }));
       }
     }
-
-    loadAll();
 
     return () => {
       mounted = false;
@@ -159,124 +136,70 @@ function usePierreDiffs() {
 
 export function CodeViewer({
   filePath,
-  content,
-  oldContent,
+  oldContent = "",
   newContent,
-  mode = "code",
-  defaultExpanded = false,
+  defaultExpanded = true,
 }: CodeViewerProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [copied, setCopied] = useState(false);
-  const { components, workerFactory, error, loading } = usePierreDiffs();
+  const { poolOptions, highlighterOptions, error, loading } =
+    useDiffsWorkerPool();
 
   const language = getLanguageFromPath(filePath);
   const fileName = filePath.split("/").pop() || filePath;
 
-  // Determine what to display
-  const displayMode = useMemo(() => {
-    if (
-      mode === "diff" &&
-      oldContent !== undefined &&
-      newContent !== undefined
-    ) {
-      return "diff";
-    }
-    return "code";
-  }, [mode, oldContent, newContent]);
-
   // Calculate stats
   const stats = useMemo(() => {
-    if (displayMode === "diff" && oldContent && newContent) {
-      const diffStats = countDiffStats(oldContent, newContent);
-      return {
-        totalLines: Math.max(countLines(oldContent), countLines(newContent)),
-        added: diffStats.added,
-        removed: diffStats.removed,
-      };
-    }
-    const codeContent = content || newContent || "";
+    const diffStats = countDiffStats(oldContent, newContent);
+    const totalLines = newContent.split("\n").length;
     return {
-      totalLines: countLines(codeContent),
-      added: 0,
-      removed: 0,
+      totalLines,
+      added: diffStats.added,
+      removed: diffStats.removed,
     };
-  }, [displayMode, content, oldContent, newContent]);
+  }, [oldContent, newContent]);
 
   // Create FileContents for @pierre/diffs
-  const oldFile = useMemo(() => {
-    if (displayMode === "diff" && oldContent !== undefined) {
-      return {
-        name: filePath,
-        contents: oldContent,
-        lang: language,
-      };
-    }
-    return undefined;
-  }, [displayMode, oldContent, filePath, language]);
+  const oldFile = useMemo(
+    () => ({
+      name: filePath,
+      contents: oldContent,
+      lang: language,
+    }),
+    [oldContent, filePath, language],
+  );
 
-  const newFile = useMemo(() => {
-    if (displayMode === "diff" && newContent !== undefined) {
-      return {
-        name: filePath,
-        contents: newContent,
-        lang: language,
-      };
-    }
-    return undefined;
-  }, [displayMode, newContent, filePath, language]);
+  const newFile = useMemo(
+    () => ({
+      name: filePath,
+      contents: newContent,
+      lang: language,
+    }),
+    [newContent, filePath, language],
+  );
 
-  const singleFile = useMemo(() => {
-    if (displayMode === "code") {
-      const codeContent = content || newContent || "";
-      return {
-        name: filePath,
-        contents: codeContent,
-        lang: language,
-      };
-    }
-    return undefined;
-  }, [displayMode, content, newContent, filePath, language]);
-
-  const handleCopy = async () => {
-    const textToCopy = content || newContent || "";
-    await navigator.clipboard.writeText(textToCopy);
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    await navigator.clipboard.writeText(newContent);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Worker pool options - only create when workerFactory is available
-  const poolOptions = useMemo(() => {
-    if (!workerFactory) return null;
-    return {
-      workerFactory,
-      poolSize: 2,
-    };
-  }, [workerFactory]);
-
-  const highlighterOptions = useMemo(
-    () => ({
-      theme: "github-light" as const,
-      langs: [language],
-    }),
-    [language],
-  );
-
-  // Diff options
+  // Diff options - always show line numbers, scroll mode
   const diffOptions = useMemo(
     () => ({
       diffStyle: "unified" as const,
       disableFileHeader: true,
+      overflow: "scroll" as const,
+      disableLineNumbers: false,
     }),
     [],
   );
 
-  // File options
-  const fileOptions = useMemo(
-    () => ({
-      disableFileHeader: true,
-    }),
-    [],
-  );
+  const highlighterOptionsWithLangs = useMemo(() => {
+    if (!highlighterOptions) return null;
+    return { ...highlighterOptions, langs: [language] };
+  }, [highlighterOptions, language]);
 
   // Render content
   const renderContent = () => {
@@ -288,7 +211,7 @@ export function CodeViewer({
       );
     }
 
-    if (loading || !components || !poolOptions) {
+    if (loading || !poolOptions || !highlighterOptionsWithLangs) {
       return (
         <div className="p-4 text-sm text-muted flex items-center gap-2">
           <div className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
@@ -297,105 +220,66 @@ export function CodeViewer({
       );
     }
 
-    const { MultiFileDiff, File, WorkerPoolContextProvider } = components;
-
     return (
       <WorkerPoolContextProvider
         poolOptions={poolOptions}
-        highlighterOptions={highlighterOptions}
+        highlighterOptions={highlighterOptionsWithLangs}
       >
-        {displayMode === "diff" && oldFile && newFile ? (
-          <MultiFileDiff
-            oldFile={oldFile}
-            newFile={newFile}
-            options={diffOptions}
-          />
-        ) : singleFile ? (
-          <File file={singleFile} options={fileOptions} />
-        ) : null}
+        <MultiFileDiff
+          oldFile={oldFile}
+          newFile={newFile}
+          options={diffOptions}
+        />
       </WorkerPoolContextProvider>
     );
   };
 
   return (
-    <div className="mt-3 rounded-xl border border-ink-900/10 bg-white overflow-hidden shadow-soft">
+    <div className="rounded-xl border border-ink-900/10 bg-white overflow-hidden">
       {/* Header */}
-      <button
+      <div
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center gap-2 px-3 py-2.5 bg-bg-200 hover:bg-bg-300 transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-2 bg-bg-200 hover:bg-bg-300 transition-colors"
       >
-        {isExpanded ? (
-          <ChevronDown className="w-4 h-4 text-ink-500" />
-        ) : (
-          <ChevronRight className="w-4 h-4 text-ink-500" />
-        )}
-
-        {displayMode === "diff" ? (
-          <FileDiffIcon className="w-4 h-4 text-accent" />
-        ) : (
-          <FileCode className="w-4 h-4 text-accent" />
-        )}
-
-        <span className="flex-1 text-left text-sm font-medium text-ink-700 truncate">
+        <span className="flex-1 text-left text-sm font-light text-ink-700 truncate">
           {fileName}
         </span>
 
-        {displayMode === "diff" && (
-          <div className="flex items-center gap-2 text-xs">
-            {stats.added > 0 && (
-              <span className="text-success">+{stats.added}</span>
-            )}
-            {stats.removed > 0 && (
-              <span className="text-error">-{stats.removed}</span>
-            )}
-          </div>
-        )}
+        {/* Copy button */}
+        <button
+          onClick={handleCopy}
+          className="rounded-md hover:bg-bg-400 transition-colors p-1"
+          title="Copy code"
+        >
+          {copied ? (
+            <Check className="w-3.5 h-3.5 text-success" />
+          ) : (
+            <Copy className="w-3.5 h-3.5 text-ink-500" />
+          )}
+        </button>
 
-        <span className="text-xs text-muted">{stats.totalLines} lines</span>
-      </button>
+        <div className="flex items-center gap-2 text-xs">
+          {stats.added > 0 && (
+            <span className="text-success">+{stats.added}</span>
+          )}
+          {stats.removed > 0 && (
+            <span className="text-error">-{stats.removed}</span>
+          )}
+        </div>
+
+        <span className="text-xs text-muted hidden sm:inline">
+          {stats.totalLines} lines
+        </span>
+
+        <span className="text-xs text-ink-400">{isExpanded ? "▲" : "▼"}</span>
+      </div>
 
       {/* Code content */}
       {isExpanded && (
-        <div className="relative">
-          {/* Copy button */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleCopy();
-            }}
-            className="absolute top-2 right-2 z-10 p-1.5 rounded-md bg-bg-300/80 hover:bg-bg-400 transition-colors"
-            title="Copy code"
-          >
-            {copied ? (
-              <Check className="w-3.5 h-3.5 text-success" />
-            ) : (
-              <Copy className="w-3.5 h-3.5 text-ink-500" />
-            )}
-          </button>
-
-          <div className="overflow-x-auto pierre-diffs-container max-h-[500px] overflow-y-auto">
-            {renderContent()}
-          </div>
+        <div className="overflow-x-auto pierre-diffs-container max-h-[60vh] sm:max-h-[500px] overflow-y-auto">
+          {renderContent()}
         </div>
       )}
     </div>
-  );
-}
-
-// Export a compact inline code preview
-export function CodePreview({
-  content,
-  maxLength = 100,
-}: {
-  content: string;
-  maxLength?: number;
-}) {
-  const truncated =
-    content.length > maxLength ? content.slice(0, maxLength) + "..." : content;
-
-  return (
-    <code className="text-xs font-mono bg-bg-200 px-1.5 py-0.5 rounded text-ink-600">
-      {truncated}
-    </code>
   );
 }

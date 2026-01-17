@@ -1,5 +1,6 @@
+import { PanelRight } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Outlet, useNavigate, useLocation } from "react-router";
+import { Outlet, useLocation, useNavigate } from "react-router";
 import { useWebSocket } from "../hooks/useWebSocket";
 import { useAppStore } from "../store/useAppStore";
 import { useMessageStore } from "../store/useMessageStore";
@@ -7,7 +8,6 @@ import { useSessionsStore } from "../store/useSessionsStore";
 import { useWorktreeStore } from "../store/useWorktreeStore";
 import type { ServerEvent } from "../types";
 import { Sidebar } from "./Sidebar";
-import { PanelRight } from "lucide-react";
 
 // Message-related event types
 const MESSAGE_EVENTS = new Set([
@@ -125,7 +125,7 @@ export function Layout() {
         )}
 
         <main
-          className={`relative flex h-full flex-col ${isSettingsPage || isChatPage ? "lg:ml-[280px]" : "lg:ml-[280px]"}`}
+          className={`relative flex h-full w-full overflow-hidden flex-col ${isSettingsPage || isChatPage ? "lg:ml-[280px] lg:w-[calc(100%-280px)]" : "lg:ml-[280px] lg:w-[calc(100%-280px)]"}`}
         >
           {/* 移动端：设置页面和聊天页面不显示汉堡菜单按钮 */}
           {!isSettingsPage && !isChatPage && (
