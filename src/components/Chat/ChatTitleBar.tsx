@@ -22,7 +22,7 @@ export function ChatTitleBar({ session, onBack }: ChatTitleBarProps) {
     <div className="flex items-center py-2 px-4 lg:px-6">
       {/* Back button - visible on mobile */}
       <button
-        className="shrink-0 mr-2 flex items-center justify-center rounded-lg p-1.5 text-ink-500 hover:bg-ink-900/5 lg:hidden transition-colors"
+        className="shrink-0 mr-2 flex items-center justify-center rounded-lg p-1.5 text-text-400 hover:bg-bg-200 lg:hidden transition-colors"
         onClick={handleBack}
         aria-label="Back to sessions"
       >
@@ -30,11 +30,11 @@ export function ChatTitleBar({ session, onBack }: ChatTitleBarProps) {
       </button>
 
       {/* Left-aligned title with dropdown indicator */}
-      <button className="flex items-center gap-1.5 min-w-0 text-ink-800 hover:text-ink-900 transition-colors group">
+      <button className="flex items-center gap-1.5 min-w-0 text-text-100 hover:text-text-000 transition-colors group">
         <span className="text-base font-medium truncate">
           {session?.title || "New Chat"}
         </span>
-        <ChevronDown className="w-4 h-4 shrink-0 text-ink-400 group-hover:text-ink-600 transition-colors" />
+        <ChevronDown className="w-4 h-4 shrink-0 text-text-400 group-hover:text-text-200 transition-colors" />
       </button>
 
       {/* Spacer */}

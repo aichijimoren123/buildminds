@@ -234,8 +234,8 @@ body {
     system-ui,
     -apple-system,
     sans-serif;
-  background-color: #ffffff;
-  color: #1a1915;
+  background-color: hsl(var(--bg-100));
+  color: hsl(var(--text-100));
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -274,12 +274,12 @@ input.mono {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d1d1cc;
+  background: hsl(var(--border-100) / 0.3);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #9b9b96;
+  background: hsl(var(--border-100) / 0.5);
 }
 
 .font-serif {

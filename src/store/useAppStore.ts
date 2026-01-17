@@ -4,6 +4,7 @@ import type { ServerEvent } from "../types";
 
 export type QualityLevel = "standard" | "high" | "max";
 export type SessionMode = "normal" | "workspace";
+export type ThemeMode = "light" | "dark" | "system";
 
 export const AVAILABLE_MODELS = [
   { id: "claude-sonnet-4-20250514", label: "Claude Sonnet 4" },
@@ -38,6 +39,9 @@ interface AppState {
   activeWorkspaceId: string | null;
   sessionMode: SessionMode;
 
+  // Theme
+  themeMode: ThemeMode;
+
   // Actions
   setPrompt: (prompt: string) => void;
   setCwd: (cwd: string) => void;
@@ -48,7 +52,9 @@ interface AppState {
   setQualityLevel: (level: QualityLevel) => void;
   setActiveWorkspaceId: (id: string | null) => void;
   setSessionMode: (mode: SessionMode) => void;
+  setThemeMode: (mode: ThemeMode) => void;
   loadServerSettings: () => Promise<void>;
+  initializeTheme: () => void;
 
   // Event Handling (for global errors)
   handleAppEvent: (event: ServerEvent) => void;
@@ -72,6 +78,9 @@ export const useAppStore = create<AppState>()(
       activeWorkspaceId: null,
       sessionMode: "normal" as SessionMode,
 
+      // Theme
+      themeMode: "system" as ThemeMode,
+
       setPrompt: (prompt) => set({ prompt }),
       setCwd: (cwd) => set({ cwd }),
       setDefaultCwd: (defaultCwd) => set({ defaultCwd }),
@@ -81,6 +90,48 @@ export const useAppStore = create<AppState>()(
       setQualityLevel: (qualityLevel) => set({ qualityLevel }),
       setActiveWorkspaceId: (activeWorkspaceId) => set({ activeWorkspaceId }),
       setSessionMode: (sessionMode) => set({ sessionMode }),
+
+      setThemeMode: (themeMode) => {
+        set({ themeMode });
+        // Apply theme to document
+        const applyTheme = (mode: "light" | "dark") => {
+          document.documentElement.setAttribute("data-mode", mode);
+        };
+
+        if (themeMode === "system") {
+          const isDark = window.matchMedia(
+            "(prefers-color-scheme: dark)",
+          ).matches;
+          applyTheme(isDark ? "dark" : "light");
+        } else {
+          applyTheme(themeMode);
+        }
+      },
+
+      initializeTheme: () => {
+        const { themeMode } = get();
+        const applyTheme = (mode: "light" | "dark") => {
+          document.documentElement.setAttribute("data-mode", mode);
+        };
+
+        if (themeMode === "system") {
+          const isDark = window.matchMedia(
+            "(prefers-color-scheme: dark)",
+          ).matches;
+          applyTheme(isDark ? "dark" : "light");
+
+          // Listen for system theme changes
+          window
+            .matchMedia("(prefers-color-scheme: dark)")
+            .addEventListener("change", (e) => {
+              if (get().themeMode === "system") {
+                applyTheme(e.matches ? "dark" : "light");
+              }
+            });
+        } else {
+          applyTheme(themeMode);
+        }
+      },
 
       loadServerSettings: async () => {
         try {
@@ -123,6 +174,7 @@ export const useAppStore = create<AppState>()(
         qualityLevel: state.qualityLevel,
         activeWorkspaceId: state.activeWorkspaceId,
         sessionMode: state.sessionMode,
+        themeMode: state.themeMode,
       }),
     },
   ),

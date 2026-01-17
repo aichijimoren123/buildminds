@@ -16,7 +16,7 @@ export function ProgressCard({ status, messageCount }: ProgressCardProps) {
       case "error":
         return <Circle className="w-4 h-4 text-error" />;
       default:
-        return <Circle className="w-4 h-4 text-muted" />;
+        return <Circle className="w-4 h-4 text-text-400" />;
     }
   };
 
@@ -34,18 +34,18 @@ export function ProgressCard({ status, messageCount }: ProgressCardProps) {
   };
 
   return (
-    <div className="rounded-xl border border-ink-900/10 bg-white overflow-hidden">
-      <div className="px-4 py-3 border-b border-ink-900/5">
-        <h3 className="text-sm font-medium text-ink-700">Progress</h3>
+    <div className="rounded-xl border border-border-100/10 bg-bg-000 overflow-hidden">
+      <div className="px-4 py-3 border-b border-border-100/5">
+        <h3 className="text-sm font-medium text-text-100">Progress</h3>
       </div>
       <div className="p-4">
         <div className="flex items-center gap-3">
           {getStatusIcon()}
           <div className="flex-1">
-            <div className="text-sm font-medium text-ink-700">
+            <div className="text-sm font-medium text-text-100">
               {getStatusText()}
             </div>
-            <div className="text-xs text-muted">
+            <div className="text-xs text-text-400">
               {messageCount} {messageCount === 1 ? "message" : "messages"}
             </div>
           </div>

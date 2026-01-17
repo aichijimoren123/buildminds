@@ -10,20 +10,20 @@ export default function MDContent({ text }: { text: string }) {
       rehypePlugins={[rehypeRaw, rehypeHighlight]}
       components={{
         h1: (props) => (
-          <h1 className="mt-4 text-xl font-semibold text-ink-900" {...props} />
+          <h1 className="mt-4 text-xl font-semibold text-text-100" {...props} />
         ),
         h2: (props) => (
-          <h2 className="mt-4 text-lg font-semibold text-ink-900" {...props} />
+          <h2 className="mt-4 text-lg font-semibold text-text-100" {...props} />
         ),
         h3: (props) => (
           <h3
-            className="mt-3 text-base font-semibold text-ink-800"
+            className="mt-3 text-base font-semibold text-text-100"
             {...props}
           />
         ),
         p: (props) => (
           <p
-            className="mt-2 text-base leading-relaxed text-ink-700"
+            className="mt-2 text-base leading-relaxed text-text-200"
             {...props}
           />
         ),
@@ -33,14 +33,14 @@ export default function MDContent({ text }: { text: string }) {
         ol: (props) => (
           <ol className="mt-2 ml-4 grid list-decimal gap-1" {...props} />
         ),
-        li: (props) => <li className="min-w-0 text-ink-700" {...props} />,
+        li: (props) => <li className="min-w-0 text-text-200" {...props} />,
         strong: (props) => (
-          <strong className="text-ink-900 font-semibold" {...props} />
+          <strong className="text-text-100 font-semibold" {...props} />
         ),
-        em: (props) => <em className="text-ink-800" {...props} />,
+        em: (props) => <em className="text-text-100" {...props} />,
         pre: (props) => (
           <pre
-            className="mt-3 max-w-full overflow-x-auto whitespace-pre-wrap rounded-xl bg-surface-tertiary p-3 text-sm text-ink-700"
+            className="mt-3 max-w-full overflow-x-auto whitespace-pre-wrap rounded-xl bg-bg-300 p-3 text-sm text-text-200"
             {...props}
           />
         ),
@@ -51,7 +51,7 @@ export default function MDContent({ text }: { text: string }) {
 
           return isInline ? (
             <code
-              className="rounded bg-surface-tertiary px-1.5 py-0.5 text-accent font-mono text-base"
+              className="rounded bg-bg-300 px-1.5 py-0.5 text-accent font-mono text-base"
               {...rest}
             >
               {children}

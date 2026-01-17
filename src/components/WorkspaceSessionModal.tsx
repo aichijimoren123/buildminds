@@ -80,46 +80,46 @@ export function WorkspaceSessionModal({
   return (
     <Dialog.Root open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 bg-ink-900/40 backdrop-blur-sm z-50" />
-        <Dialog.Popup className="fixed left-1/2 top-1/2 w-[92vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl z-50 max-h-[90vh] overflow-y-auto">
+        <Dialog.Backdrop className="fixed inset-0 bg-bg-400/40 backdrop-blur-sm z-50" />
+        <Dialog.Popup className="fixed left-1/2 top-1/2 w-[92vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-bg-000 p-6 shadow-xl z-50 max-h-[90vh] overflow-y-auto">
           <div className="flex items-start justify-between gap-4 mb-4">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/10">
                 <GitBranch className="h-5 w-5 text-accent" />
               </div>
-              <Dialog.Title className="text-lg font-semibold text-ink-800">
+              <Dialog.Title className="text-lg font-semibold text-text-100">
                 创建新任务
               </Dialog.Title>
             </div>
-            <Dialog.Close className="rounded-full p-1.5 text-ink-500 hover:bg-ink-900/10 transition-colors">
+            <Dialog.Close className="rounded-full p-1.5 text-text-400 hover:bg-border-100/10 transition-colors">
               <X className="h-4 w-4" />
             </Dialog.Close>
           </div>
 
           {/* Workspace Info */}
-          <div className="mb-4 p-3 rounded-lg bg-surface-secondary border border-ink-900/5">
+          <div className="mb-4 p-3 rounded-lg bg-bg-200 border border-border-100/5">
             <div className="flex items-center gap-2 mb-2">
               <FolderGit2 className="h-4 w-4 text-accent" />
-              <span className="text-sm font-medium text-ink-800">
+              <span className="text-sm font-medium text-text-100">
                 {workspace.repoFullName}
               </span>
             </div>
-            <div className="text-xs text-muted truncate" title={workspace.localPath}>
+            <div className="text-xs text-text-400 truncate" title={workspace.localPath}>
               {workspace.localPath}
             </div>
           </div>
 
           {/* Preview prompt */}
           {prompt && (
-            <div className="mb-4 p-3 rounded-lg bg-surface-secondary border border-ink-900/5">
-              <div className="text-xs text-muted mb-1">任务描述</div>
-              <div className="text-sm text-ink-700 line-clamp-2">{prompt}</div>
+            <div className="mb-4 p-3 rounded-lg bg-bg-200 border border-border-100/5">
+              <div className="text-xs text-text-400 mb-1">任务描述</div>
+              <div className="text-sm text-text-200 line-clamp-2">{prompt}</div>
             </div>
           )}
 
           {/* Worktree name input */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-ink-700 mb-2">
+            <label className="block text-sm font-medium text-text-200 mb-2">
               任务名称
             </label>
             <input
@@ -128,21 +128,21 @@ export function WorkspaceSessionModal({
               onChange={(e) => setWorktreeName(sanitizeBranchName(e.target.value))}
               onKeyDown={handleKeyDown}
               placeholder="fix-login-bug"
-              className="w-full rounded-lg border border-ink-900/10 bg-surface px-3 py-2.5 text-sm text-ink-800 placeholder:text-muted-light focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors"
+              className="w-full rounded-lg border border-border-100/10 bg-bg-100 px-3 py-2.5 text-sm text-text-100 placeholder:text-text-400-light focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors"
               autoFocus
             />
-            <div className="mt-1.5 text-xs text-muted">
-              分支名: <code className="bg-surface-secondary px-1 py-0.5 rounded">task/{worktreeName || "task-name"}</code>
+            <div className="mt-1.5 text-xs text-text-400">
+              分支名: <code className="bg-bg-200 px-1 py-0.5 rounded">task/{worktreeName || "task-name"}</code>
             </div>
           </div>
 
           {/* Base branch selector */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-ink-700 mb-2">
+            <label className="block text-sm font-medium text-text-200 mb-2">
               基于分支
             </label>
             {loadingBranches ? (
-              <div className="flex items-center gap-2 text-sm text-muted py-2">
+              <div className="flex items-center gap-2 text-sm text-text-400 py-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 加载分支列表...
               </div>
@@ -150,7 +150,7 @@ export function WorkspaceSessionModal({
               <select
                 value={baseBranch}
                 onChange={(e) => setBaseBranch(e.target.value)}
-                className="w-full rounded-lg border border-ink-900/10 bg-surface px-3 py-2.5 text-sm text-ink-800 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors"
+                className="w-full rounded-lg border border-border-100/10 bg-bg-100 px-3 py-2.5 text-sm text-text-100 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors"
               >
                 {branches.length > 0 ? (
                   branches.map((branch) => (
@@ -166,9 +166,9 @@ export function WorkspaceSessionModal({
           </div>
 
           {/* Worktree path preview */}
-          <div className="mb-6 p-3 rounded-lg bg-ink-900/5 border border-ink-900/5">
-            <div className="text-xs text-muted mb-1">Worktree 路径</div>
-            <div className="text-xs font-mono text-ink-600 break-all">
+          <div className="mb-6 p-3 rounded-lg bg-border-100/5 border border-border-100/5">
+            <div className="text-xs text-text-400 mb-1">Worktree 路径</div>
+            <div className="text-xs font-mono text-text-300 break-all">
               {workspace.localPath}/.worktrees/{worktreeName || "task-name"}
             </div>
           </div>
@@ -178,7 +178,7 @@ export function WorkspaceSessionModal({
             <button
               onClick={onClose}
               disabled={creating}
-              className="px-4 py-2.5 text-sm font-medium text-ink-600 hover:text-ink-800 hover:bg-ink-900/5 rounded-lg transition-colors disabled:opacity-50"
+              className="px-4 py-2.5 text-sm font-medium text-text-300 hover:text-text-100 hover:bg-border-100/5 rounded-lg transition-colors disabled:opacity-50"
             >
               取消
             </button>

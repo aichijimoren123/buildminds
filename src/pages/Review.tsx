@@ -163,9 +163,9 @@ export function Review() {
 
   if (!currentFile) {
     return (
-      <div className="flex h-full items-center justify-center bg-surface-cream">
+      <div className="flex h-full items-center justify-center bg-bg-100">
         <div className="text-center">
-          <p className="text-ink-500">No file selected</p>
+          <p className="text-text-400">No file selected</p>
           <button
             onClick={handleBack}
             className="mt-4 text-accent hover:underline"
@@ -178,12 +178,12 @@ export function Review() {
   }
 
   return (
-    <div className="flex h-full flex-col bg-surface-cream">
+    <div className="flex h-full flex-col bg-bg-100">
       {/* Title bar - same style as Chat */}
-      <div className="flex items-center py-2 px-4 lg:px-6 border-b border-ink-900/5">
+      <div className="flex items-center py-2 px-4 lg:px-6 border-b border-border-100/5">
         {/* Back button */}
         <button
-          className="shrink-0 mr-2 flex items-center justify-center rounded-lg p-1.5 text-ink-500 hover:bg-ink-900/5 transition-colors"
+          className="shrink-0 mr-2 flex items-center justify-center rounded-lg p-1.5 text-text-400 hover:bg-border-100/5 transition-colors"
           onClick={handleBack}
           aria-label="Back to chat"
         >
@@ -191,11 +191,11 @@ export function Review() {
         </button>
 
         {/* Title */}
-        <div className="flex items-center gap-1.5 min-w-0 text-ink-800">
+        <div className="flex items-center gap-1.5 min-w-0 text-text-100">
           <span className="text-base font-medium truncate">
             Review Changes
           </span>
-          <span className="text-sm text-ink-400">
+          <span className="text-sm text-text-400">
             {fileChanges.length} files
           </span>
         </div>
@@ -238,7 +238,7 @@ export function Review() {
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
               hasWorktree
                 ? "bg-accent/10 text-accent hover:bg-accent/20"
-                : "bg-ink-100 text-ink-500 hover:bg-ink-200"
+                : "bg-bg-200 text-text-400 hover:bg-bg-300"
             }`}
           >
             <GitBranch className="w-4 h-4" />
@@ -248,9 +248,9 @@ export function Review() {
 
           <Menu.Portal>
             <Menu.Positioner side="bottom" align="end" sideOffset={8}>
-              <Menu.Popup className="min-w-[180px] rounded-xl bg-white py-1 shadow-lg ring-1 ring-ink-900/10 z-50">
+              <Menu.Popup className="min-w-[180px] rounded-xl bg-bg-000 py-1 shadow-lg ring-1 ring-border-100/10 z-50">
                 <Menu.Item
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-ink-700 cursor-pointer outline-none hover:bg-ink-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-text-200 cursor-pointer outline-none hover:bg-bg-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={(e) => {
                     e.preventDefault();
                     handleCommitAndPush();
@@ -265,7 +265,7 @@ export function Review() {
                   <span>Commit & Push</span>
                 </Menu.Item>
                 <Menu.Item
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-ink-700 cursor-pointer outline-none hover:bg-ink-50 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-text-200 cursor-pointer outline-none hover:bg-bg-100 transition-colors"
                   onClick={(e) => {
                     e.preventDefault();
                     handleCreatePR();
@@ -283,7 +283,7 @@ export function Review() {
       {/* Main content area */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* File list sidebar - desktop only */}
-        <div className="w-64 shrink-0 border-r border-ink-900/5 bg-white overflow-y-auto hidden md:block">
+        <div className="w-64 shrink-0 border-r border-border-100/5 bg-bg-000 overflow-y-auto hidden md:block">
           <div className="p-2">
             {fileChanges.map((file, index) => {
               const fileName = file.path.split("/").pop() || file.path;
@@ -296,7 +296,7 @@ export function Review() {
                   className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors ${
                     isActive
                       ? "bg-accent/10 text-accent"
-                      : "text-ink-700 hover:bg-ink-50"
+                      : "text-text-200 hover:bg-bg-100"
                   }`}
                 >
                   {getFileIcon(file.status)}
@@ -304,7 +304,7 @@ export function Review() {
                     <div className="text-sm font-medium truncate">
                       {fileName}
                     </div>
-                    <div className="text-xs text-ink-400 truncate">
+                    <div className="text-xs text-text-400 truncate">
                       {file.path}
                     </div>
                   </div>
@@ -336,8 +336,8 @@ export function Review() {
           ) : (
             <div className="flex h-full items-center justify-center w-full">
               <div className="text-center">
-                <p className="text-ink-500">Unable to load file content</p>
-                <p className="text-xs text-ink-400 mt-1">
+                <p className="text-text-400">Unable to load file content</p>
+                <p className="text-xs text-text-400 mt-1">
                   The file may have been created without tracked changes
                 </p>
               </div>

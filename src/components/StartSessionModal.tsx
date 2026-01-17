@@ -20,14 +20,14 @@ export function StartSessionModal({
   onClose,
 }: StartSessionModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/20 px-4 py-8 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-2xl border border-ink-900/5 bg-surface p-6 shadow-elevated">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg-400/20 px-4 py-8 backdrop-blur-sm">
+      <div className="w-full max-w-lg rounded-2xl border border-border-100/5 bg-bg-100 p-6 shadow-elevated">
         <div className="flex items-center justify-between">
-          <div className="text-base font-semibold text-ink-800">
+          <div className="text-base font-semibold text-text-100">
             Start Session
           </div>
           <button
-            className="rounded-full p-1.5 text-muted hover:bg-surface-tertiary hover:text-ink-700 transition-colors"
+            className="rounded-full p-1.5 text-text-400 hover:bg-bg-100-tertiary hover:text-text-200 transition-colors"
             onClick={onClose}
             aria-label="Close"
           >
@@ -42,26 +42,26 @@ export function StartSessionModal({
             </svg>
           </button>
         </div>
-        <p className="mt-2 text-sm text-muted">
+        <p className="mt-2 text-sm text-text-400">
           Create a new session to start interacting with Claude Code.
         </p>
         <div className="mt-5 grid gap-4">
           <label className="grid gap-1.5">
-            <span className="text-xs font-medium text-muted">
+            <span className="text-xs font-medium text-text-400">
               Working Directory{" "}
-              <span className="text-muted-light font-normal">
+              <span className="text-text-400-light font-normal">
                 (default: current directory)
               </span>
             </span>
             <input
-              className="rounded-xl border border-ink-900/10 bg-surface-secondary px-4 py-2.5 text-sm text-ink-800 placeholder:text-muted-light focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors"
+              className="rounded-xl border border-border-100/10 bg-bg-100-secondary px-4 py-2.5 text-sm text-text-100 placeholder:text-text-400-light focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors"
               placeholder="Uses current directory if empty"
               value={cwd}
               onChange={(event) => onCwdChange(event.target.value)}
             />
             {recentCwds.length > 0 && (
               <div className="mt-2 grid gap-2">
-                <div className="text-[11px] font-medium uppercase tracking-wide text-muted-light">
+                <div className="text-[11px] font-medium uppercase tracking-wide text-text-400-light">
                   Recent
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -73,8 +73,8 @@ export function StartSessionModal({
                         type="button"
                         className={`max-w-full truncate rounded-full border px-3 py-1.5 text-xs transition-colors ${
                           isActive
-                            ? "border-accent/60 bg-accent/10 text-ink-800"
-                            : "border-ink-900/10 bg-white text-muted hover:border-ink-900/20 hover:text-ink-700"
+                            ? "border-accent/60 bg-accent/10 text-text-100"
+                            : "border-border-100/10 bg-bg-000 text-text-400 hover:border-border-100/20 hover:text-text-200"
                         }`}
                         onClick={() => onCwdChange(path)}
                         aria-pressed={isActive}
@@ -89,10 +89,10 @@ export function StartSessionModal({
             )}
           </label>
           <label className="grid gap-1.5">
-            <span className="text-xs font-medium text-muted">Prompt</span>
+            <span className="text-xs font-medium text-text-400">Prompt</span>
             <textarea
               rows={4}
-              className="rounded-xl border border-ink-900/10 bg-surface-secondary p-3 text-sm text-ink-800 placeholder:text-muted-light focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors resize-none"
+              className="rounded-xl border border-border-100/10 bg-bg-100-secondary p-3 text-sm text-text-100 placeholder:text-text-400-light focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors resize-none"
               placeholder="Describe the task you want Claude Code to handle..."
               value={prompt}
               onChange={(event) => onPromptChange(event.target.value)}

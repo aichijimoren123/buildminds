@@ -28,18 +28,18 @@ function getShortPath(cwd?: string): string {
 
 export function ContextCard({ cwd, createdAt, worktreeId }: ContextCardProps) {
   return (
-    <div className="rounded-xl border border-ink-900/10 bg-white overflow-hidden">
-      <div className="px-4 py-3 border-b border-ink-900/5">
-        <h3 className="text-sm font-medium text-ink-700">Context</h3>
+    <div className="rounded-xl border border-border-100/10 bg-bg-000 overflow-hidden">
+      <div className="px-4 py-3 border-b border-border-100/5">
+        <h3 className="text-sm font-medium text-text-100">Context</h3>
       </div>
       <div className="p-4 space-y-3">
         {cwd && (
           <div className="flex items-start gap-3">
-            <Folder className="w-4 h-4 text-muted mt-0.5" />
+            <Folder className="w-4 h-4 text-text-400 mt-0.5" />
             <div className="flex-1 min-w-0">
-              <div className="text-xs text-muted">Working Directory</div>
+              <div className="text-xs text-text-400">Working Directory</div>
               <div
-                className="text-sm text-ink-600 font-mono truncate"
+                className="text-sm text-text-200 font-mono truncate"
                 title={cwd}
               >
                 {getShortPath(cwd)}
@@ -50,10 +50,10 @@ export function ContextCard({ cwd, createdAt, worktreeId }: ContextCardProps) {
 
         {createdAt && (
           <div className="flex items-start gap-3">
-            <Clock className="w-4 h-4 text-muted mt-0.5" />
+            <Clock className="w-4 h-4 text-text-400 mt-0.5" />
             <div className="flex-1">
-              <div className="text-xs text-muted">Started</div>
-              <div className="text-sm text-ink-600">
+              <div className="text-xs text-text-400">Started</div>
+              <div className="text-sm text-text-200">
                 {formatDuration(createdAt)}
               </div>
             </div>
@@ -62,10 +62,10 @@ export function ContextCard({ cwd, createdAt, worktreeId }: ContextCardProps) {
 
         {worktreeId && (
           <div className="flex items-start gap-3">
-            <GitBranch className="w-4 h-4 text-muted mt-0.5" />
+            <GitBranch className="w-4 h-4 text-text-400 mt-0.5" />
             <div className="flex-1">
-              <div className="text-xs text-muted">Worktree</div>
-              <div className="text-sm text-ink-600 font-mono truncate">
+              <div className="text-xs text-text-400">Worktree</div>
+              <div className="text-sm text-text-200 font-mono truncate">
                 {worktreeId.slice(0, 8)}
               </div>
             </div>
@@ -73,7 +73,7 @@ export function ContextCard({ cwd, createdAt, worktreeId }: ContextCardProps) {
         )}
 
         {!cwd && !createdAt && !worktreeId && (
-          <p className="text-sm text-muted text-center py-2">
+          <p className="text-sm text-text-400 text-center py-2">
             No context available
           </p>
         )}

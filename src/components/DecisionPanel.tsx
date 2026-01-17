@@ -92,9 +92,9 @@ export function DecisionPanel({
 
         {questions.map((q, qIndex) => (
           <div key={qIndex} className="mt-4">
-            <p className="text-sm text-ink-700">{q.question}</p>
+            <p className="text-sm text-text-200">{q.question}</p>
             {q.header && (
-              <span className="mt-2 inline-flex items-center rounded-full bg-surface px-2 py-0.5 text-xs text-muted">
+              <span className="mt-2 inline-flex items-center rounded-full bg-bg-200 px-2 py-0.5 text-xs text-text-400">
                 {q.header}
               </span>
             )}
@@ -106,10 +106,10 @@ export function DecisionPanel({
                 return (
                   <button
                     key={optIndex}
-                    className={`rounded-xl border px-4 py-3 text-left text-sm text-ink-700 transition-colors ${
+                    className={`rounded-xl border px-4 py-3 text-left text-sm text-text-200 transition-colors ${
                       (selectedOptions[qIndex] ?? []).includes(option.label)
                         ? "border-info/50 bg-info/5"
-                        : "border-ink-900/10 bg-surface hover:border-info/40 hover:bg-surface-tertiary"
+                        : "border-border-100/10 bg-bg-200 hover:border-info/40 hover:bg-bg-200-tertiary"
                     }`}
                     onClick={() => {
                       if (shouldAutoSubmit) {
@@ -127,7 +127,7 @@ export function DecisionPanel({
                   >
                     <div className="font-medium">{option.label}</div>
                     {option.description && (
-                      <div className="mt-1 text-xs text-muted">
+                      <div className="mt-1 text-xs text-text-400">
                         {option.description}
                       </div>
                     )}
@@ -137,12 +137,12 @@ export function DecisionPanel({
             </div>
 
             <div className="mt-3">
-              <label className="block text-xs font-medium text-muted">
+              <label className="block text-xs font-medium text-text-400">
                 Other
               </label>
               <input
                 type="text"
-                className="mt-1 w-full rounded-xl border border-ink-900/10 bg-surface px-3 py-2 text-sm text-ink-700 focus:border-info/50 focus:outline-none"
+                className="mt-1 w-full rounded-xl border border-border-100/10 bg-bg-200 px-3 py-2 text-sm text-text-200 focus:border-info/50 focus:outline-none"
                 placeholder="Type your answer..."
                 value={otherInputs[qIndex] ?? ""}
                 onChange={(event) => {
@@ -152,7 +152,7 @@ export function DecisionPanel({
               />
             </div>
             {q.multiSelect && (
-              <div className="mt-2 text-xs text-muted">
+              <div className="mt-2 text-xs text-text-400">
                 Multiple selections allowed.
               </div>
             )}
@@ -164,7 +164,7 @@ export function DecisionPanel({
             className={`rounded-full px-5 py-2 text-sm font-medium text-white shadow-soft transition-colors ${
               canSubmit
                 ? "bg-accent hover:bg-accent-hover"
-                : "bg-ink-400/40 cursor-not-allowed"
+                : "bg-text-400/40 cursor-not-allowed"
             }`}
             onClick={() => {
               if (!canSubmit) return;
@@ -182,7 +182,7 @@ export function DecisionPanel({
             Submit answers
           </button>
           <button
-            className="rounded-full border border-ink-900/10 bg-surface px-5 py-2 text-sm font-medium text-ink-700 hover:bg-surface-tertiary transition-colors"
+            className="rounded-full border border-border-100/10 bg-bg-200 px-5 py-2 text-sm font-medium text-text-200 hover:bg-bg-200-tertiary transition-colors"
             onClick={() =>
               onSubmit({
                 behavior: "deny",
@@ -203,13 +203,13 @@ export function DecisionPanel({
       <div className="text-xs font-semibold text-accent">
         Permission Request
       </div>
-      <p className="mt-2 text-sm text-ink-700">
+      <p className="mt-2 text-sm text-text-200">
         Claude wants to use:{" "}
         <span className="font-medium">{request.toolName}</span>
       </p>
 
-      <div className="mt-3 rounded-xl bg-surface-tertiary p-3">
-        <pre className="text-xs text-ink-600 font-mono whitespace-pre-wrap break-words max-h-40 overflow-auto">
+      <div className="mt-3 rounded-xl bg-bg-200-tertiary p-3">
+        <pre className="text-xs text-text-300 font-mono whitespace-pre-wrap break-words max-h-40 overflow-auto">
           {JSON.stringify(request.input, null, 2)}
         </pre>
       </div>
@@ -227,7 +227,7 @@ export function DecisionPanel({
           Allow
         </button>
         <button
-          className="rounded-full border border-ink-900/10 bg-surface px-5 py-2 text-sm font-medium text-ink-700 hover:bg-surface-tertiary transition-colors"
+          className="rounded-full border border-border-100/10 bg-bg-200 px-5 py-2 text-sm font-medium text-text-200 hover:bg-bg-200-tertiary transition-colors"
           onClick={() =>
             onSubmit({ behavior: "deny", message: "User denied the request" })
           }

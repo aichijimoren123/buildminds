@@ -29,7 +29,7 @@ export function SystemInfoCard({
         />
         System Init
       </div>
-      <div className="flex flex-col bg-bg-200 border-border-100/10 rounded-xl px-4 py-2 border border-[0.5px] [&_label]:hidden bg-bg-100 space-y-1 dark:bg-bg-300">
+      <div className="flex flex-col bg-bg-200 border-border-100/10 rounded-xl px-4 py-2 border border-[0.5px] [&_label]:hidden space-y-1 dark:bg-bg-200">
         <InfoItem name="Session ID" value={message.session_id} />
         <InfoItem name="Model Name" value={message.model} />
         <InfoItem name="Permission Mode" value={message.permissionMode} />

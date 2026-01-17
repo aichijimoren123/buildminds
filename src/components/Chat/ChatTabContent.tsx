@@ -154,7 +154,7 @@ export function ChatTabContent({
     const fileChanges = activeSessionMeta?.fileChanges ?? [];
     return (
       <div className="flex-1 overflow-y-auto">
-        <div className="px-6 py-8 bg-surface-cream min-h-full">
+        <div className="px-6 py-8 bg-bg-100 min-h-full">
           <section className="mx-auto w-full max-w-3xl">
             {fileChanges.length > 0 ? (
               <FileChangesSummary
@@ -163,7 +163,7 @@ export function ChatTabContent({
                 onFileClick={handleFileClick}
               />
             ) : (
-              <div className="rounded-xl border border-ink-900/10 bg-white px-6 py-8 text-center text-sm text-muted shadow-soft">
+              <div className="rounded-xl border border-border-100/10 bg-bg-000 px-6 py-8 text-center text-sm text-text-400 shadow-soft">
                 No file changes in this session yet.
               </div>
             )}
@@ -176,12 +176,12 @@ export function ChatTabContent({
   // No session selected
   if (!sessionId) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-surface-cream px-6 py-12">
+      <div className="flex-1 flex items-center justify-center bg-bg-100 px-6 py-12">
         <div className="text-center">
-          <h2 className="text-2xl font-semibold text-ink-800 mb-4">
+          <h2 className="text-2xl font-semibold text-text-100 mb-4">
             Start a New Conversation
           </h2>
-          <p className="text-muted">
+          <p className="text-text-400">
             Enter a prompt below to begin working with Claude.
           </p>
         </div>
@@ -191,7 +191,7 @@ export function ChatTabContent({
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="flex flex-col gap-6 px-6 py-4 bg-surface-cream min-h-full">
+      <div className="flex flex-col gap-6 px-6 py-4 bg-bg-100 min-h-full">
         {globalError && (
           <div className="rounded-xl border border-error/20 bg-error-light p-4 text-sm text-error">
             {globalError}
@@ -211,7 +211,7 @@ export function ChatTabContent({
         )}
 
         <section className="mx-auto flex w-full max-w-2xl flex-1 flex-col">
-          <div className="text-xs font-medium text-muted mb-4">Stream</div>
+          <div className="text-xs font-medium text-text-400 mb-4">Stream</div>
           <div className="flex flex-col gap-4">
             {messages.length ? (
               messages.map((message, index) => {
@@ -230,7 +230,7 @@ export function ChatTabContent({
                 );
               })
             ) : (
-              <div className="rounded-xl border border-ink-900/10 bg-white px-6 py-8 text-center text-sm text-muted shadow-soft">
+              <div className="rounded-xl border border-border-100/10 bg-bg-000 px-6 py-8 text-center text-sm text-text-400 shadow-soft">
                 No stream output yet. Start by sending a prompt.
               </div>
             )}
@@ -239,20 +239,20 @@ export function ChatTabContent({
               <MDContent text={particalMessage} />
               {showParticalMessage && (
                 <div className="mt-3 flex flex-col gap-2 px-1">
-                  <div className="relative h-3 w-2/12 overflow-hidden rounded-full bg-ink-900/10">
-                    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
+                  <div className="relative h-3 w-2/12 overflow-hidden rounded-full bg-border-100/10">
+                    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-border-100/30 to-transparent animate-shimmer" />
                   </div>
-                  <div className="relative h-3 w-12/12 overflow-hidden rounded-full bg-ink-900/10">
-                    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
+                  <div className="relative h-3 w-12/12 overflow-hidden rounded-full bg-border-100/10">
+                    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-border-100/30 to-transparent animate-shimmer" />
                   </div>
-                  <div className="relative h-3 w-12/12 overflow-hidden rounded-full bg-ink-900/10">
-                    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
+                  <div className="relative h-3 w-12/12 overflow-hidden rounded-full bg-border-100/10">
+                    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-border-100/30 to-transparent animate-shimmer" />
                   </div>
-                  <div className="relative h-3 w-12/12 overflow-hidden rounded-full bg-ink-900/10">
-                    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
+                  <div className="relative h-3 w-12/12 overflow-hidden rounded-full bg-border-100/10">
+                    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-border-100/30 to-transparent animate-shimmer" />
                   </div>
-                  <div className="relative h-3 w-4/12 overflow-hidden rounded-full bg-ink-900/10">
-                    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
+                  <div className="relative h-3 w-4/12 overflow-hidden rounded-full bg-border-100/10">
+                    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-border-100/30 to-transparent animate-shimmer" />
                   </div>
                 </div>
               )}

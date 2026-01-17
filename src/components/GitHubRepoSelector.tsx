@@ -88,13 +88,13 @@ export function GitHubRepoSelector({
   };
 
   if (loading) {
-    return <div className="text-sm text-muted">Loading repositories...</div>;
+    return <div className="text-sm text-text-400">Loading repositories...</div>;
   }
 
   if (repos.length === 0 && !showBrowse) {
     return (
       <div className="text-center py-8">
-        <p className="text-sm text-muted mb-4">
+        <p className="text-sm text-text-400 mb-4">
           No GitHub repositories added yet
         </p>
         <button
@@ -114,19 +114,19 @@ export function GitHubRepoSelector({
     return (
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-ink-800">
+          <h3 className="text-sm font-medium text-text-100">
             Browse GitHub Repositories
           </h3>
           <button
             onClick={() => setShowBrowse(false)}
-            className="text-sm text-muted hover:text-ink-700"
+            className="text-sm text-text-400 hover:text-text-200"
           >
             Back
           </button>
         </div>
 
         {loadingAvailable ? (
-          <div className="text-sm text-muted">Loading...</div>
+          <div className="text-sm text-text-400">Loading...</div>
         ) : (
           <div className="max-h-80 overflow-y-auto space-y-2">
             {availableRepos.map((repo) => {
@@ -138,12 +138,12 @@ export function GitHubRepoSelector({
               return (
                 <div
                   key={repo.fullName}
-                  className="p-3 border border-ink-900/10 rounded-lg hover:bg-surface-secondary transition-colors"
+                  className="p-3 border border-border-100/10 rounded-lg hover:bg-bg-200 transition-colors"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-ink-800 truncate">
+                        <span className="text-sm font-medium text-text-100 truncate">
                           {repo.fullName}
                         </span>
                         {repo.isPrivate && (
@@ -153,12 +153,12 @@ export function GitHubRepoSelector({
                         )}
                       </div>
                       {repo.description && (
-                        <p className="text-xs text-muted mt-1 line-clamp-2">
+                        <p className="text-xs text-text-400 mt-1 line-clamp-2">
                           {repo.description}
                         </p>
                       )}
                       {repo.language && (
-                        <span className="text-xs text-muted mt-1 inline-block">
+                        <span className="text-xs text-text-400 mt-1 inline-block">
                           {repo.language}
                         </span>
                       )}
@@ -183,7 +183,7 @@ export function GitHubRepoSelector({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-ink-800">Your Repositories</h3>
+        <h3 className="text-sm font-medium text-text-100">Your Repositories</h3>
         <button
           onClick={() => {
             setShowBrowse(true);
@@ -203,11 +203,11 @@ export function GitHubRepoSelector({
             className={`w-full text-left p-3 border rounded-lg transition-colors ${
               selectedRepoId === repo.id
                 ? "border-accent bg-accent/5"
-                : "border-ink-900/10 hover:bg-surface-secondary"
+                : "border-border-100/10 hover:bg-bg-200"
             }`}
           >
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-ink-800 truncate">
+              <span className="text-sm font-medium text-text-100 truncate">
                 {repo.repoFullName}
               </span>
               {repo.isPrivate && (
@@ -216,7 +216,7 @@ export function GitHubRepoSelector({
                 </span>
               )}
             </div>
-            <div className="text-xs text-muted mt-1 truncate">
+            <div className="text-xs text-text-400 mt-1 truncate">
               {repo.localPath}
             </div>
           </button>

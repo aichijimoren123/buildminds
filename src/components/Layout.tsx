@@ -97,7 +97,7 @@ export function Layout() {
   };
 
   return (
-    <div className="h-full bg-surface">
+    <div className="h-full bg-bg-100">
       <div className="relative flex h-full flex-col lg:block">
         {/* 移动端：设置页面和聊天页面不显示侧边栏 */}
         {!isSettingsPage && !isChatPage && (
@@ -130,7 +130,7 @@ export function Layout() {
           {/* 移动端：设置页面和聊天页面不显示汉堡菜单按钮 */}
           {!isSettingsPage && !isChatPage && (
             <button
-              className="fixed left-4 top-4 z-20 rounded-lg p-2 text-ink-700 hover:bg-surface-tertiary lg:hidden"
+              className="fixed left-4 top-4 z-20 rounded-lg p-2 text-text-100 hover:bg-bg-200 lg:hidden"
               onClick={() => setIsSidebarOpen(true)}
               aria-label="Open sessions menu"
             >

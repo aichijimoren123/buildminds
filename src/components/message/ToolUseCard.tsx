@@ -102,7 +102,7 @@ export function ToolUseCard({
           <span className="text-sm font-medium text-accent">
             {messageContent.name}
           </span>
-          <span className="text-sm text-muted truncate">
+          <span className="text-sm text-text-400 truncate">
             {codeContent.filePath.split("/").pop()}
           </span>
         </div>
@@ -128,7 +128,7 @@ export function ToolUseCard({
           <span className="inline-flex items-center rounded-md text-accent py-0.5 text-sm font-medium shrink-0">
             {messageContent.name}
           </span>
-          <span className="text-sm text-muted truncate">{getToolInfo()}</span>
+          <span className="text-sm text-text-400 truncate">{getToolInfo()}</span>
         </div>
       </div>
     </div>

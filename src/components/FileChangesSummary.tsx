@@ -34,7 +34,7 @@ function FileIcon({ status }: { status: FileChange["status"] }) {
     case "modified":
       return <FileEdit className="w-4 h-4 text-warning" />;
     default:
-      return <FileCode className="w-4 h-4 text-muted" />;
+      return <FileCode className="w-4 h-4 text-text-400" />;
   }
 }
 
@@ -58,15 +58,15 @@ export function FileChangesSummary({
   );
 
   return (
-    <div className="rounded-xl border border-ink-900/10 bg-white overflow-hidden">
+    <div className="rounded-xl border border-border-100/10 bg-bg-000 overflow-hidden">
       {/* Header */}
-      <div className="px-4 py-3 bg-bg-200 border-b border-ink-900/10">
+      <div className="px-4 py-3 bg-bg-200 border-b border-border-100/10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             {/* File count badge */}
             <div className="flex items-center gap-2">
               <FileCode className="w-4 h-4 text-accent" />
-              <span className="text-sm font-medium text-ink-700">
+              <span className="text-sm font-medium text-text-200">
                 {changes.length} {changes.length === 1 ? "file" : "files"}{" "}
                 changed
               </span>
@@ -95,7 +95,7 @@ export function FileChangesSummary({
       </div>
 
       {/* File list */}
-      <ul className="divide-y divide-ink-900/5 max-h-64 overflow-y-auto">
+      <ul className="divide-y divide-border-100/5 max-h-64 overflow-y-auto">
         {changes.map((change, index) => (
           <li
             key={`${change.path}-${index}`}
@@ -106,7 +106,7 @@ export function FileChangesSummary({
           >
             <div className="flex items-center gap-3">
               <FileIcon status={change.status} />
-              <span className="flex-1 text-sm font-mono text-ink-600 truncate">
+              <span className="flex-1 text-sm font-mono text-text-300 truncate">
                 {getRelativePath(change.path, cwd)}
               </span>
               <div className="flex items-center gap-2 text-xs">

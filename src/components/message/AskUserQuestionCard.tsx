@@ -98,14 +98,14 @@ export function AskUserQuestionCard({
       </div>
 
       {questions.length === 0 && (
-        <div className="mt-3 text-sm text-ink-700">User input requested.</div>
+        <div className="mt-3 text-sm text-text-200">User input requested.</div>
       )}
 
       {questions.map((q, qIndex) => (
         <div key={qIndex} className="mt-4">
-          <p className="text-sm text-ink-700">{q.question}</p>
+          <p className="text-sm text-text-200">{q.question}</p>
           {q.header && (
-            <span className="mt-2 inline-flex items-center rounded-full bg-surface px-2 py-0.5 text-xs text-muted">
+            <span className="mt-2 inline-flex items-center rounded-full bg-bg-200 px-2 py-0.5 text-xs text-text-400">
               {q.header}
             </span>
           )}
@@ -113,11 +113,11 @@ export function AskUserQuestionCard({
             {(q.options ?? []).map((option, optIndex) => (
               <div
                 key={optIndex}
-                className="rounded-xl border border-ink-900/10 bg-surface px-4 py-3 text-left text-sm text-ink-700"
+                className="rounded-xl border border-border-100/10 bg-bg-200 px-4 py-3 text-left text-sm text-text-200"
               >
                 <div className="font-medium">{option.label}</div>
                 {option.description && (
-                  <div className="mt-1 text-xs text-muted">
+                  <div className="mt-1 text-xs text-text-400">
                     {option.description}
                   </div>
                 )}
@@ -125,7 +125,7 @@ export function AskUserQuestionCard({
             ))}
           </div>
           {q.multiSelect && (
-            <div className="mt-2 text-xs text-muted">
+            <div className="mt-2 text-xs text-text-400">
               Multiple selections allowed.
             </div>
           )}

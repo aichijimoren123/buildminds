@@ -112,19 +112,19 @@ export function Sidebar({
     <>
       {isMobileOpen && (
         <div
-          className="fixed inset-0 z-30 bg-ink-900/40 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-30 bg-bg-400/40 backdrop-blur-sm lg:hidden"
           onClick={onMobileClose}
           aria-hidden="true"
         />
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex h-full w-[80vw] max-w-[320px] flex-col border-r border-ink-900/5 bg-[#FAF9F6] p-4 shadow-xl transition-transform duration-300 ease-out lg:fixed lg:inset-y-0 lg:left-0 lg:z-auto lg:w-[280px] lg:translate-x-0 lg:shadow-none ${
+        className={`fixed inset-y-0 left-0 z-40 flex h-full w-[80vw] max-w-[320px] flex-col border-r border-border-100/10 bg-bg-100 p-4 shadow-xl transition-transform duration-300 ease-out lg:fixed lg:inset-y-0 lg:left-0 lg:z-auto lg:w-[280px] lg:translate-x-0 lg:shadow-none ${
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* Header with connection status */}
         <div className="flex items-center justify-between gap-3 mb-4">
-          <div className="text-sm font-semibold text-ink-800">Sessions</div>
+          <div className="text-sm font-semibold text-text-100">Sessions</div>
           <div className="flex items-center gap-2">
             <span
               className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -137,7 +137,7 @@ export function Sidebar({
             </span>
             {isMobileOpen && (
               <button
-                className="rounded-full p-1 text-ink-500 hover:bg-ink-900/10 lg:hidden"
+                className="rounded-full p-1 text-text-400 hover:bg-bg-200 lg:hidden"
                 onClick={onMobileClose}
                 aria-label="Close sessions"
               >
@@ -160,7 +160,7 @@ export function Sidebar({
 
         {/* New Session Button */}
         <button
-          className="w-full rounded-xl border border-ink-900/10 bg-surface px-4 py-2.5 text-sm font-medium text-ink-700 hover:bg-surface-tertiary hover:border-ink-900/20 transition-colors mb-4"
+          className="w-full rounded-xl border border-border-100/10 bg-bg-000 px-4 py-2.5 text-sm font-medium text-text-200 hover:bg-bg-200 hover:border-border-100/20 transition-colors mb-4"
           onClick={handleNewSession}
         >
           + New Session
@@ -169,7 +169,7 @@ export function Sidebar({
         {/* Session List */}
         <div className="flex flex-1 flex-col gap-2 overflow-y-auto min-h-0">
           {sessionList.length === 0 && (
-            <div className="rounded-xl border border-ink-900/5 bg-surface px-4 py-5 text-center text-xs text-muted">
+            <div className="rounded-xl border border-border-100/10 bg-bg-000 px-4 py-5 text-center text-xs text-text-400">
               No sessions yet. Start by sending a prompt.
             </div>
           )}
@@ -181,7 +181,7 @@ export function Sidebar({
                 className={`cursor-pointer rounded-xl border px-3 py-3 text-left transition ${
                   isSessionActive(session.id)
                     ? "border-accent/30 bg-accent-subtle"
-                    : "border-ink-900/5 bg-surface hover:bg-surface-tertiary"
+                    : "border-border-100/10 bg-bg-000 hover:bg-bg-200"
                 }`}
                 onClick={() => handleSelectSession(session.id)}
                 onKeyDown={(event) => {
@@ -204,14 +204,14 @@ export function Sidebar({
                             ? "text-success"
                             : session.status === "error"
                               ? "text-error"
-                              : "text-ink-800"
+                              : "text-text-100"
                       }`}
                     >
                       {session.title || "Untitled Session"}
                     </div>
 
                     {/* Working directory */}
-                    <div className="text-xs text-muted mt-0.5 truncate">
+                    <div className="text-xs text-text-400 mt-0.5 truncate">
                       {formatCwd(session.cwd)}
                     </div>
 
@@ -229,7 +229,7 @@ export function Sidebar({
                   {/* Session menu */}
                   <Menu.Root>
                     <Menu.Trigger
-                      className="flex-shrink-0 rounded-full p-1.5 text-ink-500 hover:bg-ink-900/10"
+                      className="flex-shrink-0 rounded-full p-1.5 text-text-400 hover:bg-bg-200"
                       aria-label="Open session menu"
                       onClick={(event) => event.stopPropagation()}
                       onPointerDown={(event) => event.stopPropagation()}
@@ -238,19 +238,19 @@ export function Sidebar({
                     </Menu.Trigger>
                     <Menu.Portal>
                       <Menu.Positioner className="z-50">
-                        <Menu.Popup className="min-w-[200px] rounded-xl border border-ink-900/10 bg-white p-1 shadow-lg">
+                        <Menu.Popup className="min-w-[200px] rounded-xl border border-border-100/10 bg-bg-000 p-1 shadow-lg">
                           <Menu.Item
-                            className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-700 outline-none hover:bg-ink-900/5"
+                            className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-text-200 outline-none hover:bg-bg-100"
                             onClick={(e) => {
                               e.preventDefault();
                               setResumeSessionId(session.id);
                             }}
                           >
-                            <Terminal className="w-4 h-4 text-ink-500" />
+                            <Terminal className="w-4 h-4 text-text-400" />
                             Resume in Claude Code
                           </Menu.Item>
                           <Menu.Item
-                            className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-error/80 outline-none hover:bg-ink-900/5"
+                            className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-error/80 outline-none hover:bg-bg-100"
                             onClick={(e) => {
                               e.preventDefault();
                               onDeleteSession(session.id);
@@ -270,9 +270,9 @@ export function Sidebar({
         </div>
 
         {/* Settings button */}
-        <div className="border-t border-ink-900/5 pt-3 mt-3">
+        <div className="border-t border-border-100/10 pt-3 mt-3">
           <button
-            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-ink-700 hover:bg-surface-tertiary transition-colors"
+            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-text-200 hover:bg-bg-200 transition-colors"
             onClick={onOpenSettings}
           >
             <Settings className="w-4 h-4" />
@@ -286,13 +286,13 @@ export function Sidebar({
           onOpenChange={(open) => !open && setResumeSessionId(null)}
         >
           <Dialog.Portal>
-            <Dialog.Backdrop className="fixed inset-0 bg-ink-900/40 backdrop-blur-sm" />
-            <Dialog.Popup className="fixed left-1/2 top-1/2 w-[92vw] max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl">
+            <Dialog.Backdrop className="fixed inset-0 bg-bg-400/40 backdrop-blur-sm" />
+            <Dialog.Popup className="fixed left-1/2 top-1/2 w-[92vw] max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-bg-000 p-6 shadow-xl">
               <div className="flex items-start justify-between gap-4">
-                <Dialog.Title className="text-lg font-semibold text-ink-800">
+                <Dialog.Title className="text-lg font-semibold text-text-100">
                   Resume in Terminal
                 </Dialog.Title>
-                <Dialog.Close className="rounded-full p-1 text-ink-500 hover:bg-ink-900/10">
+                <Dialog.Close className="rounded-full p-1 text-text-400 hover:bg-bg-200">
                   <svg
                     viewBox="0 0 24 24"
                     className="h-4 w-4"
@@ -304,15 +304,15 @@ export function Sidebar({
                   </svg>
                 </Dialog.Close>
               </div>
-              <p className="mt-2 text-sm text-muted">
+              <p className="mt-2 text-sm text-text-400">
                 Run this command in your terminal to resume the session:
               </p>
-              <div className="mt-4 flex items-center gap-2 rounded-xl border border-ink-900/10 bg-surface px-3 py-2 font-mono text-xs text-ink-700">
+              <div className="mt-4 flex items-center gap-2 rounded-xl border border-border-100/10 bg-bg-000 px-3 py-2 font-mono text-xs text-text-200">
                 <span className="flex-1 break-all">
                   {resumeSessionId ? `claude --resume ${resumeSessionId}` : ""}
                 </span>
                 <button
-                  className="rounded-lg p-1.5 text-ink-600 hover:bg-ink-900/10"
+                  className="rounded-lg p-1.5 text-text-300 hover:bg-bg-200"
                   onClick={handleCopyCommand}
                   aria-label="Copy resume command"
                 >

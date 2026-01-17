@@ -32,11 +32,11 @@ export function SessionResult({ message }: SessionResultProps) {
       <div className="flex flex-col bg-bg-200 border-border-100/10 rounded-xl px-4 py-3 border border-[0.5px] bg-bg-100 space-y-2 dark:bg-bg-300">
         <div className="flex flex-wrap items-center gap-2 text-[14px]">
           <span className="font-normal">Duration</span>
-          <span className="inline-flex items-center rounded-full bg-bg-300 px-2.5 py-0.5 text-ink-700 text-[13px]">
+          <span className="inline-flex items-center rounded-full bg-bg-300 px-2.5 py-0.5 text-text-200 text-[13px]">
             {formatMinutes(message.duration_ms)}
           </span>
           <span className="font-normal">API</span>
-          <span className="inline-flex items-center rounded-full bg-bg-300 px-2.5 py-0.5 text-ink-700 text-[13px]">
+          <span className="inline-flex items-center rounded-full bg-bg-300 px-2.5 py-0.5 text-text-200 text-[13px]">
             {formatMinutes(message.duration_api_ms)}
           </span>
         </div>
@@ -45,10 +45,10 @@ export function SessionResult({ message }: SessionResultProps) {
           <span className="inline-flex items-center rounded-full bg-accent/10 px-2.5 py-0.5 text-accent text-[13px]">
             Cost ${formatUsd(message.total_cost_usd)}
           </span>
-          <span className="inline-flex items-center rounded-full bg-bg-300 px-2.5 py-0.5 text-ink-700 text-[13px]">
+          <span className="inline-flex items-center rounded-full bg-bg-300 px-2.5 py-0.5 text-text-200 text-[13px]">
             Input {formatMillions(message.usage?.input_tokens)}
           </span>
-          <span className="inline-flex items-center rounded-full bg-bg-300 px-2.5 py-0.5 text-ink-700 text-[13px]">
+          <span className="inline-flex items-center rounded-full bg-bg-300 px-2.5 py-0.5 text-text-200 text-[13px]">
             Output {formatMillions(message.usage?.output_tokens)}
           </span>
         </div>

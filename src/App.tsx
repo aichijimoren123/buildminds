@@ -10,11 +10,13 @@ import { useAppStore } from "./store/useAppStore";
 
 export default function App() {
   const loadServerSettings = useAppStore((state) => state.loadServerSettings);
+  const initializeTheme = useAppStore((state) => state.initializeTheme);
 
-  // Load server settings on app startup
+  // Load server settings and initialize theme on app startup
   useEffect(() => {
     loadServerSettings();
-  }, [loadServerSettings]);
+    initializeTheme();
+  }, [loadServerSettings, initializeTheme]);
 
   return (
     <BrowserRouter>

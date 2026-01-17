@@ -63,18 +63,18 @@ export function CreatePRDialog({
     <Dialog.Root open={open} onOpenChange={(o) => !o && handleClose()}>
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" />
-        <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 w-[90vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white p-6 shadow-xl focus:outline-none">
+        <Dialog.Popup className="fixed left-1/2 top-1/2 z-50 w-[90vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl bg-bg-000 p-6 shadow-xl focus:outline-none">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <GitPullRequest className="h-5 w-5 text-accent" />
-              <Dialog.Title className="text-lg font-semibold text-ink-900">
+              <Dialog.Title className="text-lg font-semibold text-text-100">
                 Create Pull Request
               </Dialog.Title>
             </div>
             <button
               onClick={handleClose}
-              className="rounded-full p-1.5 text-ink-400 hover:bg-ink-100 transition-colors"
+              className="rounded-full p-1.5 text-text-400 hover:bg-bg-200 transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
@@ -99,7 +99,7 @@ export function CreatePRDialog({
               </div>
               <button
                 onClick={handleClose}
-                className="w-full rounded-lg bg-ink-100 px-4 py-2.5 text-sm font-medium text-ink-700 hover:bg-ink-200 transition-colors"
+                className="w-full rounded-lg bg-bg-200 px-4 py-2.5 text-sm font-medium text-text-200 hover:bg-bg-300 transition-colors"
               >
                 Close
               </button>
@@ -110,7 +110,7 @@ export function CreatePRDialog({
               <div>
                 <label
                   htmlFor="pr-title"
-                  className="block text-sm font-medium text-ink-700 mb-1.5"
+                  className="block text-sm font-medium text-text-200 mb-1.5"
                 >
                   Title
                 </label>
@@ -120,7 +120,7 @@ export function CreatePRDialog({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Enter PR title..."
-                  className="w-full rounded-lg border border-ink-200 px-3 py-2 text-sm text-ink-900 placeholder:text-ink-400 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                  className="w-full rounded-lg border border-border-100/20 px-3 py-2 text-sm text-text-100 placeholder:text-text-400 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                   disabled={isLoading}
                   autoFocus
                 />
@@ -129,7 +129,7 @@ export function CreatePRDialog({
               <div>
                 <label
                   htmlFor="pr-body"
-                  className="block text-sm font-medium text-ink-700 mb-1.5"
+                  className="block text-sm font-medium text-text-200 mb-1.5"
                 >
                   Description (optional)
                 </label>
@@ -139,7 +139,7 @@ export function CreatePRDialog({
                   onChange={(e) => setBody(e.target.value)}
                   placeholder="Describe your changes..."
                   rows={4}
-                  className="w-full rounded-lg border border-ink-200 px-3 py-2 text-sm text-ink-900 placeholder:text-ink-400 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent resize-none"
+                  className="w-full rounded-lg border border-border-100/20 px-3 py-2 text-sm text-text-100 placeholder:text-text-400 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent resize-none"
                   disabled={isLoading}
                 />
               </div>
@@ -154,7 +154,7 @@ export function CreatePRDialog({
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="flex-1 rounded-lg bg-ink-100 px-4 py-2.5 text-sm font-medium text-ink-700 hover:bg-ink-200 transition-colors"
+                  className="flex-1 rounded-lg bg-bg-200 px-4 py-2.5 text-sm font-medium text-text-200 hover:bg-bg-300 transition-colors"
                   disabled={isLoading}
                 >
                   Cancel

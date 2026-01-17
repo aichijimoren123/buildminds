@@ -87,7 +87,7 @@ export function Home() {
   }, [activeSessionId, sessions, navigate, pendingStart]);
 
   return (
-    <div className="flex flex-col min-h-full items-center justify-center bg-surface-cream px-6 py-12">
+    <div className="flex flex-col min-h-full items-center justify-center bg-bg-100 px-6 py-12">
       <div className="w-full max-w-3xl">
         {globalError && (
           <div className="mb-6 rounded-xl border border-error/20 bg-error-light p-4 text-sm text-error">
@@ -98,18 +98,18 @@ export function Home() {
         <div className="text-center">
           {/* Advanced Options Panel */}
           {showAdvanced && (
-            <div className="mb-4 rounded-xl border border-ink-900/10 bg-white p-4 shadow-card text-left">
+            <div className="mb-4 rounded-xl border border-border-100/10 bg-bg-000 p-4 shadow-card text-left">
               <div className="space-y-3">
                 <div>
-                  <label className="block text-sm font-medium text-muted mb-2">
+                  <label className="block text-sm font-medium text-text-400 mb-2">
                     Working Directory{" "}
-                    <span className="text-muted-light font-normal">
+                    <span className="text-text-400-light font-normal">
                       (optional)
                     </span>
                   </label>
                   <div className="relative">
                     <input
-                      className="w-full rounded-lg border border-ink-900/10 bg-surface-secondary px-3 py-2 text-sm text-ink-800 placeholder:text-muted-light focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors pr-24"
+                      className="w-full rounded-lg border border-border-100/10 bg-bg-200 px-3 py-2 text-sm text-text-100 placeholder:text-text-400-light focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors pr-24"
                       placeholder="Uses current directory if empty"
                       value={cwd}
                       onChange={(e) => {
@@ -136,7 +136,7 @@ export function Home() {
                 </div>
                 {recentCwds.length > 0 && (
                   <div>
-                    <div className="text-xs font-medium text-muted-light mb-2">
+                    <div className="text-xs font-medium text-text-400-light mb-2">
                       Recent directories
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -148,8 +148,8 @@ export function Home() {
                             type="button"
                             className={`max-w-full truncate rounded-lg border px-2 py-1 text-xs transition-colors ${
                               isActive
-                                ? "border-accent/60 bg-accent/10 text-ink-800"
-                                : "border-ink-900/10 bg-white text-muted hover:border-ink-900/20 hover:text-ink-700"
+                                ? "border-accent/60 bg-accent/10 text-text-100"
+                                : "border-border-100/10 bg-bg-000 text-text-400 hover:border-border-100/20 hover:text-text-200"
                             }`}
                             onClick={() => setCwd(path)}
                             title={path}

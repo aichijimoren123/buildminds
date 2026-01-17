@@ -213,7 +213,7 @@ export function CodeViewer({
 
     if (loading || !poolOptions || !highlighterOptionsWithLangs) {
       return (
-        <div className="p-4 text-sm text-muted flex items-center gap-2">
+        <div className="p-4 text-sm text-text-400 flex items-center gap-2">
           <div className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
           Loading...
         </div>
@@ -235,13 +235,13 @@ export function CodeViewer({
   };
 
   return (
-    <div className="rounded-xl border border-ink-900/10 bg-white overflow-hidden">
+    <div className="rounded-xl border border-border-100/10 bg-bg-000 overflow-hidden">
       {/* Header */}
       <div
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center gap-2 px-3 py-2 bg-bg-200 hover:bg-bg-300 transition-colors"
       >
-        <span className="flex-1 text-left text-sm font-light text-ink-700 truncate">
+        <span className="flex-1 text-left text-sm font-light text-text-200 truncate">
           {fileName}
         </span>
 
@@ -254,7 +254,7 @@ export function CodeViewer({
           {copied ? (
             <Check className="w-3.5 h-3.5 text-success" />
           ) : (
-            <Copy className="w-3.5 h-3.5 text-ink-500" />
+            <Copy className="w-3.5 h-3.5 text-text-400" />
           )}
         </button>
 
@@ -267,11 +267,11 @@ export function CodeViewer({
           )}
         </div>
 
-        <span className="text-xs text-muted hidden sm:inline">
+        <span className="text-xs text-text-400 hidden sm:inline">
           {stats.totalLines} lines
         </span>
 
-        <span className="text-xs text-ink-400">{isExpanded ? "▲" : "▼"}</span>
+        <span className="text-xs text-text-400">{isExpanded ? "▲" : "▼"}</span>
       </div>
 
       {/* Code content */}

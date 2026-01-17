@@ -33,7 +33,7 @@ function FileIcon({ status }: { status: FileChange["status"] }) {
     case "modified":
       return <FileEdit className="w-4 h-4 text-warning" />;
     default:
-      return <FileCode className="w-4 h-4 text-muted" />;
+      return <FileCode className="w-4 h-4 text-text-400" />;
   }
 }
 
@@ -44,12 +44,12 @@ export function ArtifactsCard({
 }: ArtifactsCardProps) {
   if (!fileChanges || fileChanges.length === 0) {
     return (
-      <div className="rounded-xl border border-ink-900/10 bg-white overflow-hidden">
-        <div className="px-4 py-3 border-b border-ink-900/5">
-          <h3 className="text-sm font-medium text-ink-700">Artifacts</h3>
+      <div className="rounded-xl border border-border-100/10 bg-bg-000 overflow-hidden">
+        <div className="px-4 py-3 border-b border-border-100/5">
+          <h3 className="text-sm font-medium text-text-100">Artifacts</h3>
         </div>
         <div className="p-4">
-          <p className="text-sm text-muted text-center py-4">
+          <p className="text-sm text-text-400 text-center py-4">
             No files changed yet
           </p>
         </div>
@@ -67,17 +67,17 @@ export function ArtifactsCard({
   );
 
   return (
-    <div className="rounded-xl border border-ink-900/10 bg-white overflow-hidden">
-      <div className="px-4 py-3 border-b border-ink-900/5">
+    <div className="rounded-xl border border-border-100/10 bg-bg-000 overflow-hidden">
+      <div className="px-4 py-3 border-b border-border-100/5">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-ink-700">Artifacts</h3>
+          <h3 className="text-sm font-medium text-text-100">Artifacts</h3>
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-success">+{totals.additions}</span>
-            <span className="text-error">-{totals.deletions}</span>
+            <span className="text-success-000">+{totals.additions}</span>
+            <span className="text-danger-100">-{totals.deletions}</span>
           </div>
         </div>
       </div>
-      <ul className="divide-y divide-ink-900/5 max-h-64 overflow-y-auto">
+      <ul className="divide-y divide-border-100/5 max-h-64 overflow-y-auto">
         {fileChanges.map((change, index) => (
           <li key={`${change.path}-${index}`}>
             <button
@@ -85,10 +85,10 @@ export function ArtifactsCard({
               className="w-full px-4 py-2.5 hover:bg-bg-100 transition-colors flex items-center gap-3 text-left"
             >
               <FileIcon status={change.status} />
-              <span className="flex-1 text-sm text-ink-600 truncate font-mono">
+              <span className="flex-1 text-sm text-text-200 truncate font-mono">
                 {getRelativePath(change.path, cwd)}
               </span>
-              <ChevronRight className="w-4 h-4 text-muted" />
+              <ChevronRight className="w-4 h-4 text-text-400" />
             </button>
           </li>
         ))}

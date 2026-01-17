@@ -13,14 +13,14 @@ export function GitHubAuthButton() {
 
   if (loading) {
     return (
-      <div className="h-8 w-24 bg-surface-secondary animate-pulse rounded-lg" />
+      <div className="h-8 w-24 bg-bg-200 animate-pulse rounded-lg" />
     );
   }
 
   if (authenticated && user) {
     return (
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-secondary">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-bg-200">
           {user.avatarUrl && (
             <img
               src={user.avatarUrl}
@@ -28,13 +28,13 @@ export function GitHubAuthButton() {
               className="w-6 h-6 rounded-full"
             />
           )}
-          <span className="text-sm font-medium text-ink-800">
+          <span className="text-sm font-medium text-text-100">
             {user.username}
           </span>
         </div>
         <button
           onClick={logout}
-          className="px-3 py-1.5 text-sm text-muted hover:text-ink-700 hover:bg-surface-secondary rounded-lg transition-colors"
+          className="px-3 py-1.5 text-sm text-text-400 hover:text-text-200 hover:bg-bg-200 rounded-lg transition-colors"
         >
           Logout
         </button>

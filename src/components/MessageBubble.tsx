@@ -22,7 +22,7 @@ export function MessageBubble({ type, children, className = "" }: MessageBubbleP
   return (
     <div className="flex justify-start">
       <div
-        className={`max-w-[85%] rounded-2xl rounded-bl-md bg-white border border-ink-900/10 px-4 py-3 shadow-soft ${className}`}
+        className={`max-w-[85%] rounded-2xl rounded-bl-md bg-bg-000 border border-border-100/10 px-4 py-3 shadow-soft ${className}`}
       >
         {children}
       </div>
@@ -43,7 +43,7 @@ export function UserPromptBubble({ text }: { text: string }) {
 export function AssistantBubble({ children }: { children: ReactNode }) {
   return (
     <MessageBubble type="assistant">
-      <div className="text-sm text-ink-800">{children}</div>
+      <div className="text-sm text-text-100">{children}</div>
     </MessageBubble>
   );
 }

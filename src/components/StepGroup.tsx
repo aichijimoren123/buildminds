@@ -43,13 +43,13 @@ export function StepGroup({ steps, defaultExpanded = false }: StepGroupProps) {
 
   return (
     <Collapsible.Root open={isExpanded} onOpenChange={setIsExpanded}>
-      <Collapsible.Trigger className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-bg-100 border border-ink-900/10 hover:bg-bg-200 transition-colors cursor-pointer">
+      <Collapsible.Trigger className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-bg-100 border border-border-100/10 hover:bg-bg-200 transition-colors cursor-pointer">
         {getStatusIcon()}
-        <span className="flex-1 text-sm font-medium text-ink-700 text-left">
+        <span className="flex-1 text-sm font-medium text-text-200 text-left">
           {getStatusText()}
         </span>
         <ChevronDown
-          className={`w-4 h-4 text-ink-500 transition-transform duration-200 ${
+          className={`w-4 h-4 text-text-400 transition-transform duration-200 ${
             isExpanded ? "rotate-180" : ""
           }`}
         />

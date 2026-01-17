@@ -157,48 +157,48 @@ export function WorkspaceSelector({ onSelectWorkspace }: WorkspaceSelectorProps)
   return (
     <div className="mb-4">
       <Menu.Root open={isOpen} onOpenChange={setIsOpen}>
-        <Menu.Trigger className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border border-ink-900/10 bg-surface hover:bg-surface-tertiary transition-colors">
+        <Menu.Trigger className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border border-border-100/10 bg-bg-100 hover:bg-bg-100-tertiary transition-colors">
           <div className="flex items-center gap-2 min-w-0">
             {selectedRepo ? (
-              <Github className="w-4 h-4 text-ink-600 shrink-0" />
+              <Github className="w-4 h-4 text-text-300 shrink-0" />
             ) : (
-              <FolderGit2 className="w-4 h-4 text-ink-600 shrink-0" />
+              <FolderGit2 className="w-4 h-4 text-text-300 shrink-0" />
             )}
-            <span className="text-sm font-medium text-ink-800 truncate">
+            <span className="text-sm font-medium text-text-100 truncate">
               {getDisplayLabel()}
             </span>
           </div>
           <ChevronDown
-            className={`w-4 h-4 text-ink-500 shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
+            className={`w-4 h-4 text-text-400 shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
           />
         </Menu.Trigger>
 
         <Menu.Portal>
           <Menu.Positioner side="bottom" align="start" sideOffset={4} className="z-50">
-            <Menu.Popup className="w-[calc(100%-2rem)] min-w-[240px] max-w-[280px] rounded-xl bg-white border border-ink-900/10 shadow-lg py-1">
+            <Menu.Popup className="w-[calc(100%-2rem)] min-w-[240px] max-w-[280px] rounded-xl bg-bg-000 border border-border-100/10 shadow-lg py-1">
               {/* All Workspaces option */}
               <Menu.Item
-                className="flex items-center gap-2 px-3 py-2 text-sm text-ink-700 hover:bg-surface-tertiary cursor-pointer outline-none"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-text-200 hover:bg-bg-100-tertiary cursor-pointer outline-none"
                 onClick={(e) => {
                   e.preventDefault();
                   handleSelectWorkspace(null);
                 }}
               >
-                <FolderGit2 className="w-4 h-4 text-ink-500" />
+                <FolderGit2 className="w-4 h-4 text-text-400" />
                 <span>All Workspaces</span>
                 {!activeWorkspaceId && (
                   <span className="ml-auto text-accent">✓</span>
                 )}
               </Menu.Item>
 
-              <Menu.Separator className="my-1 h-px bg-ink-900/10" />
+              <Menu.Separator className="my-1 h-px bg-border-100/10" />
 
               {/* GitHub Section */}
               {loading ? (
-                <div className="px-3 py-2 text-sm text-muted">Loading...</div>
+                <div className="px-3 py-2 text-sm text-text-400">Loading...</div>
               ) : !authenticated ? (
                 <Menu.Item
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-accent hover:bg-surface-tertiary cursor-pointer outline-none"
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-accent hover:bg-bg-100-tertiary cursor-pointer outline-none"
                   onClick={(e) => {
                     e.preventDefault();
                     handleSignIn();
@@ -211,7 +211,7 @@ export function WorkspaceSelector({ onSelectWorkspace }: WorkspaceSelectorProps)
                 <>
                   {/* User info */}
                   {user && (
-                    <div className="flex items-center gap-2 px-3 py-2 text-xs text-muted">
+                    <div className="flex items-center gap-2 px-3 py-2 text-xs text-text-400">
                       {user.avatarUrl && (
                         <img
                           src={user.avatarUrl}
@@ -225,27 +225,27 @@ export function WorkspaceSelector({ onSelectWorkspace }: WorkspaceSelectorProps)
 
                   {/* Repos list */}
                   {loadingRepos ? (
-                    <div className="px-3 py-2 text-sm text-muted">
+                    <div className="px-3 py-2 text-sm text-text-400">
                       Loading repositories...
                     </div>
                   ) : repos.length === 0 ? (
-                    <div className="px-3 py-2 text-sm text-muted text-center">
+                    <div className="px-3 py-2 text-sm text-text-400 text-center">
                       No repositories added
                     </div>
                   ) : (
                     repos.map((repo) => (
                       <Menu.Item
                         key={repo.id}
-                        className="flex items-center gap-2 px-3 py-2 text-sm text-ink-700 hover:bg-surface-tertiary cursor-pointer outline-none"
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-text-200 hover:bg-bg-100-tertiary cursor-pointer outline-none"
                         onClick={(e) => {
                           e.preventDefault();
                           handleSelectWorkspace(repo);
                         }}
                       >
-                        <Github className="w-4 h-4 text-ink-500 shrink-0" />
+                        <Github className="w-4 h-4 text-text-400 shrink-0" />
                         <div className="flex-1 min-w-0">
                           <div className="truncate">{repo.repoFullName}</div>
-                          <div className="text-xs text-muted truncate">
+                          <div className="text-xs text-text-400 truncate">
                             {repo.localPath}
                           </div>
                         </div>
@@ -256,11 +256,11 @@ export function WorkspaceSelector({ onSelectWorkspace }: WorkspaceSelectorProps)
                     ))
                   )}
 
-                  <Menu.Separator className="my-1 h-px bg-ink-900/10" />
+                  <Menu.Separator className="my-1 h-px bg-border-100/10" />
 
                   {/* Add repository */}
                   <Menu.Item
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-accent hover:bg-surface-tertiary cursor-pointer outline-none"
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-accent hover:bg-bg-100-tertiary cursor-pointer outline-none"
                     onClick={(e) => {
                       e.preventDefault();
                       handleOpenBrowse();
@@ -279,18 +279,18 @@ export function WorkspaceSelector({ onSelectWorkspace }: WorkspaceSelectorProps)
       {/* Browse Repositories Modal */}
       <Dialog.Root open={showBrowseModal} onOpenChange={setShowBrowseModal}>
         <Dialog.Portal>
-          <Dialog.Backdrop className="fixed inset-0 bg-ink-900/40 backdrop-blur-sm z-50" />
-          <Dialog.Popup className="fixed left-1/2 top-1/2 w-[92vw] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl z-50 max-h-[80vh] flex flex-col">
+          <Dialog.Backdrop className="fixed inset-0 bg-bg-400/40 backdrop-blur-sm z-50" />
+          <Dialog.Popup className="fixed left-1/2 top-1/2 w-[92vw] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-bg-000 p-6 shadow-xl z-50 max-h-[80vh] flex flex-col">
             <div className="flex items-center justify-between mb-4">
-              <Dialog.Title className="text-lg font-semibold text-ink-800">
+              <Dialog.Title className="text-lg font-semibold text-text-100">
                 Add Repository
               </Dialog.Title>
-              <Dialog.Close className="rounded-full p-1 text-ink-500 hover:bg-ink-900/10">
+              <Dialog.Close className="rounded-full p-1 text-text-400 hover:bg-border-100/10">
                 <X className="w-5 h-5" />
               </Dialog.Close>
             </div>
 
-            <Dialog.Description className="text-sm text-muted mb-4">
+            <Dialog.Description className="text-sm text-text-400 mb-4">
               Select a repository from your GitHub account to add as a workspace.
             </Dialog.Description>
 
@@ -298,10 +298,10 @@ export function WorkspaceSelector({ onSelectWorkspace }: WorkspaceSelectorProps)
               {loadingAvailable ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin text-accent" />
-                  <span className="ml-2 text-sm text-muted">Loading repositories...</span>
+                  <span className="ml-2 text-sm text-text-400">Loading repositories...</span>
                 </div>
               ) : availableRepos.length === 0 ? (
-                <div className="text-center py-8 text-sm text-muted">
+                <div className="text-center py-8 text-sm text-text-400">
                   No repositories found
                 </div>
               ) : (
@@ -315,13 +315,13 @@ export function WorkspaceSelector({ onSelectWorkspace }: WorkspaceSelectorProps)
                     return (
                       <div
                         key={repo.fullName}
-                        className="p-3 border border-ink-900/10 rounded-xl hover:bg-surface-secondary transition-colors"
+                        className="p-3 border border-border-100/10 rounded-xl hover:bg-bg-100-secondary transition-colors"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <Github className="w-4 h-4 text-ink-500 shrink-0" />
-                              <span className="text-sm font-medium text-ink-800 truncate">
+                              <Github className="w-4 h-4 text-text-400 shrink-0" />
+                              <span className="text-sm font-medium text-text-100 truncate">
                                 {repo.fullName}
                               </span>
                               {repo.isPrivate && (
@@ -331,12 +331,12 @@ export function WorkspaceSelector({ onSelectWorkspace }: WorkspaceSelectorProps)
                               )}
                             </div>
                             {repo.description && (
-                              <p className="text-xs text-muted mt-1 line-clamp-2">
+                              <p className="text-xs text-text-400 mt-1 line-clamp-2">
                                 {repo.description}
                               </p>
                             )}
                             {repo.language && (
-                              <span className="text-xs text-muted mt-1 inline-block">
+                              <span className="text-xs text-text-400 mt-1 inline-block">
                                 {repo.language}
                               </span>
                             )}

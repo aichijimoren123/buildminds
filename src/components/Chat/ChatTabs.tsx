@@ -34,7 +34,7 @@ export function ChatTabs({
   }
 
   return (
-    <div className="flex items-center border-b border-ink-900/10 bg-surface-secondary/50">
+    <div className="flex items-center border-b border-border-100/10 bg-bg-200/50">
       {/* Scrollable tab container */}
       <div className="flex-1 overflow-x-auto scrollbar-hide">
         <div className="flex items-center">
@@ -45,8 +45,8 @@ export function ChatTabs({
                 key={tab.id}
                 className={`group relative flex items-center gap-2 px-4 py-2.5 border-b-2 cursor-pointer transition-colors min-w-0 max-w-[200px] ${
                   isActive
-                    ? "border-accent bg-surface text-ink-800"
-                    : "border-transparent text-ink-600 hover:text-ink-800 hover:bg-surface-tertiary"
+                    ? "border-accent bg-bg-000 text-text-100"
+                    : "border-transparent text-text-300 hover:text-text-100 hover:bg-bg-000-tertiary"
                 }`}
                 onClick={() => onTabClick(tab.id)}
                 role="tab"
@@ -67,7 +67,7 @@ export function ChatTabs({
                 {/* Close button */}
                 {tabs.length > 1 && (
                   <button
-                    className={`ml-1 p-0.5 rounded hover:bg-ink-900/10 transition-opacity ${
+                    className={`ml-1 p-0.5 rounded hover:bg-border-100/10 transition-opacity ${
                       isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                     }`}
                     onClick={(e) => {
@@ -87,7 +87,7 @@ export function ChatTabs({
 
       {/* Add tab button */}
       <button
-        className="flex items-center justify-center w-9 h-9 mx-1 rounded-lg text-ink-500 hover:text-ink-700 hover:bg-surface-tertiary transition-colors shrink-0"
+        className="flex items-center justify-center w-9 h-9 mx-1 rounded-lg text-text-400 hover:text-text-200 hover:bg-bg-000-tertiary transition-colors shrink-0"
         onClick={onAddTab}
         aria-label="New conversation"
       >

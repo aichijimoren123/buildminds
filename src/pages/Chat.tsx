@@ -115,7 +115,7 @@ export function Chat() {
   };
 
   return (
-    <div className="flex h-full w-full bg-surface-cream overflow-hidden">
+    <div className="flex h-full w-full bg-bg-100 overflow-hidden">
       {/* Main content area with optional InfoPanel */}
       <div className="flex flex-1 min-h-0 min-w-0">
         {/* Chat content - flexible width */}

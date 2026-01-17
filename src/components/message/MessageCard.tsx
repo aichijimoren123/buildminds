@@ -107,10 +107,10 @@ export function MessageCard({
       return (
         <div
           key={key}
-          className="rounded-xl border border-ink-900/10 bg-white pb-4 pt-0 px-4 shadow-soft"
+          className="rounded-xl border border-border-100/10 bg-bg-000 pb-4 pt-0 px-4 shadow-soft"
         >
           <div>Unsupported assistant block</div>
-          <pre className="mt-2 whitespace-pre-wrap text-sm text-ink-600 font-mono">
+          <pre className="mt-2 whitespace-pre-wrap text-sm text-text-300 font-mono">
             {JSON.stringify(messageContent, null, 2)}
           </pre>
         </div>
@@ -171,9 +171,9 @@ export function MessageCard({
 
   // Fallback for unknown message types
   return (
-    <div className="rounded-xl border border-ink-900/10 bg-white pb-4 pt-0 px-4 shadow-soft">
+    <div className="rounded-xl border border-border-100/10 bg-bg-000 pb-4 pt-0 px-4 shadow-soft">
       <div>Unsupport message type {Math.floor(Date.now() / 1000)}</div>
-      <pre className="mt-2 whitespace-pre-wrap text-sm text-ink-600 font-mono">
+      <pre className="mt-2 whitespace-pre-wrap text-sm text-text-300 font-mono">
         {JSON.stringify(message, null, 2)}
       </pre>
     </div>

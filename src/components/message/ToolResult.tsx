@@ -74,9 +74,9 @@ export function ToolResult({ message, messageContent }: ToolResultProps) {
   return (
     <div className="flex flex-col mt-4">
       <div className="header text-accent-main-100">Output</div>
-      <div className="mt-2 rounded-xl bg-surface-tertiary p-3">
+      <div className="mt-2 rounded-xl bg-bg-300 p-3">
         <pre
-          className={`text-sm whitespace-pre-wrap break-words font-mono ${isError ? "text-red-500" : "text-ink-700"}`}
+          className={`text-sm whitespace-pre-wrap break-words font-mono ${isError ? "text-red-500" : "text-text-200"}`}
         >
           {isMarkdownContent ? (
             <div>

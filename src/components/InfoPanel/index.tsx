@@ -23,7 +23,7 @@ export function InfoPanel({
   onFileClick,
 }: InfoPanelProps) {
   return (
-    <div className="h-full overflow-y-auto bg-surface-cream border-l border-ink-900/10 p-4 space-y-4">
+    <div className="h-full overflow-y-auto bg-bg-100 border-l border-border-100/10 p-4 space-y-4">
       <ProgressCard status={status} messageCount={messageCount} />
 
       <ArtifactsCard
