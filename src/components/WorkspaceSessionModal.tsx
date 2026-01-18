@@ -31,14 +31,43 @@ export function WorkspaceSessionModal({
   const [branches, setBranches] = useState<string[]>([]);
   const [loadingBranches, setLoadingBranches] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [pathPreview, setPathPreview] = useState<string>("");
 
   // Reset state when modal opens
   useEffect(() => {
     if (open) {
       setWorktreeName(generateDefaultName(prompt));
       setBaseBranch(workspace?.branch || "main");
+      setPathPreview("");
     }
   }, [open, prompt, workspace?.branch]);
+
+  // Fetch path preview when workspace or worktreeName changes
+  useEffect(() => {
+    if (!open || !workspace?.id) {
+      setPathPreview("");
+      return;
+    }
+
+    const fetchPathPreview = async () => {
+      try {
+        const name = worktreeName.trim() || "task-name";
+        const response = await fetch(
+          `/api/worktrees/workspace/${workspace.id}/path-preview?name=${encodeURIComponent(name)}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setPathPreview(data.path || "");
+        }
+      } catch (err) {
+        console.error("Failed to fetch path preview:", err);
+      }
+    };
+
+    // Debounce the fetch
+    const timer = setTimeout(fetchPathPreview, 300);
+    return () => clearTimeout(timer);
+  }, [open, workspace?.id, worktreeName]);
 
   // Load branches when workspace changes
   useEffect(() => {
@@ -169,7 +198,7 @@ export function WorkspaceSessionModal({
           <div className="mb-6 p-3 rounded-lg bg-border-100/5 border border-border-100/5">
             <div className="text-xs text-text-400 mb-1">Worktree 路径</div>
             <div className="text-xs font-mono text-text-300 break-all">
-              {workspace.localPath}/.worktrees/{worktreeName || "task-name"}
+              {pathPreview || "加载中..."}
             </div>
           </div>
 

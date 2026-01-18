@@ -13,9 +13,11 @@ import {
   Square,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router";
 import { useAppStore } from "../store/useAppStore";
 import { useSessionsStore } from "../store/useSessionsStore";
 import type { ClientEvent } from "../types";
+import { WorkspaceSelector } from "./WorkspaceSelector";
 import { WorkspaceSessionModal } from "./WorkspaceSessionModal";
 
 const DEFAULT_ALLOWED_TOOLS = "Read,Edit,Bash";
@@ -193,9 +195,11 @@ export function PromptInput({
     startWorkspaceSession,
   } = usePromptActions(sendEvent, { forceNewSession });
   const promptRef = useRef<HTMLTextAreaElement | null>(null);
+  const navigate = useNavigate();
 
   const setSessionMode = useAppStore((state) => state.setSessionMode);
   const activeWorkspaceId = useAppStore((state) => state.activeWorkspaceId);
+  const setActiveSessionId = useSessionsStore((state) => state.setActiveSessionId);
 
   const [connectorsOpen, setConnectorsOpen] = useState(false);
   const [showWorkspaceModal, setShowWorkspaceModal] = useState(false);
@@ -233,8 +237,7 @@ export function PromptInput({
     if (isNewSession && sessionMode === "workspace") {
       // Workspace mode: show modal to get worktree name
       if (!activeWorkspaceId || !workspace) {
-        // No workspace selected, prompt user to select one
-        alert("请先在左侧选择一个 GitHub 仓库");
+        // No workspace selected - the WorkspaceSelector above will guide them
         return;
       }
       setPendingPrompt(prompt);
@@ -276,6 +279,24 @@ export function PromptInput({
   return (
     <section className={containerClasses}>
       <div className="mx-auto w-full max-w-2xl">
+        {/* Workspace Selector - only show in workspace mode for new sessions */}
+        {isNewSession && sessionMode === "workspace" && (
+          <WorkspaceSelector
+            onSelectWorktree={(sessionId) => {
+              setActiveSessionId(sessionId);
+              navigate(`/chat/${sessionId}`);
+            }}
+            onNewWorkspace={() => {
+              // Focus the input after selecting a workspace
+              promptRef.current?.focus();
+            }}
+            onWorktreeCreated={() => {
+              // When worktree is created, focus the input for the user to enter the prompt
+              promptRef.current?.focus();
+            }}
+          />
+        )}
+
         {/* 主容器：使用主题变量 */}
         <div className="relative flex flex-col rounded-2xl bg-bg-000 ring-1 ring-border-100/10">
           {/* 上半部分：输入框 + 操作按钮 */}
@@ -284,7 +305,11 @@ export function PromptInput({
             <textarea
               rows={1}
               className="w-full resize-none bg-transparent text-md text-text-100 placeholder:text-text-500 focus:outline-none leading-relaxed"
-              placeholder="分配一个任务或提问任何问题"
+              placeholder={
+                isNewSession && sessionMode === "workspace" && !activeWorkspaceId
+                  ? "Select a repository above to start coding"
+                  : "分配一个任务或提问任何问题"
+              }
               value={prompt}
               onChange={(event) => setPrompt(event.target.value)}
               onKeyDown={handleKeyDown}

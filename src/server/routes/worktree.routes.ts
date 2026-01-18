@@ -42,6 +42,22 @@ worktreeRoutes.get("/workspace/:workspaceId/branches", async (c) => {
   }
 });
 
+// Get worktree path preview for a workspace
+worktreeRoutes.get("/workspace/:workspaceId/path-preview", async (c) => {
+  try {
+    const workspaceId = c.req.param("workspaceId");
+    const name = c.req.query("name") || "task-name";
+    const pathPreview = await worktreeService.getWorktreePathPreview(
+      workspaceId,
+      name
+    );
+    return c.json({ path: pathPreview });
+  } catch (error) {
+    console.error("Failed to get path preview:", error);
+    return c.json({ error: String(error) }, 500);
+  }
+});
+
 // Create a new worktree
 worktreeRoutes.post("/", async (c) => {
   try {

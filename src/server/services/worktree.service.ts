@@ -35,10 +35,11 @@ export class WorkTreeService {
    * 获取 base repo path（从环境变量或默认值）
    */
   private getBaseRepoPath(): string {
-    return (
+    const basePath =
       process.env.GITHUB_REPOS_PATH ||
-      path.join(process.cwd(), "..", "claude-projects")
-    );
+      path.join(process.cwd(), "..", "claude-repos");
+    // 确保返回绝对路径
+    return path.resolve(basePath);
   }
 
   /**
@@ -470,6 +471,23 @@ export class WorkTreeService {
   }
 
   /**
+   * 获取 Worktree 路径预览（用于前端显示）
+   */
+  async getWorktreePathPreview(
+    workspaceId: string,
+    name: string
+  ): Promise<string> {
+    const workspace = await this.workspaceRepo.findById(workspaceId);
+    if (!workspace) {
+      throw new Error("Workspace not found");
+    }
+
+    const sanitizedName = this.sanitizeName(name);
+    const repoRootPath = this.getRepoRootPath(workspace.repoFullName);
+    return path.join(repoRootPath, sanitizedName || "task-name");
+  }
+
+  /**
    * 获取仓库可用的分支列表
    */
   async getBranches(workspaceId: string): Promise<string[]> {
@@ -479,6 +497,31 @@ export class WorkTreeService {
     }
 
     const bareRepoPath = this.getBareRepoPath(workspace.repoFullName);
+
+    // Check if bare repo exists
+    const fs = await import("fs/promises");
+    try {
+      await fs.access(bareRepoPath);
+    } catch {
+      // Bare repo doesn't exist, try using localPath directly
+      console.warn(
+        `Bare repo not found at ${bareRepoPath}, trying localPath: ${workspace.localPath}`
+      );
+
+      // Try to get branches from the workspace localPath
+      try {
+        const { stdout } = await execAsync(`git branch -r`, {
+          cwd: workspace.localPath,
+        });
+        return stdout
+          .split("\n")
+          .map((b) => b.trim())
+          .filter((b) => b && !b.includes("HEAD"))
+          .map((b) => b.replace("origin/", ""));
+      } catch {
+        return ["main"];
+      }
+    }
 
     try {
       // 先 fetch（在 bare repo 中执行）
