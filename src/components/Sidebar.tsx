@@ -4,8 +4,8 @@ import {
   GitBranch,
   MoreHorizontal,
   Settings,
-  Trash2,
   Terminal,
+  Trash2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
@@ -180,7 +180,7 @@ export function Sidebar({
                 key={session.id}
                 className={`cursor-pointer rounded-xl border px-3 py-3 text-left transition ${
                   isSessionActive(session.id)
-                    ? "border-accent/30 bg-accent-subtle"
+                    ? "border-accent/30 bg-bg-200"
                     : "border-border-100/10 bg-bg-000 hover:bg-bg-200"
                 }`}
                 onClick={() => handleSelectSession(session.id)}

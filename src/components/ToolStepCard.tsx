@@ -56,7 +56,7 @@ export function ToolStepCard({ step }: ToolStepCardProps) {
   const hasResult = step.result && step.result.trim().length > 0;
 
   return (
-    <div className="rounded-xl bg-bg-200 border border-border-100/5 overflow-hidden">
+    <div className="rounded-xl bg-bg-000 border border-border-100/5 overflow-hidden">
       <Collapsible.Root open={isExpanded} onOpenChange={setIsExpanded}>
         <Collapsible.Trigger
           className="w-full flex items-center gap-2 px-3 py-2 hover:bg-bg-300/50 transition-colors cursor-pointer"

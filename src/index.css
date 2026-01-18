@@ -116,8 +116,9 @@ pre code.hljs {
   --warning-900: 45 94.8% 15.1%;
 }
 
+/* System preference only applies when data-mode is "system" */
 @media (prefers-color-scheme: dark) {
-  [data-theme="claude"] {
+  [data-theme="claude"][data-mode="system"] {
     --accent-brand: 15 63.1% 59.6%;
     --accent-main-000: 15 54.2% 51.2%;
     --accent-main-100: 15 63.1% 59.6%;

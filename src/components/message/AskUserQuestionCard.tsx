@@ -105,7 +105,7 @@ export function AskUserQuestionCard({
         <div key={qIndex} className="mt-4">
           <p className="text-sm text-text-200">{q.question}</p>
           {q.header && (
-            <span className="mt-2 inline-flex items-center rounded-full bg-bg-200 px-2 py-0.5 text-xs text-text-400">
+            <span className="mt-2 inline-flex items-center rounded-full bg-bg-000 px-2 py-0.5 text-xs text-text-400">
               {q.header}
             </span>
           )}
@@ -113,7 +113,7 @@ export function AskUserQuestionCard({
             {(q.options ?? []).map((option, optIndex) => (
               <div
                 key={optIndex}
-                className="rounded-xl border border-border-100/10 bg-bg-200 px-4 py-3 text-left text-sm text-text-200"
+                className="rounded-xl border border-border-100/10 bg-bg-000 px-4 py-3 text-left text-sm text-text-200"
               >
                 <div className="font-medium">{option.label}</div>
                 {option.description && (

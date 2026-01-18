@@ -93,44 +93,16 @@ export const useAppStore = create<AppState>()(
 
       setThemeMode: (themeMode) => {
         set({ themeMode });
-        // Apply theme to document
-        const applyTheme = (mode: "light" | "dark") => {
-          document.documentElement.setAttribute("data-mode", mode);
-        };
-
-        if (themeMode === "system") {
-          const isDark = window.matchMedia(
-            "(prefers-color-scheme: dark)",
-          ).matches;
-          applyTheme(isDark ? "dark" : "light");
-        } else {
-          applyTheme(themeMode);
-        }
+        // Apply theme to document - use the actual mode value
+        // CSS handles system preference via @media (prefers-color-scheme: dark)
+        document.documentElement.setAttribute("data-mode", themeMode);
       },
 
       initializeTheme: () => {
         const { themeMode } = get();
-        const applyTheme = (mode: "light" | "dark") => {
-          document.documentElement.setAttribute("data-mode", mode);
-        };
-
-        if (themeMode === "system") {
-          const isDark = window.matchMedia(
-            "(prefers-color-scheme: dark)",
-          ).matches;
-          applyTheme(isDark ? "dark" : "light");
-
-          // Listen for system theme changes
-          window
-            .matchMedia("(prefers-color-scheme: dark)")
-            .addEventListener("change", (e) => {
-              if (get().themeMode === "system") {
-                applyTheme(e.matches ? "dark" : "light");
-              }
-            });
-        } else {
-          applyTheme(themeMode);
-        }
+        // Apply theme to document - use the actual mode value
+        // CSS handles system preference via @media (prefers-color-scheme: dark)
+        document.documentElement.setAttribute("data-mode", themeMode);
       },
 
       loadServerSettings: async () => {

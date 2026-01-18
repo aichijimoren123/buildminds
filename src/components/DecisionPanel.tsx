@@ -94,7 +94,7 @@ export function DecisionPanel({
           <div key={qIndex} className="mt-4">
             <p className="text-sm text-text-200">{q.question}</p>
             {q.header && (
-              <span className="mt-2 inline-flex items-center rounded-full bg-bg-200 px-2 py-0.5 text-xs text-text-400">
+              <span className="mt-2 inline-flex items-center rounded-full bg-bg-000 px-2 py-0.5 text-xs text-text-400">
                 {q.header}
               </span>
             )}
@@ -109,7 +109,7 @@ export function DecisionPanel({
                     className={`rounded-xl border px-4 py-3 text-left text-sm text-text-200 transition-colors ${
                       (selectedOptions[qIndex] ?? []).includes(option.label)
                         ? "border-info/50 bg-info/5"
-                        : "border-border-100/10 bg-bg-200 hover:border-info/40 hover:bg-bg-200-tertiary"
+                        : "border-border-100/10 bg-bg-000 hover:border-info/40 hover:bg-bg-000-tertiary"
                     }`}
                     onClick={() => {
                       if (shouldAutoSubmit) {
@@ -142,7 +142,7 @@ export function DecisionPanel({
               </label>
               <input
                 type="text"
-                className="mt-1 w-full rounded-xl border border-border-100/10 bg-bg-200 px-3 py-2 text-sm text-text-200 focus:border-info/50 focus:outline-none"
+                className="mt-1 w-full rounded-xl border border-border-100/10 bg-bg-000 px-3 py-2 text-sm text-text-200 focus:border-info/50 focus:outline-none"
                 placeholder="Type your answer..."
                 value={otherInputs[qIndex] ?? ""}
                 onChange={(event) => {
@@ -182,7 +182,7 @@ export function DecisionPanel({
             Submit answers
           </button>
           <button
-            className="rounded-full border border-border-100/10 bg-bg-200 px-5 py-2 text-sm font-medium text-text-200 hover:bg-bg-200-tertiary transition-colors"
+            className="rounded-full border border-border-100/10 bg-bg-000 px-5 py-2 text-sm font-medium text-text-200 hover:bg-bg-000-tertiary transition-colors"
             onClick={() =>
               onSubmit({
                 behavior: "deny",
@@ -208,7 +208,7 @@ export function DecisionPanel({
         <span className="font-medium">{request.toolName}</span>
       </p>
 
-      <div className="mt-3 rounded-xl bg-bg-200-tertiary p-3">
+      <div className="mt-3 rounded-xl bg-bg-000-tertiary p-3">
         <pre className="text-xs text-text-300 font-mono whitespace-pre-wrap break-words max-h-40 overflow-auto">
           {JSON.stringify(request.input, null, 2)}
         </pre>
@@ -227,7 +227,7 @@ export function DecisionPanel({
           Allow
         </button>
         <button
-          className="rounded-full border border-border-100/10 bg-bg-200 px-5 py-2 text-sm font-medium text-text-200 hover:bg-bg-200-tertiary transition-colors"
+          className="rounded-full border border-border-100/10 bg-bg-000 px-5 py-2 text-sm font-medium text-text-200 hover:bg-bg-000-tertiary transition-colors"
           onClick={() =>
             onSubmit({ behavior: "deny", message: "User denied the request" })
           }

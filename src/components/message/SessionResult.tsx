@@ -29,7 +29,7 @@ export function SessionResult({ message }: SessionResultProps) {
   return (
     <div className="flex flex-col gap-2 mt-4">
       <div className="header text-accent-main-100">Session Result</div>
-      <div className="flex flex-col bg-bg-200 border-border-100/10 rounded-xl px-4 py-3 border border-[0.5px] bg-bg-100 space-y-2 dark:bg-bg-300">
+      <div className="flex flex-col border-border-100/10 rounded-xl px-4 py-3 border border-[0.5px] bg-bg-000 space-y-2">
         <div className="flex flex-wrap items-center gap-2 text-[14px]">
           <span className="font-normal">Duration</span>
           <span className="inline-flex items-center rounded-full bg-bg-300 px-2.5 py-0.5 text-text-200 text-[13px]">
