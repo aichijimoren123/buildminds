@@ -7,7 +7,7 @@ import { useMessageStore } from "../store/useMessageStore";
 import { useSessionsStore } from "../store/useSessionsStore";
 import { useWorktreeStore } from "../store/useWorktreeStore";
 import type { ServerEvent } from "../types";
-import { Sidebar } from "./Sidebar";
+import { Sidebar } from "./sidebar";
 
 // Message-related event types
 const MESSAGE_EVENTS = new Set([

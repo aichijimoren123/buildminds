@@ -40,7 +40,7 @@ export default function MDContent({ text }: { text: string }) {
         em: (props) => <em className="text-text-100" {...props} />,
         pre: (props) => (
           <pre
-            className="mt-3 max-w-full overflow-x-auto whitespace-pre-wrap rounded-xl bg-bg-300 p-3 text-sm text-text-200"
+            className="mt-3 max-w-full overflow-x-auto whitespace-pre-wrap rounded-xl bg-bg-000 p-3 text-sm text-text-200"
             {...props}
           />
         ),

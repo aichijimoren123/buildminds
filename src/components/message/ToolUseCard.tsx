@@ -117,7 +117,7 @@ export function ToolUseCard({
 
   // For other tools, show compact card
   return (
-    <div className="flex flex-col gap-2 rounded-xl bg-bg-300 px-3 py-2 mt-4">
+    <div className="flex flex-col gap-2 rounded-xl bg-bg-000 px-3 py-2 mt-4">
       <div className="flex flex-row items-center gap-2">
         <StatusDot
           variant={statusVariant}

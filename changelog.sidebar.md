@@ -1,5 +1,150 @@
 # Sidebar & Settings Mobile Optimization Changelog
 
+## 2026-01-18 - Add Repository 弹窗功能
+
+### 概述
+
+新增 AddRepositoryDialog 弹窗组件，点击 Sidebar 中的 "Add repository" 按钮时打开，允许用户浏览和克隆 GitHub 仓库。
+
+### 新增功能
+
+#### AddRepositoryDialog 组件
+
+- **弹窗入口**：在 Code 模式下，点击 Sidebar 底部的 "Add repository" 按钮打开弹窗
+- **GitHub 登录提示**：未登录时显示 "Sign in with GitHub" 按钮，使用 better-auth 进行 OAuth 认证
+- **仓库列表**：登录后显示用户的 GitHub 仓库列表
+- **搜索功能**：支持按仓库名、描述、语言搜索过滤
+- **Clone 按钮**：每个仓库有独立的 "Clone" 按钮，点击后克隆到本地（不会自动克隆）
+- **状态显示**：
+  - 加载中：显示 spinner 动画
+  - 克隆中：按钮显示 "Cloning..." 状态
+  - 已克隆：显示 "Cloned" 标签
+  - 私有仓库：显示 "Private" 标签
+- **错误处理**：显示具体错误信息，认证错误时提示登录
+
+### 文件变更
+
+#### 新增文件
+
+- `src/components/AddRepositoryDialog.tsx` - 添加仓库弹窗组件
+
+#### 修改文件
+
+- `src/components/Sidebar.tsx`
+  - 导入 `AddRepositoryDialog` 组件
+  - 新增 `showAddRepoDialog` 状态
+  - "Add repository" 按钮点击改为打开弹窗（原为打开设置）
+  - 添加 `AddRepositoryDialog` 到 JSX
+  - `onRepoAdded` 回调更新本地仓库列表
+
+### 技术实现
+
+#### AddRepositoryDialog 组件结构
+
+```typescript
+interface AddRepositoryDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onRepoAdded?: (repo: AddedRepo) => void;
+}
+```
+
+#### 状态管理
+
+```typescript
+const [availableRepos, setAvailableRepos] = useState<AvailableRepo[]>([]);
+const [addedRepos, setAddedRepos] = useState<AddedRepo[]>([]);
+const [loading, setLoading] = useState(false);
+const [cloningRepo, setCloningRepo] = useState<string | null>(null);
+const [searchQuery, setSearchQuery] = useState("");
+const [error, setError] = useState<string | null>(null);
+const [needsAuth, setNeedsAuth] = useState(false);
+```
+
+#### API 调用
+
+```typescript
+// 加载可用仓库
+const response = await fetch("/api/github/browse");
+
+// 克隆仓库
+const response = await fetch("/api/github/repos", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ repoFullName }),
+});
+```
+
+#### GitHub OAuth 登录
+
+```typescript
+import { signIn } from "../lib/auth-client";
+
+const handleGitHubLogin = async () => {
+  await signIn.social({
+    provider: "github",
+    callbackURL: window.location.pathname,
+  });
+};
+```
+
+### 视觉设计
+
+#### 弹窗布局
+
+- 标题栏：图标 + "Add Repository" 标题 + 关闭按钮
+- 搜索栏：带搜索图标的输入框（仅在有仓库时显示）
+- 仓库列表：滚动区域，每个仓库为独立卡片
+- 底部提示："Repositories will be cloned to your local machine"
+
+#### 仓库卡片样式
+
+```jsx
+<div className="p-4 border rounded-xl border-border-100/10 hover:bg-bg-100">
+  <div className="flex items-start justify-between gap-4">
+    <div className="flex-1 min-w-0">
+      <span className="text-sm font-medium text-text-100">{repo.fullName}</span>
+      {repo.isPrivate && <span className="text-xs px-2 py-0.5 bg-amber-500/10 text-amber-500 rounded-lg">Private</span>}
+      <p className="text-xs text-text-400 mt-1.5">{repo.description}</p>
+    </div>
+    <button className="px-4 py-2 text-sm font-medium text-white bg-accent rounded-lg">
+      Clone
+    </button>
+  </div>
+</div>
+```
+
+#### 登录提示状态
+
+```jsx
+<div className="text-center py-12">
+  <FolderGit2 className="w-12 h-12 text-text-400 mx-auto mb-3" />
+  <p className="text-sm text-text-400 mb-4">Sign in with GitHub to browse your repositories</p>
+  <button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#24292e] rounded-lg">
+    <LogIn className="w-4 h-4" />
+    Sign in with GitHub
+  </button>
+</div>
+```
+
+### 依赖组件
+
+- `@base-ui/react/dialog` - Dialog 弹窗组件
+- `lucide-react` - 图标（Download, FolderGit2, Lock, LogIn, Search, X）
+- `../lib/auth-client` - better-auth 客户端（signIn）
+
+### 交互流程
+
+1. 用户点击 "Add repository" → 打开弹窗
+2. 弹窗加载 `/api/github/browse` 获取仓库列表
+3. 如果未登录（401）→ 显示 GitHub 登录按钮
+4. 用户点击登录 → 跳转 GitHub OAuth 授权
+5. 授权完成返回 → 自动加载仓库列表
+6. 用户点击 "Clone" → 调用 `/api/github/repos` POST 克隆仓库
+7. 克隆成功 → 更新状态显示 "Cloned"，回调通知 Sidebar
+
+---
+
 ## 2026-01-18 - Sidebar 模式切换重构
 
 ### 概述

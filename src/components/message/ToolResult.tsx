@@ -5,7 +5,7 @@ import type {
 import { useEffect, useRef, useState } from "react";
 import MDContent from "../../render/markdown";
 import { setToolStatus, type ToolStatus } from "./toolStatus";
-import { isMarkdown, extractTagContent } from "./utils";
+import { extractTagContent, isMarkdown } from "./utils";
 
 type MessageContent = SDKAssistantMessage["message"]["content"];
 
@@ -74,7 +74,7 @@ export function ToolResult({ message, messageContent }: ToolResultProps) {
   return (
     <div className="flex flex-col mt-4">
       <div className="header text-accent-main-100">Output</div>
-      <div className="mt-2 rounded-xl bg-bg-300 p-3">
+      <div className="mt-2 rounded-xl bg-bg-000 p-3">
         <pre
           className={`text-sm whitespace-pre-wrap break-words font-mono ${isError ? "text-red-500" : "text-text-200"}`}
         >
