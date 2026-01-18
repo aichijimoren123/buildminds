@@ -32,20 +32,22 @@ export class RepositoryService {
     const repo = repos.find((r) => r.fullName === repoFullName);
     if (!repo) throw new Error("Repository not found on GitHub");
 
-    // Clone repo
+    // Clone repo (returns main worktree path)
     const localPath = await this.githubService.cloneRepo(
       repo.cloneUrl,
       repo.fullName,
       user.accessToken,
+      repo.defaultBranch,
     );
 
-    // Save to database
+    // Save to database (localPath 现在是 main worktree 路径)
     return await this.githubRepoRepo.create({
       userId,
       repoFullName: repo.fullName,
       repoUrl: `https://api.github.com/repos/${repo.fullName}`,
       cloneUrl: repo.cloneUrl,
       localPath,
+      branch: repo.defaultBranch,
       isPrivate: repo.isPrivate,
       lastSynced: new Date(),
     });
@@ -68,6 +70,7 @@ export class RepositoryService {
         repo.cloneUrl,
         repo.repoFullName,
         user.accessToken,
+        repo.branch,
       );
     } else {
       await this.githubService.pullRepo(repo.localPath, user.accessToken);
@@ -93,8 +96,10 @@ export class RepositoryService {
     const repo = await this.githubRepoRepo.findById(repoId);
     if (!repo) throw new Error("Repository not found");
 
+    // 删除整个仓库根目录（包括 bare repo 和所有 worktree）
+    const repoRootPath = this.githubService.getRepoRootPath(repo.repoFullName);
     try {
-      await fs.rm(repo.localPath, { recursive: true, force: true });
+      await fs.rm(repoRootPath, { recursive: true, force: true });
     } catch (error) {
       console.error("Failed to remove local repo directory:", error);
     }

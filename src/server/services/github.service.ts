@@ -8,6 +8,7 @@ export interface GitHubRepoInfo {
   fullName: string;
   cloneUrl: string;
   isPrivate: boolean;
+  defaultBranch: string;
   description?: string;
   language?: string;
   updatedAt?: string;
@@ -29,6 +30,30 @@ export class GitHubService {
     );
   }
 
+  /**
+   * 获取仓库根目录路径
+   * 结构: baseRepoPath/owner-repo/
+   */
+  getRepoRootPath(repoFullName: string): string {
+    return path.join(this.getBaseRepoPath(), repoFullName.replace("/", "-"));
+  }
+
+  /**
+   * 获取 bare repository 路径
+   * 结构: baseRepoPath/owner-repo/.bare
+   */
+  getBareRepoPath(repoFullName: string): string {
+    return path.join(this.getRepoRootPath(repoFullName), ".bare");
+  }
+
+  /**
+   * 获取 main worktree 路径
+   * 结构: baseRepoPath/owner-repo/main
+   */
+  getMainWorktreePath(repoFullName: string): string {
+    return path.join(this.getRepoRootPath(repoFullName), "main");
+  }
+
   async ensureRepoDirectory(): Promise<void> {
     await fs.mkdir(this.getBaseRepoPath(), { recursive: true });
   }
@@ -46,9 +71,10 @@ export class GitHubService {
         fullName: repo.full_name,
         cloneUrl: repo.clone_url,
         isPrivate: repo.private,
+        defaultBranch: repo.default_branch || "main",
         description: repo.description || undefined,
         language: repo.language || undefined,
-        updatedAt: repo.updated_at,
+        updatedAt: repo.updated_at || undefined,
       }));
     } catch (error) {
       console.error("Failed to list GitHub repos:", error);
@@ -60,16 +86,17 @@ export class GitHubService {
     cloneUrl: string,
     repoFullName: string,
     accessToken: string,
+    defaultBranch: string = "main",
   ): Promise<string> {
     await this.ensureRepoDirectory();
 
-    const localPath = path.join(
-      this.getBaseRepoPath(),
-      repoFullName.replace("/", "-"),
-    );
+    const repoRootPath = this.getRepoRootPath(repoFullName);
+    const bareRepoPath = this.getBareRepoPath(repoFullName);
+    const mainWorktreePath = this.getMainWorktreePath(repoFullName);
 
+    // 清理已存在的目录
     try {
-      await fs.rm(localPath, { recursive: true, force: true });
+      await fs.rm(repoRootPath, { recursive: true, force: true });
     } catch (error) {
       // Ignore if directory doesn't exist
     }
@@ -79,10 +106,34 @@ export class GitHubService {
         "https://",
         `https://x-access-token:${accessToken}@`,
       );
-      const git: SimpleGit = simpleGit();
-      await git.clone(authenticatedUrl, localPath, ["--depth", "1"]);
 
-      return localPath;
+      // 创建仓库根目录
+      await fs.mkdir(repoRootPath, { recursive: true });
+
+      // 1. 克隆为 bare repository
+      const git: SimpleGit = simpleGit();
+      await git.clone(authenticatedUrl, bareRepoPath, ["--bare"]);
+
+      // 2. 配置 bare repo 以支持 worktree
+      const bareGit = simpleGit(bareRepoPath);
+
+      // 设置 fetch refspec 以便能拉取所有分支
+      await bareGit.raw([
+        "config",
+        "remote.origin.fetch",
+        "+refs/heads/*:refs/remotes/origin/*",
+      ]);
+
+      // 3. 创建 main worktree
+      await bareGit.raw([
+        "worktree",
+        "add",
+        mainWorktreePath,
+        defaultBranch,
+      ]);
+
+      // 返回 main worktree 路径（这是实际的工作目录）
+      return mainWorktreePath;
     } catch (error) {
       console.error("Failed to clone repo:", error);
       throw new Error(`Failed to clone repository: ${repoFullName}`);
@@ -162,7 +213,23 @@ export class GitHubService {
 
   async checkRepoExists(localPath: string): Promise<boolean> {
     try {
-      await fs.access(path.join(localPath, ".git"));
+      // 检查是否是 worktree（有 .git 文件指向 bare repo）
+      const gitPath = path.join(localPath, ".git");
+      const stat = await fs.stat(gitPath);
+      // worktree 的 .git 是一个文件，普通 repo 的 .git 是目录
+      return stat.isFile() || stat.isDirectory();
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * 检查 bare repository 是否存在
+   */
+  async checkBareRepoExists(repoFullName: string): Promise<boolean> {
+    try {
+      const bareRepoPath = this.getBareRepoPath(repoFullName);
+      await fs.access(path.join(bareRepoPath, "HEAD"));
       return true;
     } catch {
       return false;

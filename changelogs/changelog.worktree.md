@@ -1,5 +1,135 @@
 # WorkTree Feature - Changelog
 
+## 2026-01-18 - Bare Repository + Worktree Directory Structure Refactor
+
+### Overview
+
+Refactored the repository cloning and worktree architecture to use a bare repository model. All clones and worktrees are now organized under a unified directory structure for better project management.
+
+### New Directory Structure
+
+```
+GITHUB_REPOS_PATH/
+  └── owner-repo/           # Repository root directory
+       ├── .bare/           # Bare repository (hidden)
+       ├── main/            # Main branch worktree (default)
+       ├── task-abc123/     # Task worktree 1
+       └── fix-bug/         # Task worktree 2
+```
+
+**Benefits:**
+- All worktrees are at the same level, making them easy to find and manage
+- IDE-friendly: open the repository folder to see all task branches
+- Clean separation: bare repo is hidden, only worktrees are visible
+- Follows Git's official recommended worktree workflow
+
+### Files Modified
+
+#### 1. `src/server/services/github.service.ts`
+
+**New Methods:**
+- `getRepoRootPath(repoFullName)` - Get repository root directory path
+- `getBareRepoPath(repoFullName)` - Get bare repository path (`.bare`)
+- `getMainWorktreePath(repoFullName)` - Get main worktree path
+- `checkBareRepoExists(repoFullName)` - Check if bare repo exists
+
+**Modified `cloneRepo()`:**
+```typescript
+async cloneRepo(
+  cloneUrl: string,
+  repoFullName: string,
+  accessToken: string,
+  defaultBranch: string = "main",  // NEW: Support custom default branch
+): Promise<string>
+```
+
+New clone workflow:
+1. Create repository root directory
+2. Clone as bare repository to `.bare/`
+3. Configure fetch refspec for all branches
+4. Create main worktree
+5. Return main worktree path
+
+**Added `defaultBranch` to `GitHubRepoInfo`:**
+```typescript
+export interface GitHubRepoInfo {
+  // ... existing fields
+  defaultBranch: string;  // NEW
+}
+```
+
+#### 2. `src/server/services/worktree.service.ts`
+
+**New Private Methods:**
+- `getBaseRepoPath()` - Get base repo path from env
+- `getRepoRootPath(repoFullName)` - Get repository root path
+- `getBareRepoPath(repoFullName)` - Get bare repo path
+
+**Updated Methods:**
+
+All methods now execute git commands in the bare repository context:
+
+| Method | Change |
+|--------|--------|
+| `createForSession()` | Worktree path: `{repoRoot}/task-{sessionId}` |
+| `create()` | Worktree path: `{repoRoot}/{sanitizedName}` |
+| `merge()` | Execute merge in main worktree |
+| `abandon()` | Execute in bare repo |
+| `cleanup()` | Execute in bare repo |
+| `delete()` | Execute in bare repo |
+| `getBranches()` | Fetch from bare repo |
+
+#### 3. `src/server/services/repository.service.ts`
+
+**Modified `addRepository()`:**
+- Pass `defaultBranch` to `cloneRepo()`
+- Save `branch` field to database
+
+**Modified `removeRepository()`:**
+- Delete entire repository root directory (includes bare repo + all worktrees)
+
+**Modified `syncRepository()`:**
+- Pass `repo.branch` to `cloneRepo()` when re-cloning
+
+### Migration Notes
+
+**For existing repositories:** Existing repositories using the old structure will need to be re-cloned to use the new bare repo structure.
+
+**Old Structure (deprecated):**
+```
+GITHUB_REPOS_PATH/
+  └── owner-repo/              # Main repository clone
+       └── .worktrees/         # Worktrees in hidden directory
+           ├── task-1/
+           └── task-2/
+```
+
+**New Structure:**
+```
+GITHUB_REPOS_PATH/
+  └── owner-repo/
+       ├── .bare/              # Bare repository
+       ├── main/               # Main branch worktree
+       ├── task-1/             # Task worktree
+       └── task-2/             # Task worktree
+```
+
+### Technical Details
+
+**Bare Repository Configuration:**
+```bash
+# After cloning bare repo, configure fetch to get all branches
+git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+```
+
+**Creating Worktrees from Bare Repo:**
+```bash
+# Create worktree from bare repo
+git -C /path/to/.bare worktree add /path/to/worktree branch-name
+```
+
+---
+
 ## 2026-01-13 - WorkTree & Workspace Architecture Implementation
 
 ### Overview

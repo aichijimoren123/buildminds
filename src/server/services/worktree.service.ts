@@ -1,5 +1,6 @@
 import { exec } from "child_process";
 import { promisify } from "util";
+import path from "path";
 import type {
   WorkTree,
   WorkTreeStatus,
@@ -31,6 +32,32 @@ export class WorkTreeService {
   ) {}
 
   /**
+   * 获取 base repo path（从环境变量或默认值）
+   */
+  private getBaseRepoPath(): string {
+    return (
+      process.env.GITHUB_REPOS_PATH ||
+      path.join(process.cwd(), "..", "claude-projects")
+    );
+  }
+
+  /**
+   * 获取仓库根目录路径
+   * 结构: baseRepoPath/owner-repo/
+   */
+  private getRepoRootPath(repoFullName: string): string {
+    return path.join(this.getBaseRepoPath(), repoFullName.replace("/", "-"));
+  }
+
+  /**
+   * 获取 bare repository 路径
+   * 结构: baseRepoPath/owner-repo/.bare
+   */
+  private getBareRepoPath(repoFullName: string): string {
+    return path.join(this.getRepoRootPath(repoFullName), ".bare");
+  }
+
+  /**
    * 为新会话创建 WorkTree
    */
   async createForSession(options: CreateWorkTreeOptions): Promise<WorkTree> {
@@ -43,13 +70,17 @@ export class WorkTreeService {
 
     const branch = baseBranch || workspace.branch;
     const branchName = `buildminds/task-${sessionId.slice(0, 8)}`;
-    const worktreePath = `${workspace.localPath}/.worktrees/${sessionId}`;
 
-    // 创建 git worktree
+    // 新结构：worktree 在仓库根目录下，与 main 平级
+    const repoRootPath = this.getRepoRootPath(workspace.repoFullName);
+    const bareRepoPath = this.getBareRepoPath(workspace.repoFullName);
+    const worktreePath = path.join(repoRootPath, `task-${sessionId.slice(0, 8)}`);
+
+    // 创建 git worktree（在 bare repo 中执行）
     try {
       await execAsync(
         `git worktree add -b "${branchName}" "${worktreePath}" "${branch}"`,
-        { cwd: workspace.localPath },
+        { cwd: bareRepoPath },
       );
     } catch (error) {
       throw new Error(`Failed to create git worktree: ${error}`);
@@ -177,16 +208,21 @@ export class WorkTreeService {
       throw new Error("Workspace not found");
     }
 
+    const bareRepoPath = this.getBareRepoPath(workspace.repoFullName);
+    const mainWorktreePath = path.join(
+      this.getRepoRootPath(workspace.repoFullName),
+      "main",
+    );
+
     try {
-      // 确保主分支是最新的
+      // 在 main worktree 中执行合并
       await execAsync(`git checkout "${workspace.branch}"`, {
-        cwd: workspace.localPath,
+        cwd: mainWorktreePath,
       });
 
-      // 在主仓库中合并
       await execAsync(
         `git merge "${worktree.branchName}" -m "Merge task: ${worktree.name}"`,
-        { cwd: workspace.localPath },
+        { cwd: mainWorktreePath },
       );
 
       // 更新状态
@@ -210,15 +246,17 @@ export class WorkTreeService {
       throw new Error("Workspace not found");
     }
 
+    const bareRepoPath = this.getBareRepoPath(workspace.repoFullName);
+
     try {
-      // 删除 worktree
+      // 删除 worktree（在 bare repo 中执行）
       await execAsync(`git worktree remove "${worktree.localPath}" --force`, {
-        cwd: workspace.localPath,
+        cwd: bareRepoPath,
       });
 
       // 删除分支
       await execAsync(`git branch -D "${worktree.branchName}"`, {
-        cwd: workspace.localPath,
+        cwd: bareRepoPath,
       });
 
       // 更新状态
@@ -319,15 +357,17 @@ export class WorkTreeService {
     const workspace = await this.workspaceRepo.findById(worktree.workspaceId);
     if (!workspace) return;
 
+    const bareRepoPath = this.getBareRepoPath(workspace.repoFullName);
+
     try {
       // 尝试删除 worktree（如果还存在）
       await execAsync(`git worktree remove "${worktree.localPath}" --force`, {
-        cwd: workspace.localPath,
+        cwd: bareRepoPath,
       }).catch(() => {});
 
       // 尝试删除分支（如果还存在）
       await execAsync(`git branch -D "${worktree.branchName}"`, {
-        cwd: workspace.localPath,
+        cwd: bareRepoPath,
       }).catch(() => {});
 
       // 更新状态
@@ -355,7 +395,11 @@ export class WorkTreeService {
     const branch = baseBranch || workspace.branch || "main";
     const sanitizedName = this.sanitizeName(name);
     const branchName = `task/${sanitizedName}`;
-    const worktreePath = `${workspace.localPath}/.worktrees/${sanitizedName}`;
+
+    // 新结构：worktree 在仓库根目录下，与 main 平级
+    const repoRootPath = this.getRepoRootPath(workspace.repoFullName);
+    const bareRepoPath = this.getBareRepoPath(workspace.repoFullName);
+    const worktreePath = path.join(repoRootPath, sanitizedName);
 
     // 检查是否已存在同名 worktree
     const existing = await this.worktreeRepo.findByWorkspace(workspaceId);
@@ -363,16 +407,16 @@ export class WorkTreeService {
       throw new Error(`Worktree "${name}" already exists`);
     }
 
-    // 创建 git worktree
+    // 创建 git worktree（在 bare repo 中执行）
     try {
       // 先 fetch 最新代码
-      await execAsync(`git fetch origin`, { cwd: workspace.localPath }).catch(
+      await execAsync(`git fetch origin`, { cwd: bareRepoPath }).catch(
         () => {},
       );
 
       await execAsync(
         `git worktree add -b "${branchName}" "${worktreePath}" "${branch}"`,
-        { cwd: workspace.localPath },
+        { cwd: bareRepoPath },
       );
     } catch (error) {
       throw new Error(`Failed to create git worktree: ${error}`);
@@ -405,15 +449,17 @@ export class WorkTreeService {
       throw new Error("Workspace not found");
     }
 
+    const bareRepoPath = this.getBareRepoPath(workspace.repoFullName);
+
     try {
-      // 删除 worktree
+      // 删除 worktree（在 bare repo 中执行）
       await execAsync(`git worktree remove "${worktree.localPath}" --force`, {
-        cwd: workspace.localPath,
+        cwd: bareRepoPath,
       }).catch(() => {});
 
       // 删除分支
       await execAsync(`git branch -D "${worktree.branchName}"`, {
-        cwd: workspace.localPath,
+        cwd: bareRepoPath,
       }).catch(() => {});
     } catch (error) {
       console.error("Failed to delete worktree:", error);
@@ -432,14 +478,16 @@ export class WorkTreeService {
       throw new Error("Workspace not found");
     }
 
+    const bareRepoPath = this.getBareRepoPath(workspace.repoFullName);
+
     try {
-      // 先 fetch
-      await execAsync(`git fetch origin`, { cwd: workspace.localPath }).catch(
+      // 先 fetch（在 bare repo 中执行）
+      await execAsync(`git fetch origin`, { cwd: bareRepoPath }).catch(
         () => {},
       );
 
       const { stdout } = await execAsync(`git branch -r`, {
-        cwd: workspace.localPath,
+        cwd: bareRepoPath,
       });
 
       return stdout
