@@ -1,21 +1,33 @@
 import { Dialog } from "@base-ui/react/dialog";
 import { Menu } from "@base-ui/react/menu";
 import {
+  ChevronDown,
+  Code2,
+  Filter,
   GitBranch,
+  MessageSquare,
   MoreHorizontal,
+  Plus,
   Settings,
   Terminal,
   Trash2,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { useAppStore } from "../store/useAppStore";
-import { useSessionsSortedByDate } from "../store/useSessionsStore";
+import { useAuth } from "../hooks/useAuth";
+import { useAppStore, type SessionMode } from "../store/useAppStore";
+import { useSessionsStore } from "../store/useSessionsStore";
 import { useWorktreeStore } from "../store/useWorktreeStore";
-import { WorkspaceSelector } from "./WorkspaceSelector";
+
+interface GithubRepo {
+  id: string;
+  repoFullName: string;
+  localPath: string;
+  lastSynced?: number;
+  isPrivate: boolean;
+}
 
 interface SidebarProps {
-  connected: boolean;
   onNewSession: () => void;
   onDeleteSession: (sessionId: string) => void;
   onOpenSettings: () => void;
@@ -24,7 +36,6 @@ interface SidebarProps {
 }
 
 export function Sidebar({
-  connected,
   onNewSession,
   onDeleteSession,
   onOpenSettings,
@@ -33,21 +44,97 @@ export function Sidebar({
 }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const activeWorkspaceId = useAppStore((state) => state.activeWorkspaceId);
-  const worktrees = useWorktreeStore((state) => state.worktrees);
+  const { user, authenticated } = useAuth();
 
+  // Store state
+  const sessionMode = useAppStore((state) => state.sessionMode);
+  const setSessionMode = useAppStore((state) => state.setSessionMode);
+  const worktrees = useWorktreeStore((state) => state.worktrees);
+  const sessions = useSessionsStore((state) => state.sessions);
+
+  // Local state
   const [resumeSessionId, setResumeSessionId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const closeTimerRef = useRef<number | null>(null);
 
-  // Use filtered sessions based on workspace
-  const sessionList = useSessionsSortedByDate(activeWorkspaceId);
+  // Workspaces state for code mode
+  const [repos, setRepos] = useState<GithubRepo[]>([]);
+  const [loadingRepos, setLoadingRepos] = useState(false);
+  const [hasLoadedRepos, setHasLoadedRepos] = useState(false);
 
-  const formatCwd = (cwd?: string) => {
-    if (!cwd) return "Working dir unavailable";
-    const parts = cwd.split(/[\\/]+/).filter(Boolean);
-    const tail = parts.slice(-2).join("/");
-    return `/${tail || cwd}`;
+  // Load repos when in code mode and authenticated
+  useEffect(() => {
+    if (sessionMode === "workspace" && authenticated && !hasLoadedRepos && !loadingRepos) {
+      loadRepos();
+    }
+  }, [sessionMode, authenticated, hasLoadedRepos, loadingRepos]);
+
+  const loadRepos = async () => {
+    setLoadingRepos(true);
+    try {
+      const response = await fetch("/api/github/repos");
+      if (response.ok) {
+        const data = await response.json();
+        setRepos(data.repos);
+      }
+    } catch (error) {
+      console.error("Failed to load repos:", error);
+    } finally {
+      setLoadingRepos(false);
+      setHasLoadedRepos(true);
+    }
+  };
+
+  // Get sessions based on mode
+  // In normal mode: show all sessions without workspace filter
+  // In code mode: show all sessions that have a workspace association
+  const sessionList = useMemo(() => {
+    const allSessions = Object.values(sessions);
+    let filtered: typeof allSessions;
+
+    if (sessionMode === "normal") {
+      // Normal mode: show sessions without workspace
+      filtered = allSessions.filter((s) => !s.githubRepoId);
+    } else {
+      // Code mode: show all sessions with workspace association
+      filtered = allSessions.filter((s) => !!s.githubRepoId);
+    }
+
+    return filtered.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
+  }, [sessions, sessionMode]);
+
+  // Create a map of workspace IDs to repo info for display
+  const repoMap = useMemo(() => {
+    const map: Record<string, GithubRepo> = {};
+    for (const repo of repos) {
+      map[repo.id] = repo;
+    }
+    return map;
+  }, [repos]);
+
+  // Format relative time
+  const formatRelativeTime = (timestamp?: number) => {
+    if (!timestamp) return "";
+    const now = Date.now();
+    const diff = now - timestamp;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    const weeks = Math.floor(diff / 604800000);
+
+    if (minutes < 1) return "just now";
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7) return `${days}d ago`;
+    return `${weeks}w ago`;
+  };
+
+  // Get workspace display name
+  const getWorkspaceName = (githubRepoId?: string) => {
+    if (!githubRepoId) return null;
+    const repo = repoMap[githubRepoId];
+    if (!repo) return null;
+    return repo.repoFullName;
   };
 
   useEffect(() => {
@@ -94,6 +181,10 @@ export function Sidebar({
     onMobileClose?.();
   };
 
+  const handleModeChange = (mode: SessionMode) => {
+    setSessionMode(mode);
+  };
+
   // Determine active session from URL
   const urlSessionId = location.pathname.match(/^\/chat\/([^/]+)/)?.[1];
   const isSessionActive = (sessionId: string) => urlSessionId === sessionId;
@@ -103,7 +194,6 @@ export function Sidebar({
     if (!worktreeId) return null;
     const worktree = worktrees[worktreeId];
     if (!worktree) return null;
-    // Extract just the branch name from full path
     const parts = worktree.branchName.split("/");
     return parts[parts.length - 1] || worktree.branchName;
   };
@@ -122,66 +212,78 @@ export function Sidebar({
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {/* Header with connection status */}
+        {/* Header with mode toggle and new session button */}
         <div className="flex items-center justify-between gap-3 mb-4">
-          <div className="text-sm font-semibold text-text-100">Sessions</div>
-          <div className="flex items-center gap-2">
-            <span
-              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                connected
-                  ? "bg-success-light text-success"
-                  : "bg-error-light text-error"
+          {/* Mode Toggle Buttons */}
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-bg-000 border border-border-100/10">
+            <button
+              className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors ${
+                sessionMode === "normal"
+                  ? "bg-bg-200 text-text-100"
+                  : "text-text-400 hover:text-text-200"
               }`}
+              onClick={() => handleModeChange("normal")}
+              aria-label="Normal mode"
+              title="Normal mode"
             >
-              {connected ? "Connected" : "Offline"}
-            </span>
-            {isMobileOpen && (
-              <button
-                className="rounded-full p-1 text-text-400 hover:bg-bg-200 lg:hidden"
-                onClick={onMobileClose}
-                aria-label="Close sessions"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M6 6l12 12M18 6l-12 12" />
-                </svg>
-              </button>
-            )}
+              <MessageSquare className="w-4 h-4" />
+            </button>
+            <button
+              className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors ${
+                sessionMode === "workspace"
+                  ? "bg-bg-200 text-text-100"
+                  : "text-text-400 hover:text-text-200"
+              }`}
+              onClick={() => handleModeChange("workspace")}
+              aria-label="Code mode"
+              title="Code mode"
+            >
+              <Code2 className="w-4 h-4" />
+            </button>
           </div>
+
+          {/* New Session Button */}
+          <button
+            className="flex items-center justify-center w-8 h-8 rounded-full bg-accent text-white hover:bg-accent/90 transition-colors"
+            onClick={handleNewSession}
+            aria-label="New session"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
         </div>
 
-        {/* Workspace Selector */}
-        <WorkspaceSelector />
-
-        {/* New Session Button */}
-        <button
-          className="w-full rounded-xl border border-border-100/10 bg-bg-000 px-4 py-2.5 text-sm font-medium text-text-200 hover:bg-bg-200 hover:border-border-100/20 transition-colors mb-4"
-          onClick={handleNewSession}
-        >
-          + New Session
-        </button>
+        {/* Sessions Header with Filter */}
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-sm font-semibold text-text-100">Sessions</span>
+          <button
+            className="flex items-center justify-center w-6 h-6 rounded text-text-400 hover:text-text-200 hover:bg-bg-200 transition-colors"
+            aria-label="Filter sessions"
+          >
+            <Filter className="w-4 h-4" />
+          </button>
+        </div>
 
         {/* Session List */}
-        <div className="flex flex-1 flex-col gap-2 overflow-y-auto min-h-0">
+        <div className="flex flex-1 flex-col gap-1 overflow-y-auto min-h-0">
           {sessionList.length === 0 && (
             <div className="rounded-xl border border-border-100/10 bg-bg-000 px-4 py-5 text-center text-xs text-text-400">
-              No sessions yet. Start by sending a prompt.
+              {sessionMode === "normal"
+                ? "No sessions yet. Start by sending a prompt."
+                : "No workspace sessions yet. Select a repository to start."}
             </div>
           )}
           {sessionList.map((session) => {
             const branchName = getBranchName(session.worktreeId);
+            const workspaceName = getWorkspaceName(session.githubRepoId);
+            const timeAgo = formatRelativeTime(session.updatedAt);
+
             return (
               <div
                 key={session.id}
-                className={`cursor-pointer rounded-xl border px-3 py-3 text-left transition ${
+                className={`cursor-pointer rounded-xl px-3 py-2.5 text-left transition ${
                   isSessionActive(session.id)
-                    ? "border-accent/30 bg-bg-200"
-                    : "border-border-100/10 bg-bg-000 hover:bg-bg-200"
+                    ? "bg-bg-200"
+                    : "hover:bg-bg-200/50"
                 }`}
                 onClick={() => handleSelectSession(session.id)}
                 onKeyDown={(event) => {
@@ -195,28 +297,30 @@ export function Sidebar({
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
-                    {/* Title with status color */}
+                    {/* Title */}
                     <div
                       className={`text-[13px] font-medium truncate ${
                         session.status === "running"
                           ? "text-info"
-                          : session.status === "completed"
-                            ? "text-success"
-                            : session.status === "error"
-                              ? "text-error"
-                              : "text-text-100"
+                          : "text-text-100"
                       }`}
                     >
                       {session.title || "Untitled Session"}
                     </div>
 
-                    {/* Working directory */}
+                    {/* Time and Workspace */}
                     <div className="text-xs text-text-400 mt-0.5 truncate">
-                      {formatCwd(session.cwd)}
+                      {sessionMode === "workspace" && workspaceName ? (
+                        <>
+                          {timeAgo} {workspaceName}
+                        </>
+                      ) : (
+                        timeAgo
+                      )}
                     </div>
 
-                    {/* Branch badge */}
-                    {branchName && (
+                    {/* Branch badge (code mode only) */}
+                    {sessionMode === "workspace" && branchName && (
                       <div className="flex items-center gap-1 mt-1.5">
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/10 text-accent text-[11px] font-medium">
                           <GitBranch className="w-3 h-3" />
@@ -229,7 +333,7 @@ export function Sidebar({
                   {/* Session menu */}
                   <Menu.Root>
                     <Menu.Trigger
-                      className="flex-shrink-0 rounded-full p-1.5 text-text-400 hover:bg-bg-200"
+                      className="flex-shrink-0 rounded-full p-1 text-text-400 hover:bg-bg-300 opacity-0 group-hover:opacity-100 transition-opacity"
                       aria-label="Open session menu"
                       onClick={(event) => event.stopPropagation()}
                       onPointerDown={(event) => event.stopPropagation()}
@@ -269,15 +373,62 @@ export function Sidebar({
           })}
         </div>
 
-        {/* Settings button */}
+        {/* Bottom Section: User Profile */}
         <div className="border-t border-border-100/10 pt-3 mt-3">
-          <button
-            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-text-200 hover:bg-bg-200 transition-colors"
-            onClick={onOpenSettings}
-          >
-            <Settings className="w-4 h-4" />
-            Settings
-          </button>
+          {authenticated && user ? (
+            <Menu.Root>
+              <Menu.Trigger className="flex w-full items-center gap-3 rounded-xl px-3 py-2 hover:bg-bg-200 transition-colors">
+                {user.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt={user.username}
+                    className="w-8 h-8 rounded-full"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
+                    <span className="text-sm font-medium text-accent">
+                      {user.username?.charAt(0).toUpperCase() || "U"}
+                    </span>
+                  </div>
+                )}
+                <div className="flex-1 min-w-0 text-left">
+                  <div className="text-sm font-medium text-text-100 truncate">
+                    {user.username}
+                  </div>
+                  {sessionMode === "workspace" && (
+                    <div className="text-xs text-text-400">
+                      {repos.length} workspace{repos.length !== 1 ? "s" : ""}
+                    </div>
+                  )}
+                </div>
+                <ChevronDown className="w-4 h-4 text-text-400" />
+              </Menu.Trigger>
+              <Menu.Portal>
+                <Menu.Positioner className="z-50" side="top" sideOffset={4}>
+                  <Menu.Popup className="min-w-[200px] rounded-xl border border-border-100/10 bg-bg-000 p-1 shadow-lg">
+                    <Menu.Item
+                      className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-text-200 outline-none hover:bg-bg-100"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onOpenSettings();
+                      }}
+                    >
+                      <Settings className="w-4 h-4 text-text-400" />
+                      Settings
+                    </Menu.Item>
+                  </Menu.Popup>
+                </Menu.Positioner>
+              </Menu.Portal>
+            </Menu.Root>
+          ) : (
+            <button
+              className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-text-200 hover:bg-bg-200 transition-colors"
+              onClick={onOpenSettings}
+            >
+              <Settings className="w-4 h-4" />
+              Settings
+            </button>
+          )}
         </div>
 
         {/* Resume Dialog */}

@@ -1,5 +1,188 @@
 # Sidebar & Settings Mobile Optimization Changelog
 
+## 2026-01-18 - Sidebar 模式切换重构
+
+### 概述
+
+重构 Sidebar 组件，引入 Normal/Code 双模式切换，移除 WorkspaceSelector，改进会话列表展示，新增用户资料区域。
+
+### 新增功能
+
+#### 模式切换 (Normal/Code)
+
+- **Header 区域重新设计**：
+  - 左侧：模式切换按钮组（圆角容器内两个按钮）
+    - `MessageSquare` 图标：Normal 模式（普通会话）
+    - `Code2` 图标：Code 模式（工作区会话）
+  - 右侧：圆形 `+` 按钮（创建新会话）
+
+- **模式行为**：
+  - **Normal 模式**：显示没有关联 workspace 的会话
+  - **Code 模式**：显示所有关联 workspace 的会话（跨所有 workspace）
+
+#### 会话列表改进
+
+- **Sessions 标题栏**：
+  - 左侧显示 "Sessions" 标签
+  - 右侧新增 Filter 图标按钮（预留功能）
+
+- **会话项显示**：
+  - 标题：会话名称，运行中状态显示为蓝色
+  - 副标题：
+    - Normal 模式：仅显示相对时间（如 "2d ago"）
+    - Code 模式：显示相对时间 + workspace 名称（如 "2d ago 12products/poke-backend"）
+  - 分支徽章：仅在 Code 模式下显示关联的 git 分支
+
+#### 用户资料区域（底部）
+
+- **已登录状态**：
+  - 用户头像（或首字母占位符）
+  - 用户名
+  - Code 模式下显示 workspace 数量（如 "3 workspaces"）
+  - 下拉菜单入口（ChevronDown 图标）
+  - 菜单包含 Settings 选项
+
+- **未登录状态**：
+  - 显示简单的 Settings 按钮
+
+### 移除内容
+
+- **WorkspaceSelector 组件**：不再从 Sidebar 导入和使用
+- **连接状态指示器**：移除 "Connected/Offline" 状态徽章
+- **旧版 "+ New Session" 按钮**：替换为圆形 `+` 按钮
+- **`connected` prop**：从 SidebarProps 中移除
+
+### 技术实现
+
+#### 会话过滤逻辑
+
+```typescript
+const sessionList = useMemo(() => {
+  const allSessions = Object.values(sessions);
+  let filtered: typeof allSessions;
+
+  if (sessionMode === "normal") {
+    // Normal 模式：显示没有 workspace 关联的会话
+    filtered = allSessions.filter((s) => !s.githubRepoId);
+  } else {
+    // Code 模式：显示所有有 workspace 关联的会话
+    filtered = allSessions.filter((s) => !!s.githubRepoId);
+  }
+
+  return filtered.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
+}, [sessions, sessionMode]);
+```
+
+#### 相对时间格式化
+
+```typescript
+const formatRelativeTime = (timestamp?: number) => {
+  if (!timestamp) return "";
+  const now = Date.now();
+  const diff = now - timestamp;
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  const weeks = Math.floor(diff / 604800000);
+
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days < 7) return `${days}d ago`;
+  return `${weeks}w ago`;
+};
+```
+
+#### Workspace 信息获取
+
+```typescript
+// 在 Code 模式下加载 repos
+useEffect(() => {
+  if (sessionMode === "workspace" && authenticated && !hasLoadedRepos && !loadingRepos) {
+    loadRepos();
+  }
+}, [sessionMode, authenticated, hasLoadedRepos, loadingRepos]);
+
+// 创建 workspace ID 到 repo 信息的映射
+const repoMap = useMemo(() => {
+  const map: Record<string, GithubRepo> = {};
+  for (const repo of repos) {
+    map[repo.id] = repo;
+  }
+  return map;
+}, [repos]);
+```
+
+### 文件变更
+
+#### 修改文件
+
+- `src/components/Sidebar.tsx`
+  - 新增导入：`Code2`, `Filter`, `MessageSquare`, `Plus`, `ChevronDown`
+  - 新增导入：`useAuth` hook, `SessionMode` type
+  - 移除导入：`WorkspaceSelector`
+  - 重写 Header 区域
+  - 重写会话列表渲染逻辑
+  - 新增用户资料区域
+  - 移除 `connected` prop
+
+- `src/components/Layout.tsx`
+  - 移除 Sidebar 组件的 `connected` prop
+
+### 视觉设计
+
+#### 模式切换按钮组
+
+```jsx
+<div className="flex items-center gap-1 p-1 rounded-xl bg-bg-000 border border-border-100/10">
+  <button className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors ${
+    sessionMode === "normal"
+      ? "bg-bg-200 text-text-100"
+      : "text-text-400 hover:text-text-200"
+  }`}>
+    <MessageSquare className="w-4 h-4" />
+  </button>
+  {/* Code 模式按钮类似 */}
+</div>
+```
+
+#### 新建会话按钮
+
+```jsx
+<button className="flex items-center justify-center w-8 h-8 rounded-full bg-accent text-white hover:bg-accent/90 transition-colors">
+  <Plus className="w-4 h-4" />
+</button>
+```
+
+#### 会话项样式
+
+- 移除边框，改用更简洁的背景色变化
+- 活动状态：`bg-bg-200`
+- 悬停状态：`hover:bg-bg-200/50`
+- 间距减小：`gap-1`（原 `gap-2`）
+
+### 状态管理
+
+使用 `useAppStore` 中的 `sessionMode` 状态：
+
+```typescript
+export type SessionMode = "normal" | "workspace";
+
+// Store state
+const sessionMode = useAppStore((state) => state.sessionMode);
+const setSessionMode = useAppStore((state) => state.setSessionMode);
+```
+
+### 待优化项
+
+- [ ] Filter 按钮功能实现（按状态、时间排序等）
+- [ ] Code 模式下按 workspace 分组显示
+- [ ] 会话搜索功能
+- [ ] 拖拽排序会话
+- [ ] 会话固定/收藏功能
+
+---
+
 ## 2026-01-14 - 移动端设置页面优化
 
 ### 新增功能

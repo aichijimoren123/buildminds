@@ -102,7 +102,6 @@ export function Layout() {
         {/* 移动端：设置页面和聊天页面不显示侧边栏 */}
         {!isSettingsPage && !isChatPage && (
           <Sidebar
-            connected={connected}
             onNewSession={handleNewSessionClick}
             onDeleteSession={handleDeleteSession}
             onOpenSettings={() => navigate("/settings")}
@@ -114,7 +113,6 @@ export function Layout() {
         {(isSettingsPage || isChatPage) && (
           <div className="hidden lg:block">
             <Sidebar
-              connected={connected}
               onNewSession={handleNewSessionClick}
               onDeleteSession={handleDeleteSession}
               onOpenSettings={() => navigate("/settings")}
