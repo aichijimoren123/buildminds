@@ -24,10 +24,10 @@ export interface RepoStatus {
 export class GitHubService {
   // Get base repo path dynamically from settings/env
   private getBaseRepoPath(): string {
-    return (
+    const basePath =
       process.env.GITHUB_REPOS_PATH ||
-      path.join(process.cwd(), "..", "claude-projects")
-    );
+      path.join(process.cwd(), "..", "claude-repos");
+    return path.resolve(basePath);
   }
 
   /**
