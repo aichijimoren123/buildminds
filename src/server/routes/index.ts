@@ -15,6 +15,7 @@ import { SessionService } from "../services/session.service";
 import { SettingsService } from "../services/settings.service";
 import { WebSocketService } from "../services/websocket.service";
 import { WorkTreeService } from "../services/worktree.service";
+import { filesystemRoutes } from "./filesystem.routes";
 import { githubRoutes } from "./github.routes";
 import { registerSessionRoutes } from "./session.routes";
 import { registerSettingsRoutes } from "./settings.routes";
@@ -77,6 +78,7 @@ export function setupRoutes(app: Hono) {
 
   app.route("/api/github", githubRoutes);
   app.route("/api/worktrees", worktreeRoutes);
+  app.route("/api/filesystem", filesystemRoutes);
 
   // Health check endpoint
   app.get("/api/health", (c) => c.text("ok"));

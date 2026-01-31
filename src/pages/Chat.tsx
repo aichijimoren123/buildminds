@@ -1,7 +1,8 @@
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useNavigate, useOutletContext, useParams } from "react-router";
 import { ChatTabContent } from "../components/Chat/ChatTabContent";
 import { ChatTitleBar } from "../components/Chat/ChatTitleBar";
+import type { FileNode } from "../components/FileBrowser";
 import { InfoPanel } from "../components/InfoPanel";
 import { PromptInput } from "../components/PromptInput";
 import { useSessionMessages } from "../store/useMessageStore";
@@ -114,6 +115,12 @@ export function Chat() {
     }
   };
 
+  // Handle file selection from FileBrowser
+  const handleFileSelect = useCallback((node: FileNode) => {
+    // TODO: Open file in editor or preview
+    console.log("File selected:", node.path);
+  }, []);
+
   return (
     <div className="flex h-full w-full bg-bg-100 overflow-hidden">
       {/* Main content area with optional InfoPanel */}
@@ -153,6 +160,7 @@ export function Chat() {
             createdAt={currentSession?.createdAt}
             worktreeId={currentSession?.worktreeId}
             onFileClick={handleFileClick}
+            onFileSelect={handleFileSelect}
           />
         </div>
       </div>
