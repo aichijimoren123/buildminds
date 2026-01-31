@@ -4,6 +4,7 @@ import { Layout } from "./components/Layout";
 import "./index.css";
 import { Chat } from "./pages/Chat";
 import { Home } from "./pages/Home";
+import { ModelSettings } from "./pages/ModelSettings";
 import { Review } from "./pages/Review";
 import { Settings } from "./pages/Settings";
 import { useAppStore } from "./store/useAppStore";
@@ -26,6 +27,7 @@ export default function App() {
           <Route path="/chat/:sessionId" element={<Chat />} />
           <Route path="/chat/:sessionId/review/:fileIndex" element={<Review />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/settings/models" element={<ModelSettings />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

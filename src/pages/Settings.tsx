@@ -1,4 +1,5 @@
 import {
+  Bot,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -64,6 +65,13 @@ function CableIcon(props: React.SVGProps<SVGSVGElement>) {
 
 const MENU_ITEMS = [
   { id: "account", label: "账户", icon: User, description: "管理您的账户信息" },
+  {
+    id: "models",
+    label: "模型配置",
+    icon: Bot,
+    description: "配置 API Provider 和模型",
+    route: "/settings/models",
+  },
   {
     id: "developer",
     label: "开发设置",
@@ -614,6 +622,12 @@ export function Settings() {
 
   // 处理菜单点击
   const handleMenuClick = (id: string) => {
+    const item = MENU_ITEMS.find((item) => item.id === id);
+    // 如果有 route 属性，跳转到对应页面
+    if (item && 'route' in item && item.route) {
+      navigate(item.route);
+      return;
+    }
     setSlideDirection("in");
     setIsAnimating(true);
     setActiveSection(id);
@@ -703,7 +717,13 @@ export function Settings() {
               {MENU_ITEMS.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => setActiveSection(item.id)}
+                  onClick={() => {
+                    if ('route' in item && item.route) {
+                      navigate(item.route);
+                    } else {
+                      setActiveSection(item.id);
+                    }
+                  }}
                   className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium cursor-pointer ${
                     activeSection === item.id
                       ? "bg-bg-000 text-text-100 border-border-100/10 border"

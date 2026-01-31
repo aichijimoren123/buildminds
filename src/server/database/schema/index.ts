@@ -4,6 +4,7 @@ export * from "./sessions.schema";
 export * from "./messages.schema";
 export * from "./settings.schema";
 export * from "./github-repos.schema";
+export * from "./models.schema";
 
 // Better Auth tables
 export * from "./user.schema";
